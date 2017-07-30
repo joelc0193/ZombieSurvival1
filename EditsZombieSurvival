@@ -1,0 +1,49 @@
+Currently: Trying to make the character pistol point directly at the cursor instead of the center of the character facing the cursor.
+
+Redo graph wall_check with thicker walls
+
+Make all texts in menus appear in the middle no matter what number is being displayed
+
+Make healing syringe like in killing floor
+
+Make menu of buying weapons, grenade counter
+
+a help menu with key functions
+
+zombies left counter: a count of each type of zombie
+
+weapon switch through keys,
+
+if mouse is on zombies, shows zombie's health above his head
+
+make sprite image move legs and not body for a more realistic effect. Take into account the direction that the character is facing and the direction that he is going towards.
+
+Make Zombies spawn outside
+
+delete the find_area function of zombie_spawn
+
+Change the level caps
+
+Make it so that each round comes with a certain amount of each zombie and that number is distributed amongst zombie_spawns instead of the zombie spawns themselves deciding what zombies are made
+
+Maybe make walls have different penetrations
+
+Make it so that when character switches area, zombie doesn't go back to the same node
+
+Make Zombie Chase Closest object.
+
+Check:
+
+current_level.areas[character.current_area.index].character_on=False: Check to see if we ever use the information that the character is on the area
+
+zombie.following_path=True: Check to see if zombie.following_path is ever used
+
+zombie.distance=distance(zombie.center_xcoord, zombie.center_ycoord, character.center_xcoord, character.center_ycoord): Change this so that it finds the distance based on the path's distance from the dictionary
+
+self.character_on=False: In the room class, check to see if that information is used
+
+Wall class, room class, check to see if index argument is used
+
+self.character_on=False: in area class, check to see if used
+
+self.index=index: In area class, check to see if index is used
