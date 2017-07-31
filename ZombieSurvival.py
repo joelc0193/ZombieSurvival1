@@ -1,3 +1,4 @@
+#aassasd
 import pygame, sys, time, random, graph
 import cPickle as pickle
 from pygame.locals import *
