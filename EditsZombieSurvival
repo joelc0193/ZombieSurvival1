@@ -1,4 +1,6 @@
-Currently: Trying to make the character pistol point directly at the cursor instead of the center of the character facing the cursor.
+zombie.distance
+
+Trying to make the character pistol point directly at the cursor instead of the center of the character facing the cursor.
 
 Redo graph wall_check with thicker walls
 

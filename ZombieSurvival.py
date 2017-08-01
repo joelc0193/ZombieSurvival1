@@ -189,7 +189,10 @@ def update_survivor_location():  # MOves the survivor
 		survivor.current_area.entities_on.add(survivor)
 
 	# finds new angle that survivor has to in order to be facing the cursor
-	survivor.angle = angle_finder(survivor.center_xcoord, survivor.center_ycoord, GameState['xcoord_cursor'], GameState['ycoord_cursor'])
+	#survivor.angle=angle_finder(survivor.center_xcoord, survivor.center_ycoord, GameState['xcoord_cursor'], GameState['ycoord_cursor'])
+	survivor.vector=Vector2(survivor.center_coords)
+	mouse_vector=Vector2(GameState['xcoord_cursor'],GameState['ycoord_cursor'])
+	survivor.angle=(survivor.vector-mouse_vector).as_polar()[1]
 
 # updates the zombies's image as it walks
 def update_zombie_state_image(zombie):
@@ -235,13 +238,9 @@ def move_zombies():
 		if zombie.body_motion!='attack':
 			distanc=distance(zombie.center_xcoord+zombie.speed*cos(zombie.angle), zombie.center_ycoord+zombie.speed*sin(zombie.angle), zombie.path[0][0], zombie.path[0][1])
 			if distanc<=zombie.speed:
-				zombie.center_xcoord=zombie.path[0][0]
-				zombie.center_ycoord=zombie.path[0][1]
+				zombie.vector=zombie.path[0]
 			else:
-				zombie.center_xcoord+=zombie.speed*cos(zombie.angle)
-				zombie.center_ycoord+=zombie.speed*sin(zombie.angle)
-
-			zombie.center_coords=(zombie.center_xcoord, zombie.center_ycoord)
+				zombie.vector+=zombie.veclocity
 			# rotate zombie so that he faces node that he is walking towards
 			zombie.rotated_image = rotate_image(zombie, 'zombie')
 
@@ -259,8 +258,8 @@ def move_zombies():
 				zombie.current_area=find_current_location(zombie.center_coords, current_map.areas)
 				zombie.current_area.entities_on.add(zombie)
 			# find the distance between the survivor and the zombie
-			zombie.distance=distance(zombie.center_xcoord, zombie.center_ycoord, survivor.center_xcoord, survivor.center_ycoord)
-
+			zombie.distance=zombie.path[1]
+			
 def new_cursor_location():
 	for event in GameState['events']:
 		if event.type==MOUSEMOTION:  # If mouse was pressed, updates cursor's location
@@ -300,8 +299,9 @@ def update_projectile_locations(): # updates the bullets
 				else:
 				 	bullet.remove=True
 			bullet.draw()
-			bullet.center_xcoord+=(bullet.speed*((bullet.bullet_number/bullet.total_number)))*cos(bullet.angle)
-			bullet.center_ycoord+=(bullet.speed*((bullet.bullet_number/bullet.total_number)))*sin(bullet.angle)
+			bullet.center_xcoord+=(bullet.speed*((bullet.bullet_number/bullet.total_number)))*-cos((bullet.angle/180)*pi)
+			bullet.center_ycoord+=(bullet.speed*((bullet.bullet_number/bullet.total_number)))*-sin((bullet.angle/180)*pi)
+			print 'here'
 			bullet.bullet_number=1
 			bullet.total_number=1
 			bullet.center_coords=(bullet.center_xcoord, bullet.center_ycoord)
@@ -339,7 +339,7 @@ def rotate_image(thing,string): # rotates images
 		return rotated_sprite
 	elif string=='bullet':
 		loc = thing.image.get_rect().center  #rot_image is not defined 
-		rot_sprite = pygame.transform.rotate(thing.image, -degrees(thing.angle))
+		rot_sprite = pygame.transform.rotate(thing.image, -thing.angle)
 		rot_sprite.get_rect().center = loc
 		return rot_sprite
 	elif string=='wall_check':
@@ -1275,8 +1275,8 @@ class Survivor(pygame.sprite.Sprite):
 		self.move_right=False
 		self.feet_motion='walk'
 		self.body_motion='idle'
-		self.center_xcoord=xcoord
-		self.center_ycoord=ycoord
+		self.center_coords-[xcoord, ycoord]
+		self.vector=Vector2(self.center)
 		self.time_of_last_generated_body_state=0
 		self.time_of_last_generated_feet_state=0
 		self.current_body_state_number=0
@@ -1294,7 +1294,6 @@ class Survivor(pygame.sprite.Sprite):
 		self.feet_rect=self.feet_image.get_rect(centerx=self.center_xcoord, centery=self.center_ycoord)
 		self.current_area=None
 		self.switched_areas=True
-		self.center_coords=(self.center_xcoord, self.center_ycoord)
 		self.walking_rect=pygame.Rect(self.center_coords[0]-7.5, self.center_coords[1]-7.5, 15, 15)
 		self.weapon=[weapon for weapon in GameState['weapons_collection'] if weapon.weapon_name=='handgun'][0]
 		self.weapons=[weapon for weapon in GameState['weapons_collection']]
@@ -1304,7 +1303,7 @@ class Survivor(pygame.sprite.Sprite):
 	def rotate_survivor(self):
 		# Rotate Body
 		location = self.center_coords
-		rotated_body_sprite = pygame.transform.rotate(self.body_image, -degrees(self.angle))
+		rotated_body_sprite = pygame.transform.rotate(self.body_image, -self.angle+180)
 		self.body_rect=rotated_body_sprite.get_rect()
 		self.body_rect.center = self.center_coords
 		self.rect=self.body_rect
