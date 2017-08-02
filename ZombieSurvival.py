@@ -182,7 +182,7 @@ def update_survivor_location():  # MOves the survivor
 		survivor.current_area.entities_on.add(survivor)
 
 	# finds new angle that survivor has to in order to be facing the cursor
-	_, survivor.angle=(GameState['cursor_vector']-survivor.vector).as_polar()
+	_, survivor.angle_from_center_to_cursor=(GameState['cursor_vector']-survivor.vector).as_polar()
 
 # updates the zombies's image as it walks
 def update_zombie_state_image(zombie):
@@ -207,7 +207,7 @@ def move_zombies():
 				zombie.path=[survivor.vector]
 				zombie.velocity=zombie.path[0]-zombie.vector
 				zombie.velocity.scale_to_length(zombie.speed)
-				zombie.distance=distance(zombie.vector[0], zombie.vector[1], survivor.vector[0], survivor.vector[1])
+				zombie.distance=zombie.vector.distance_to(survivor.vector)
 	# for each zombie...
 	for zombie in GameState['zombies_collection']:
 		# updates the zombie path so that tha last coordinate is the survivor's coordinates
@@ -232,8 +232,8 @@ def move_zombies():
 
 		# find future zombie location coordinates
 		if zombie.body_motion!='attack':
-			distanc=(zombie.vector+zombie.velocity).distance_to(Vector2(zombie.path[0]))
-			if distanc<=zombie.speed:
+			distance=(zombie.vector+zombie.velocity).distance_to(Vector2(zombie.path[0]))
+			if distance<=zombie.speed:
 				zombie.vector=Vector2(zombie.path[0])
 			else:
 				zombie.vector+=zombie.velocity
@@ -268,17 +268,15 @@ def new_cursor_location():
 def update_projectile_locations(): # updates the bullets
 	for bullet in GameState['projectiles']: # For each projectile
 		# If projectile is not out of bounds
-		if (bullet.center_xcoord <= WIDTH and bullet.center_xcoord >=0) and (bullet.center_ycoord <= HEIGHT and bullet.center_ycoord >=0): 
+		if (bullet.vector[0] <= WIDTH and bullet.vector[0] >=0) and (bullet.vector[1] <= HEIGHT and bullet.vector[1] >=0): 
 			bullet.prepare()
 			# check to see if it crashed into a wall and finds the speed at which the bullet should go so that it ends up at the first point of collision in the next frame
 			walls_hit=pygame.sprite.spritecollide(bullet.wall_check, current_map.walls, False, pygame.sprite.collide_mask)
 			if walls_hit:
 				wall_hit_check=False
-				x=bullet.center_xcoord
-				y=bullet.center_ycoord
-				origin=(x,y)
+				origin=bullet.vector
 				current_pos=Vector2(origin)
-				heading=Vector2(bullet.speed*cos(bullet.angle),bullet.speed*sin(bullet.angle))
+				heading=bullet.velocity
 				direction=heading.normalize()
 				brake=False
 				while not wall_hit_check:
@@ -287,23 +285,21 @@ def update_projectile_locations(): # updates the bullets
 			 				wall_hit_check=True
 			 				break
 			 		current_pos+=direction
-				bullet.speed=distance(bullet.center_xcoord, bullet.center_ycoord, current_pos[0], current_pos[1])
+				bullet.speed=bullet.vector.distance_to(current_pos)
+				bullet.velocity.scale_to_length(bullet.speed)
 				bullet.remove_later=True
 				if bullet.speed>1:
 				 	bullet.prepare()
 				else:
 				 	bullet.remove=True
 			bullet.draw()
-			bullet.center_xcoord+=(bullet.speed*((bullet.bullet_number/bullet.total_number)))*-cos((bullet.angle/180)*pi)
-			bullet.center_ycoord+=(bullet.speed*((bullet.bullet_number/bullet.total_number)))*-sin((bullet.angle/180)*pi)
-			print 'here'
+			bullet.vector+=bullet.velocity
 			bullet.bullet_number=1
 			bullet.total_number=1
-			bullet.center_coords=(bullet.center_xcoord, bullet.center_ycoord)
 			
 			bullet.switched_areas=switched_areas(bullet)
 			if bullet.switched_areas:
-				bullet.current_area=find_current_location((bullet.center_xcoord, bullet.center_ycoord), current_map.areas)
+				bullet.current_area=find_current_location(bullet.vector, current_map.areas)
 
 			if not bullet.remove:
 				# updates the new coordinates based on angle of direction and draws onto DISPLAYSURF
@@ -339,28 +335,21 @@ def rotate_image(thing,string): # rotates images
 		return rot_sprite
 	elif string=='wall_check':
 		loc = thing.image.get_rect().center  #rot_image is not defined 
-		rot_sprite = pygame.transform.rotate(thing.image, -degrees(thing.angle+(3.14159/2)))
+		rot_sprite = pygame.transform.rotate(thing.image, -thing.angle+90)
 		return rot_sprite
-
-def angle_finder(x1,y1,rotate_to_x2,rotate_to_y2): # finds angkes
-	return atan2((rotate_to_y2-y1),(rotate_to_x2-x1))
 
 def find_current_location(coords, locations): # finds current location
 	for location in locations:
 		if location.rect.collidepoint(coords[0], coords[1]):
 			return location
 	closest_location=None
-	distanc=0
+	distance=0
 	for location in locations:
-		d=distance(coords[0], coords[1], location.center_coords[0], location.center_coords[1])
+		d=location.center_coords.distance_to(coords)
 		if d<distance:
-			distanc=d
+			distance=d
 			closest_location=location
 	return closest_location
-
-def distance(x1, y1, x2, y2): # finds distance between two things
-    return sqrt((x1 - x2)**2 + (y1 - y2)**2)
-    pass
 
 def draw_game(args):
 	DISPLAYSURF.fill(BLACK)
@@ -781,7 +770,7 @@ class Player_Tab:
 		rects=[]
 		for event in GameState['events']:
 			if event.type==MOUSEBUTTONDOWN:
-				point=GameState['cursor_location']
+				point=GameState['cursor_vector']
 				for item in GameState['menu_items']:
 					i+=1
 					i=i%len(GameState['colors'])
@@ -1129,7 +1118,7 @@ class Map:
 		for node in self.nodes:
 			self.original_graph.add_vertex(node)
 		self.nodes_copy=self.nodes
-		## This is used in part to make the graph of the nodes. Uncomment in when working on a new map
+		# # This is used in part to make the graph of the nodes. Uncomment in when working on a new map
 		# for index1, node1 in enumerate(self.nodes_copy):
 		# 	for index2, node2 in enumerate(self.nodes_copy):
 		# 		if node1!=node2:
@@ -1138,11 +1127,13 @@ class Map:
 		# 			for wall in self.walls:
 		# 				wall.draw()
 		# 			wall_check=Wall_Check(node1, node2, 1)
-		#			wall_check.prepare()
+		# 			wall_check.prepare()
 		# 			wall_check.draw()
 		# 			walls_hit = pygame.sprite.spritecollide(wall_check, self.walls, False, pygame.sprite.collide_mask)
 		# 			if not walls_hit:
-		# 				distanc=distance(node1[0], node1[1], node2[0], node2[1])
+		# 				vector1=node1
+		# 				vector2=node2
+		#  				distance=vector1.distance_to(vector2)
 		# 				self.original_graph.add_edge(node1, node2, distanc)
 
 class Menu_Item(pygame.sprite.Sprite):
@@ -1227,9 +1218,9 @@ class Area:
 		self.y2coord = y2coord
 		self.rect = pygame.Rect(x1coord, y1coord, x2coord-x1coord, y2coord-y1coord)
 		self.entities_on=pygame.sprite.Group()
-		self.center_xcoord=(self.x1coord+self.x2coord)/2
-		self.center_ycoord=(self.y1coord+self.y2coord)/2
-		self.center_coords=(self.center_xcoord, self.center_ycoord)
+		self.center_xcoord=self.rect.centerx
+		self.center_ycoord=self.rect.centery
+		self.center_coords=Vector2(self.rect.center)
 		self.path=None
 	def prepare(self):
 		self.surface=pygame.Surface((abs(self.x2coord-self.x1coord),abs(self.y2coord-self.y1coord)))  # the size of the rect
@@ -1238,8 +1229,8 @@ class Area:
 	def draw(self):
 		DISPLAYSURF.blit(self.surface, (self.x1coord,self.y1coord))
 	def shortest_path(self, thing):
-		self.starting_node=(self.center_xcoord, self.center_ycoord)
-		self.ending_node=(thing.current_area.center_xcoord,thing.current_area.center_ycoord)
+		self.starting_node=(self.center_coords[0], self.center_coords[1])
+		self.ending_node=(thing.current_area.center_coords[0], thing.current_area.center_coords[1])
 		self.path=current_map.paths[self.starting_node, self.ending_node]
 		
 class Survivor(pygame.sprite.Sprite):
@@ -1282,7 +1273,7 @@ class Survivor(pygame.sprite.Sprite):
 		self.feet_image=Images['Characters/Survivor/feet/idle0']
 		self.current_room=None
 		self.rotated_body_image=None
-		self.angle=0
+		self.angle_from_center_to_cursor=0
 		self.update_body_state_image_delay=.02
 		self.update_feet_state_image_delay=.02
 		self.body_rect=self.body_image.get_rect(center=self.vector)
@@ -1298,53 +1289,52 @@ class Survivor(pygame.sprite.Sprite):
 	def rotate_survivor(self):
 		# Rotate Body
 		location = self.vector
-		rotated_body_sprite = pygame.transform.rotate(self.body_image, -self.angle)
+		rotated_body_sprite = pygame.transform.rotate(self.body_image, -self.angle_from_center_to_cursor)
 		self.body_rect=rotated_body_sprite.get_rect()
 		self.body_rect.center = self.vector
 		self.rect=self.body_rect
 
 		#Rotate Feet and find feet update delay
-		angle=survivor.angle-survivor.angle_walk
+		angle=(survivor.angle_from_center_to_cursor-survivor.angle_walk)%360
 		angle_to_rotate_survivor_feet=survivor.angle_walk
 		if self.move_up == False and self.move_down == False and self.move_left == False and self.move_right == False:
 			survivor.feet_motion='idle'
 			survivor.max_feet_state_number=0
-			angle_to_rotate_survivor_feet=survivor.angle
+			angle_to_rotate_survivor_feet=survivor.angle_from_center_to_cursor
 			survivor.update_feet_state_image_delay=.02
 			update_body_state_image_delay=.02
-		elif angle>=-180/4 or angle<=180/4:
+		elif angle>=7*180/4 or angle<=180/4:
 			survivor.feet_motion='walk'
 			survivor.max_feet_state_number=19
 			survivor.speed=self.walk_speed
 			survivor.update_feet_state_image_delay=.05
 			update_body_state_image_delay=.05
 		elif angle>=180/4 and angle<=3*180/4:
-			survivor.feet_motion='strafe_right'
-			survivor.max_feet_state_number=19
-			angle_to_rotate_survivor_feet=pi/2
-			survivor.speed=self.walk_speed*self.strafe_percent
-			survivor.update_feet_state_image_delay=.03
-			update_body_state_image_delay=.03
-		elif angle>=-3*180/4 and angle<=-180/4:
-			angle_to_rotate_survivor_feet=3*pi/2
 			survivor.feet_motion='strafe_left'
 			survivor.max_feet_state_number=19
-			angle_to_rotate_survivor_feet=pi/2
+			angle_to_rotate_survivor_feet=survivor.angle_walk+90
 			survivor.speed=self.walk_speed*self.strafe_percent
 			survivor.update_feet_state_image_delay=.03
 			update_body_state_image_delay=.03
-		elif angle>=3*180/4 or angle<=3*180/4:
+		elif angle>=5*180/4 and angle<=7*180/4:
+			angle_to_rotate_survivor_feet=survivor.angle_walk-90
+			survivor.feet_motion='strafe_right'
+			survivor.max_feet_state_number=19
+			survivor.speed=self.walk_speed*self.strafe_percent
+			survivor.update_feet_state_image_delay=.03
+			update_body_state_image_delay=.03
+		elif angle>=3*180/4 and angle<5*180/4:
 			survivor.feet_motion='walk'
+			angle_to_rotate_survivor_feet=angle_to_rotate_survivor_feet-180
 			survivor.max_feet_state_number=19
 			survivor.speed=self.walk_speed*self.backwards_percent
 			survivor.update_feet_state_image_delay=.03
 			update_body_state_image_delay=.03
-
 		# Reloading has a different update delay time
 		if survivor.body_motion!='reload':
 			survivor.update_body_state_image_delay=update_body_state_image_delay
 
-		rotated_feet_sprite = pygame.transform.rotate(self.feet_image, -degrees(angle_to_rotate_survivor_feet))
+		rotated_feet_sprite = pygame.transform.rotate(self.feet_image, -angle_to_rotate_survivor_feet)
 		self.feet_rect=rotated_feet_sprite.get_rect()
 		self.feet_rect.center=self.vector
 		return rotated_body_sprite, rotated_feet_sprite
@@ -1413,7 +1403,7 @@ class Survivor(pygame.sprite.Sprite):
 			pass
 
 class Projectile(pygame.sprite.Sprite):
-	def __init__(self, center_xcoord, center_ycoord, angle, ProjSpeed, bullet_number, total_number, weapon):
+	def __init__(self, center_coords, ProjSpeed, angle, bullet_number, total_number, weapon):
 		pygame.sprite.Sprite.__init__(self, GameState['projectiles'])
 		self.weapon_originated=weapon
 		self.image=pygame.image.load('Bullets/bullet.png')
@@ -1422,11 +1412,10 @@ class Projectile(pygame.sprite.Sprite):
 		self.remove_later=False
 		self.image=pygame.transform.scale(self.image, (self.width, self.height))
 		self.color = color
-		self.center_xcoord = center_xcoord
-		self.center_ycoord = center_ycoord
-		self.rect=self.image.get_rect(centerx=self.center_xcoord, centery=self.center_ycoord)
+		self.vector=Vector2(center_coords)
+		self.angle=angle
+		self.rect=self.image.get_rect(center=center_coords)
 		self.color = color
-		self.angle = angle
 		self.speed = ProjSpeed
 		self.penetration = weapon.penetration
 		self.rect = DISPLAYSURF.blit(self.image, self.rect)
@@ -1437,11 +1426,12 @@ class Projectile(pygame.sprite.Sprite):
 		self.image=rotate_image(self, 'bullet')
 		self.remove=False
 		self.wall_check=None
-		self.center_coords=(self.center_xcoord, self.center_ycoord)
+		self.velocity=Vector2()
+		self.velocity.from_polar((self.speed, self.angle))
 	def prepare(self):
-		self.wall_check=Wall_Check((self.center_xcoord, self.center_ycoord), (self.center_xcoord+cos(self.angle)*self.speed, self.center_ycoord+sin(self.angle)*self.speed), self.width)
+		self.wall_check=Wall_Check(self.vector, self.vector+self.velocity, self.width)
 		self.mask = pygame.mask.from_surface(self.image,0)
-		self.rect.center=(self.center_xcoord, self.center_ycoord)
+		self.rect.center=self.vector
 		self.wall_check.prepare()
 	def draw(self):
 		DISPLAYSURF.blit(self.image, self.rect)
@@ -1528,13 +1518,14 @@ class Zombie(pygame.sprite.Sprite):
 class Wall_Check:
 	def __init__(self, node1, node2, width):
 		self.image=pygame.image.load('black_image.png').convert_alpha()
-		self.node1=node1
-		self.node2=node2
-		self.distanc=distance(self.node1[0], self.node1[1], self.node2[0], self.node2[1])
-		self.angle=angle=angle_finder(self.node1[0], self.node1[1], self.node2[0], self.node2[1])
+		self.node1=Vector2(node1)
+		self.node2=Vector2(node2)
+		self.total_vector=Vector2(node1-node2)
+		self.distance=self.node1.distance_to(self.node2)
+		_, self.angle=self.total_vector.as_polar()
 		self.width=width
 		self.height=abs(node2[1]-node2[1])
-		self.image=pygame.transform.scale(self.image, (self.width,int(self.distanc)))
+		self.image=pygame.transform.scale(self.image, (self.width,int(self.distance)))
 		self.centerx=abs(node1[0]-node2[0])
 		self.centery=abs(node1[1]-node2[1])
 		self.image=rotate_image(self, 'wall_check')
@@ -1582,9 +1573,9 @@ class Weapon(pygame.sprite.Sprite):
 		if self.shooting_type=='automatic':
 			if survivor.body_motion=='shoot' and survivor.current_body_state_number==0:
 				survivor.body_motion=None
-			self.x_distance=pol2cart(self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle)[0] # from survivor head to top of weapon
-			self.y_distance=pol2cart(self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle)[1] # from survivor head to tip of weapon
-			self.new_projectile_coords=(self.x_distance+survivor.vector[0], self.y_distance+survivor.vector[1])
+			self.new_projectile_coords=Vector2()
+			self.new_projectile_coords.from_polar((self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle_fron_center_cursor))
+			self.new_projectile_coords+=survivor.vector
 			now=time.time()
 			if (now-self.last_time_bullet_shot>=self.bullet_delay):
 				if GameState['MouseButtonDown']:
@@ -1597,8 +1588,8 @@ class Weapon(pygame.sprite.Sprite):
 							survivor.current_body_state_number=0
 							survivor.max_body_state_number=2
 							survivor.update_feet_state_image_delay=.1
-							bullet = Projectile(self.new_projectile_coords[0], self.new_projectile_coords[1],survivor.angle, survivor.bullet_speed, bullet_number, total_number, self)
-							bullet.current_area=find_current_location(bullet.center_coords, current_map.areas)
+							bullet = Projectile(self.new_projectile_coords, survivor.bullet_speed, survivor.angle_from_center_to_cursor, bullet_number, total_number, self)
+							bullet.current_area=find_current_location(bullet.vector, current_map.areas)
 							bullet.current_area.entities_on.add(bullet)
 							self.current_mag_ammo-=1
 							bullets_fired+=1
@@ -1618,9 +1609,9 @@ class Weapon(pygame.sprite.Sprite):
 		elif self.shooting_type=='semi automatic':
 			if survivor.body_motion=='shoot' and survivor.current_body_state_number==0:
 				survivor.body_motion=None
-			self.x_distance=pol2cart(self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle)[0] # from survivor head to top of weapon
-			self.y_distance=pol2cart(self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle)[1] # from survivor head to tip of weapon
-			self.new_projectile_coords=(self.x_distance+survivor.vector[0], self.y_distance+survivor.vector[1])
+			self.new_projectile_coords=Vector2()
+			self.new_projectile_coords.from_polar((self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle_from_center_to_cursor))
+			self.new_projectile_coords+=survivor.vector
 			if GameState['MouseButtonDown']:
 				total_number=1
 				bullets_fired=0
@@ -1630,8 +1621,8 @@ class Weapon(pygame.sprite.Sprite):
 						survivor.current_body_state_number=0
 						survivor.max_body_state_number=2
 						survivor.update_feet_state_image_delay=.1
-						bullet = Projectile(self.new_projectile_coords[0], self.new_projectile_coords[1], survivor.angle, survivor.bullet_speed, bullet_number, total_number, self)
-						bullet.current_area=find_current_location(bullet.center_coords, current_map.areas)
+						bullet = Projectile(self.new_projectile_coords, survivor.bullet_speed, survivor.angle_from_center_to_cursor, bullet_number, total_number, self)
+						bullet.current_area=find_current_location(bullet.vector, current_map.areas)
 						bullet.current_area.entities_on.add(bullet)
 						self.current_mag_ammo-=1
 						bullets_fired+=1
@@ -1654,7 +1645,7 @@ price=10
 price_per_mag=2
 fire_rate=1
 bullet_image='bullet.png'
-weapon_size=(15,10)
+weapon_size=Vector2(15,10)
 damage=100
 max_mag_ammo=12
 max_weapon_ammo=80
@@ -1673,7 +1664,7 @@ price=10
 price_per_mag=2
 fire_rate=1
 bullet_image='bullet.png'
-weapon_size=(0,10)
+weapon_size=Vector2(0,10)
 damage=100
 max_mag_ammo=12
 max_weapon_ammo=80
@@ -1713,7 +1704,7 @@ Grenade('Grenades/Grenade1/grenade1.png', 2, 2, (15,30))
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
-		self.zombie_quantities=[100,0,0,0]
+		self.zombie_quantities=[10,10,0,0]
 		self.zombie_delays=[3,3,0,0]
 		self.zombie_last_times=[0,0,0,0]
 		self.delays_doubled=False
@@ -1774,8 +1765,7 @@ survivor = Survivor(250, 350, 3)
 survivor.current_room=find_current_location(survivor.vector, current_map.rooms)
 survivor.current_area=find_current_location(survivor.vector, current_map.areas)
 
-survivor.weapon.distance_from_survivor_to_tip_of_weapon=distance(survivor.vector[0], survivor.vector[1], survivor.vector[0]+survivor.weapon.weapon_size[0], survivor.vector[1]+survivor.weapon.weapon_size[1])
-survivor.weapon.angle_from_survivor_to_tip_of_weapon=angle_finder(survivor.vector[0], survivor.vector[1], survivor.vector[0]+survivor.weapon.weapon_size[0], survivor.vector[1]+survivor.weapon.weapon_size[1])
+survivor.weapon.distance_from_survivor_to_tip_of_weapon, survivor.weapon.angle_from_survivor_to_tip_of_weapon=survivor.weapon.weapon_size.as_polar()
 
 
 # g=deepcopy(current_map.original_graph)
@@ -1794,7 +1784,9 @@ survivor.weapon.angle_from_survivor_to_tip_of_weapon=angle_finder(survivor.vecto
 # 			wall_check=Wall_Check((round(starting_node[0]), round(starting_node[1])), (round(ending_node[0]),round(ending_node[1])), 1)
 # 			walls_hit = pygame.sprite.spritecollide(wall_check, current_map.walls, False, pygame.sprite.collide_mask)
 # 			if not walls_hit:
-# 				distanc=distance(starting_node[0], starting_node[1], ending_node[0], ending_node[1])
+# 				starting_node_vector=Vector2(starting_node)
+# 				ending_node_vector=Vector2(ending_node)
+# 				distance=starting_node_vector.distance_to(ending_node_vector)
 # 				g.add_edge(starting_node, ending_node, distanc)
 # 		print a,b
 # 		a+=1
@@ -1839,7 +1831,9 @@ with open('map_1_graph.pkl', 'rb') as input:
 # for key in current_map.paths:
 # 	total_d=0
 # 	for i in range(0, len(current_map.paths[key])-1):
-# 		total_d+=distance(current_map.paths[key][i][0], current_map.paths[key][i][1], current_map.paths[key][i+1][0], current_map.paths[key][i+1][1])
+# 		vector1=current_map.paths[key][i]
+# 		vector2=current_map.paths[key][i+1]
+# 		total_d+=current_map.paths[key][i].distance_to(current_map.paths[key][i+1])
 # 	current_map.paths[key]=[current_map.paths[key], total_d]
 
 # with open('map_1_paths.pkl', 'wb') as output:
@@ -1848,18 +1842,18 @@ with open('map_1_graph.pkl', 'rb') as input:
 with open('map_1_paths.pkl', 'rb') as input:
     current_map.paths = pickle.load(input)
 
-# i=0
-# for area in current_map.areas:
-# 	area.shortest_path(survivor)
-# 	i, len(current_map.areas)
-# 	i+=1
+i=0
+for area in current_map.areas:
+	area.shortest_path(survivor)
+	i, len(current_map.areas)
+	i+=1
 
-# for area in current_map.areas:
-# 	area.surface=None
-# 	area.mask=None
+for area in current_map.areas:
+	area.surface=None
+	area.mask=None
 
-# with open('map_1_areas.pkl', 'wb') as output:
-#     pickle.dump(current_map.areas, output, pickle.HIGHEST_PROTOCOL)
+with open('map_1_areas.pkl', 'wb') as output:
+    pickle.dump(current_map.areas, output, pickle.HIGHEST_PROTOCOL)
 
 with open('map_1_areas.pkl', 'rb') as input:
     current_map.areas = pickle.load(input)
@@ -1874,7 +1868,7 @@ for wall in current_map.rooms:
 	room.prepare()
 
 for index in range(0,len(current_map.areas)):
-	current_map.nodes.append((current_map.areas[index].center_xcoord,current_map.areas[index].center_ycoord))
+	current_map.nodes.append((current_map.areas[index].center_coords[0],current_map.areas[index].center_coords[1]))
 
 def main():
 	pygame.init()
