@@ -1,13 +1,8 @@
-import pygame, sys, time, random, graph
-import cPickle as pickle
+import pygame, sys, time, random, graph, cPickle as pickle, numpy as np, imghdr, os
 from pygame.locals import *
 from pygame.math import Vector2
 from math import *
 from copy import deepcopy
-import sys
-import numpy as np
-import imghdr
-import os
 
 # Read all images
 Images={}
@@ -83,7 +78,7 @@ FILIGREEYELLOW=(167, 126, 36)
 def switched_rooms(thing): # Find if thing switched rooms or not
 	if thing.switched_rooms:
 		return False
-	elif not (thing.current_room.rect.left<=thing.center_xcoord and thing.current_room.rect.right>=thing.center_xcoord and thing.current_room.rect.bottom>=thing.center_ycoord and thing.current_room.rect.top<=thing.center_ycoord):
+	elif not (thing.current_room.rect.left<=thing.vector[0] and thing.current_room.rect.right>=thing.vector[0] and thing.current_room.rect.bottom>=thing.vector[1] and thing.current_room.rect.top<=thing.vector[1]):
 		return True
 	else:
 		return False
@@ -92,7 +87,7 @@ def switched_areas(thing): # find if thing switched areas or not
 	if thing.switched_areas:
 		return False
 	if thing.current_area!=None:
-		if not (thing.current_area.rect.left<=thing.center_xcoord and thing.current_area.rect.right>=thing.center_xcoord and thing.current_area.rect.bottom>=thing.center_ycoord and thing.current_area.rect.top<=thing.center_ycoord):
+		if not (thing.current_area.rect.left<=thing.vector[0] and thing.current_area.rect.right>=thing.vector[0] and thing.current_area.rect.bottom>=thing.vector[1] and thing.current_area.rect.top<=thing.vector[1]):
 			return True
 		else:
 			return False
@@ -131,68 +126,63 @@ def update_survivor_location():  # MOves the survivor
 						survivor.current_body_state_number=0
 						survivor.update_body_state_image_delay=.05
 	# Updates survivor location based on state of corresponding keys
-	move_x=survivor.center_xcoord
-	move_y=survivor.center_ycoord
+	survivor.velocity=Vector2(0, 0)
 	if survivor.move_up==True:
-		move_y-=5
+		survivor.velocity[1]-=5
 	if survivor.move_down==True:
-		move_y+=5
+		survivor.velocity[1]+=5
 	if survivor.move_right==True:
-		move_x+=5
+		survivor.velocity[0]+=5
 	if survivor.move_left==True:
-		move_x-=5
+		survivor.velocity[0]-=5
+
+	if not survivor.velocity==[0,0]:
+		survivor.velocity.scale_to_length(survivor.speed)
 
 	WALKINGRECTWIDTH=15
 	WALKINGRECTHEIGHT=15
 
 	# If the survivor is not told to stay in place
-	if not (move_x==survivor.center_xcoord and move_y==survivor.center_ycoord):
-		# finds the direction where the survivor is headed
-		survivor.angle_walk=angle_finder(survivor.center_xcoord, survivor.center_ycoord , move_x, move_y)
-		# finds new x location based on speed of survivor and angle headed
-		survivor.center_xcoord+=survivor.speed*cos(survivor.angle_walk)
-		WALKINGRECTTOPLEFT=(survivor.center_xcoord-WALKINGRECTWIDTH/2, survivor.center_ycoord-WALKINGRECTHEIGHT/2)
+	if not (survivor.velocity==Vector2(0,0)):
+		# finds new x location
+		survivor.angle_walk=Vector2().angle_to(survivor.velocity)
+		survivor.vector[0]+=survivor.velocity[0]
+		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
 		# Checks to see if the survivor's new x location does not cause it to crash a wall
 		for wall in current_map.walls:
 			# If it crashes a wall, moves back
 			if wall.rect.colliderect(survivor.walking_rect):
-				survivor.center_xcoord-=survivor.speed*cos(survivor.angle_walk)
-				WALKINGRECTTOPLEFT=(survivor.center_xcoord-WALKINGRECTWIDTH/2, survivor.center_ycoord-WALKINGRECTHEIGHT/2)
+				survivor.vector[0]-=survivor.velocity[0]
+				WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
 		# finds new y location based on speed of survivor and angle headed
-		survivor.center_ycoord+=survivor.speed*sin(survivor.angle_walk)
-		WALKINGRECTTOPLEFT=(survivor.center_xcoord-WALKINGRECTWIDTH/2, survivor.center_ycoord-WALKINGRECTHEIGHT/2)
+		survivor.vector[1]+=survivor.velocity[1]
+		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
 		# checks to see if the survivor's new y location does not cause it to crash a wall
 		for wall in current_map.walls:
 			if wall.rect.colliderect(survivor.walking_rect):
-				survivor.center_ycoord-=survivor.speed*sin(survivor.angle_walk)
-				WALKINGRECTTOPLEFT=(survivor.center_xcoord-WALKINGRECTWIDTH/2, survivor.center_ycoord-WALKINGRECTHEIGHT/2)
+				survivor.vector[1]-=survivor.velocity[1]
+				WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
-		# Draws the survivor
-	survivor.center_coords=(survivor.center_xcoord, survivor.center_ycoord)
-
 	# checks to see if survivor switched rooms
 	survivor.switched_rooms=switched_rooms(survivor)
 	# If survivor switched rooms, find new room
 	if survivor.switched_rooms:
 		survivor.current_room.entities_on.remove(survivor)
-		survivor.current_room=find_current_location(survivor.center_coords, current_map.rooms)
+		survivor.current_room=find_current_location(survivor.vector, current_map.rooms)
 		survivor.current_room.entities_on.add(survivor)
 	# checks to see if survivor switches areas
 	survivor.switched_areas=switched_areas(survivor)
 	# if survivor switched area, finds new area
 	if survivor.switched_areas:
 		survivor.current_area.entities_on.remove(survivor)
-		survivor.current_area=find_current_location(survivor.center_coords, current_map.areas)	
+		survivor.current_area=find_current_location(survivor.vector, current_map.areas)	
 		survivor.current_area.entities_on.add(survivor)
 
 	# finds new angle that survivor has to in order to be facing the cursor
-	#survivor.angle=angle_finder(survivor.center_xcoord, survivor.center_ycoord, GameState['xcoord_cursor'], GameState['ycoord_cursor'])
-	survivor.vector=Vector2(survivor.center_coords)
-	mouse_vector=Vector2(GameState['xcoord_cursor'],GameState['ycoord_cursor'])
-	survivor.angle=(survivor.vector-mouse_vector).as_polar()[1]
+	_, survivor.angle=(GameState['cursor_vector']-survivor.vector).as_polar()
 
 # updates the zombies's image as it walks
 def update_zombie_state_image(zombie):
@@ -201,7 +191,7 @@ def update_zombie_state_image(zombie):
 		zombie.time_of_last_generated_state = now # update the time of last zombie update to now
 		zombie.current_state_number+=1
 		zombie.current_state_number=zombie.current_state_number%zombie.max_number_of_states
-		zombie.image=Images['Characters/Zombies/Zombie'+str(zombie.zombie_number)+'/'+zombie.body_motion+str(zombie.current_state_number)] # Find the image stored under the key generateed above
+		zombie.image=Images['Characters/Zombies/Zombie'+str(zombie.zombie_number)+'/'+zombie.body_motion+str(zombie.current_state_number)] # Find the image stored under the key generated above
 	return zombie.image
 
 def move_zombies():
@@ -214,33 +204,39 @@ def move_zombies():
 				zombie.path=generated_path[1::]
 				zombie.distance=current_map.paths[(zombie.current_area.center_xcoord,zombie.current_area.center_ycoord),(survivor.current_area.center_xcoord, survivor.current_area.center_ycoord)][1]
 			else:
-				zombie.path=[(survivor.center_xcoord, survivor.center_ycoord)]
-				zombie.distance=distance(zombie.center_xcoord, zombie.center_ycoord, survivor.center_xcoord, survivor.center_ycoord)
+				zombie.path=[survivor.vector]
+				zombie.velocity=zombie.path[0]-zombie.vector
+				zombie.velocity.scale_to_length(zombie.speed)
+				zombie.distance=distance(zombie.vector[0], zombie.vector[1], survivor.vector[0], survivor.vector[1])
 	# for each zombie...
 	for zombie in GameState['zombies_collection']:
 		# updates the zombie path so that tha last coordinate is the survivor's coordinates
 		zombie.update_path()
 		zombie.following_path=True
 		# update direction that zombie should face
-		zombie.angle=angle_finder(zombie.center_xcoord, zombie.center_ycoord , zombie.path[0][0], zombie.path[0][1])
+		zombie.distance_from_next_path_point, zombie.angle_to_next_path_point=(zombie.vector-zombie.path[0]).as_polar()
 		# draw the zombie
 		zombie.prepare()
 		zombie.draw()
 
 		# If zombie has reached the node that he was walking towards, and that node is not the survivor's location, deletes that node and zombie keeps going with journey
-		if zombie.center_coords==zombie.path[0]:
+		if zombie.vector==zombie.path[0]:
 			if not len(zombie.path)==1:
 				del zombie.path[0]
-			if zombie.path[0]==survivor.center_coords:
+			if zombie.path[0]==survivor.vector:
 				survivor.was_hit(zombie)
+
+		zombie.velocity=zombie.path[0]-zombie.vector
+		zombie.velocity.scale_to_length(zombie.speed)
+		zombie.angle_to_next_path_point=zombie.vector.angle_to(zombie.path[0])
 
 		# find future zombie location coordinates
 		if zombie.body_motion!='attack':
-			distanc=distance(zombie.center_xcoord+zombie.speed*cos(zombie.angle), zombie.center_ycoord+zombie.speed*sin(zombie.angle), zombie.path[0][0], zombie.path[0][1])
+			distanc=(zombie.vector+zombie.velocity).distance_to(Vector2(zombie.path[0]))
 			if distanc<=zombie.speed:
-				zombie.vector=zombie.path[0]
+				zombie.vector=Vector2(zombie.path[0])
 			else:
-				zombie.vector+=zombie.veclocity
+				zombie.vector+=zombie.velocity
 			# rotate zombie so that he faces node that he is walking towards
 			zombie.rotated_image = rotate_image(zombie, 'zombie')
 
@@ -250,21 +246,20 @@ def move_zombies():
 			# if zombie switched rooms, find new room
 			if zombie.switched_rooms:
 				zombie.current_room.entities_on.remove(zombie)
-				zombie.current_room=find_current_location(zombie.center_coords, current_map.rooms)
+				zombie.current_room=find_current_location(zombie.vector, current_map.rooms)
 				zombie.current_room.entities_on.add(zombie)
 			# if zombie switched area, find new area
 			if zombie.switched_areas:
 				zombie.current_area.entities_on.remove(zombie)
-				zombie.current_area=find_current_location(zombie.center_coords, current_map.areas)
+				zombie.current_area=find_current_location(zombie.vector, current_map.areas)
 				zombie.current_area.entities_on.add(zombie)
 			# find the distance between the survivor and the zombie
-			zombie.distance=zombie.path[1]
-			
+			zombie.distance=zombie.vector.distance_to(survivor.vector)
+
 def new_cursor_location():
 	for event in GameState['events']:
 		if event.type==MOUSEMOTION:  # If mouse was pressed, updates cursor's location
-			GameState['xcoord_cursor'] = event.pos[0]
-			GameState['ycoord_cursor'] = event.pos[1]
+			GameState['cursor_vector'] = event.pos
 		# If mouse button was clicked, sets flag so that generate_function knows to keep generating bullets
 		if event.type==MOUSEBUTTONDOWN:
 			GameState['MouseButtonDown']=True
@@ -332,10 +327,10 @@ def update_projectile_locations(): # updates the bullets
 
 def rotate_image(thing,string): # rotates images
 	if string=='zombie':
-		location = thing.center_coords 
-		rotated_sprite = pygame.transform.rotate(thing.image, -degrees(thing.angle))
+		location = thing.vector
+		rotated_sprite = pygame.transform.rotate(thing.image, -thing.angle_to_next_path_point+180)
 		thing.rect=rotated_sprite.get_rect()
-		thing.rect.center = thing.center_coords
+		thing.rect.center = thing.vector
 		return rotated_sprite
 	elif string=='bullet':
 		loc = thing.image.get_rect().center  #rot_image is not defined 
@@ -354,14 +349,14 @@ def find_current_location(coords, locations): # finds current location
 	for location in locations:
 		if location.rect.collidepoint(coords[0], coords[1]):
 			return location
- 	closest_location=None
- 	distanc=0
- 	for location in locations:
- 		d=distance(coords[0], coords[1], location.center_xcoord, location.center_ycoord)
- 		if d<distance:
- 			distanc=d
- 			closest_location=location
- 	return closest_location
+	closest_location=None
+	distanc=0
+	for location in locations:
+		d=distance(coords[0], coords[1], location.center_coords[0], location.center_coords[1])
+		if d<distance:
+			distanc=d
+			closest_location=location
+	return closest_location
 
 def distance(x1, y1, x2, y2): # finds distance between two things
     return sqrt((x1 - x2)**2 + (y1 - y2)**2)
@@ -611,7 +606,7 @@ def menu_displayer():
 def pause_menu():
 	for event in GameState['events']:
 			if event.type==MOUSEBUTTONDOWN:
-				point=(GameState['xcoord_cursor'], GameState['ycoord_cursor'])
+				point=GameState['cursor_vector']
 				GameState['active_tab'].color=INDIGOBLUE
 				if player_tab.rect.collidepoint(point):
 					GameState['active_tab']=player_tab
@@ -786,7 +781,7 @@ class Player_Tab:
 		rects=[]
 		for event in GameState['events']:
 			if event.type==MOUSEBUTTONDOWN:
-				point=(GameState['xcoord_cursor'], GameState['ycoord_cursor'])
+				point=GameState['cursor_location']
 				for item in GameState['menu_items']:
 					i+=1
 					i=i%len(GameState['colors'])
@@ -921,7 +916,7 @@ class Weapons_Tab:
 		rects=[]
 		for event in GameState['events']:
 			if event.type==MOUSEBUTTONDOWN:
-				point=(GameState['xcoord_cursor'], GameState['ycoord_cursor'])
+				point=GameState['cursor_vector']
 				for item in GameState['menu_items']:
 					i+=1
 					i=i%len(GameState['colors'])
@@ -1090,8 +1085,7 @@ GameState={
 'Left':False,
 'Right':False,
 # Keep track of direction of bullet
-'xcoord_cursor':0,
-'ycoord_cursor':0,
+'cursor_vector':Vector2(),
 'MouseButtonDown':False,
 # Projectiles to keep track of
 'projectiles':pygame.sprite.Group(),
@@ -1211,6 +1205,7 @@ class Room:
 		self.color=color
 		self.entities_on=pygame.sprite.Group()
 		self.rect = pygame.Rect(x1coord, y1coord, x2coord-x1coord, y2coord-y1coord)
+		self.center_coords=Vector2(self.rect.center)
 		self.entities_on=pygame.sprite.Group()
 		self.nodes=[]
 		for node in nodes:
@@ -1234,6 +1229,7 @@ class Area:
 		self.entities_on=pygame.sprite.Group()
 		self.center_xcoord=(self.x1coord+self.x2coord)/2
 		self.center_ycoord=(self.y1coord+self.y2coord)/2
+		self.center_coords=(self.center_xcoord, self.center_ycoord)
 		self.path=None
 	def prepare(self):
 		self.surface=pygame.Surface((abs(self.x2coord-self.x1coord),abs(self.y2coord-self.y1coord)))  # the size of the rect
@@ -1275,8 +1271,7 @@ class Survivor(pygame.sprite.Sprite):
 		self.move_right=False
 		self.feet_motion='walk'
 		self.body_motion='idle'
-		self.center_coords-[xcoord, ycoord]
-		self.vector=Vector2(self.center)
+		self.vector=Vector2(xcoord,ycoord)
 		self.time_of_last_generated_body_state=0
 		self.time_of_last_generated_feet_state=0
 		self.current_body_state_number=0
@@ -1290,11 +1285,11 @@ class Survivor(pygame.sprite.Sprite):
 		self.angle=0
 		self.update_body_state_image_delay=.02
 		self.update_feet_state_image_delay=.02
-		self.body_rect=self.body_image.get_rect(centerx=self.center_xcoord, centery=self.center_ycoord)
-		self.feet_rect=self.feet_image.get_rect(centerx=self.center_xcoord, centery=self.center_ycoord)
+		self.body_rect=self.body_image.get_rect(center=self.vector)
+		self.feet_rect=self.feet_image.get_rect(center=self.vector)
 		self.current_area=None
 		self.switched_areas=True
-		self.walking_rect=pygame.Rect(self.center_coords[0]-7.5, self.center_coords[1]-7.5, 15, 15)
+		self.walking_rect=pygame.Rect(self.vector[0]-7.5, self.vector[1]-7.5, 15, 15)
 		self.weapon=[weapon for weapon in GameState['weapons_collection'] if weapon.weapon_name=='handgun'][0]
 		self.weapons=[weapon for weapon in GameState['weapons_collection']]
 		self.images=Images
@@ -1302,14 +1297,14 @@ class Survivor(pygame.sprite.Sprite):
 		self.current_survivor_feet_state_number=0
 	def rotate_survivor(self):
 		# Rotate Body
-		location = self.center_coords
-		rotated_body_sprite = pygame.transform.rotate(self.body_image, -self.angle+180)
+		location = self.vector
+		rotated_body_sprite = pygame.transform.rotate(self.body_image, -self.angle)
 		self.body_rect=rotated_body_sprite.get_rect()
-		self.body_rect.center = self.center_coords
+		self.body_rect.center = self.vector
 		self.rect=self.body_rect
 
 		#Rotate Feet and find feet update delay
-		angle=(survivor.angle-survivor.angle_walk)%(2*pi)
+		angle=survivor.angle-survivor.angle_walk
 		angle_to_rotate_survivor_feet=survivor.angle_walk
 		if self.move_up == False and self.move_down == False and self.move_left == False and self.move_right == False:
 			survivor.feet_motion='idle'
@@ -1317,20 +1312,20 @@ class Survivor(pygame.sprite.Sprite):
 			angle_to_rotate_survivor_feet=survivor.angle
 			survivor.update_feet_state_image_delay=.02
 			update_body_state_image_delay=.02
-		elif angle>=7*pi/4 or angle<=pi/4:
+		elif angle>=-180/4 or angle<=180/4:
 			survivor.feet_motion='walk'
 			survivor.max_feet_state_number=19
 			survivor.speed=self.walk_speed
 			survivor.update_feet_state_image_delay=.05
 			update_body_state_image_delay=.05
-		elif angle>=5*pi/4 and angle<=7*pi/4:
+		elif angle>=180/4 and angle<=3*180/4:
 			survivor.feet_motion='strafe_right'
 			survivor.max_feet_state_number=19
 			angle_to_rotate_survivor_feet=pi/2
 			survivor.speed=self.walk_speed*self.strafe_percent
 			survivor.update_feet_state_image_delay=.03
 			update_body_state_image_delay=.03
-		elif angle>=pi/4 and angle<=3*pi/4:
+		elif angle>=-3*180/4 and angle<=-180/4:
 			angle_to_rotate_survivor_feet=3*pi/2
 			survivor.feet_motion='strafe_left'
 			survivor.max_feet_state_number=19
@@ -1338,20 +1333,20 @@ class Survivor(pygame.sprite.Sprite):
 			survivor.speed=self.walk_speed*self.strafe_percent
 			survivor.update_feet_state_image_delay=.03
 			update_body_state_image_delay=.03
-		elif angle>=3*pi/4 or angle<=5*pi/4:
+		elif angle>=3*180/4 or angle<=3*180/4:
 			survivor.feet_motion='walk'
 			survivor.max_feet_state_number=19
 			survivor.speed=self.walk_speed*self.backwards_percent
 			survivor.update_feet_state_image_delay=.03
 			update_body_state_image_delay=.03
-		
+
 		# Reloading has a different update delay time
 		if survivor.body_motion!='reload':
 			survivor.update_body_state_image_delay=update_body_state_image_delay
 
 		rotated_feet_sprite = pygame.transform.rotate(self.feet_image, -degrees(angle_to_rotate_survivor_feet))
 		self.feet_rect=rotated_feet_sprite.get_rect()
-		self.feet_rect.center=self.center_coords
+		self.feet_rect.center=self.vector
 		return rotated_body_sprite, rotated_feet_sprite
 	def update_state(self): # updates the self state image and rotates it
 		now=time.time()
@@ -1360,7 +1355,7 @@ class Survivor(pygame.sprite.Sprite):
 			self.time_of_last_generated_body_state = now # update the time of last self update to now
 			self.current_body_state_number+=1
 			self.current_body_state_number=self.current_body_state_number%(survivor.max_body_state_number+1)
-			self.body_image=Images['Characters/Survivor/handgun/'+str(survivor.body_motion)+str(survivor.current_body_state_number)] # Find the image stored under the key generateed above
+			self.body_image=Images['Characters/Survivor/handgun/'+str(survivor.body_motion)+str(survivor.current_body_state_number)] # Find the image stored under the key generated above
 
 		if (self.time_of_last_generated_feet_state==0) or (now-self.time_of_last_generated_feet_state>=self.update_feet_state_image_delay):
 			self.time_of_last_generated_feet_state = now # update the time of last self update to now
@@ -1477,8 +1472,7 @@ class Zombie(pygame.sprite.Sprite):
 		self.current_state_number=0
 		self.speed=speed
 		self.damage=1
-		self.center_xcoord = xcoord
-		self.center_ycoord = ycoord
+		self.vector=Vector2(xcoord,ycoord)
 		self.image = Images['Characters/Zombies/Zombie'+str(zombie_number)+'/walk'+str(self.current_state_number)]
 		self.rect=self.image.get_rect()
 		self.body_motion='walk'
@@ -1499,13 +1493,12 @@ class Zombie(pygame.sprite.Sprite):
 		self.current_area=area
 		self.switched_areas=True
 		self.following_path=False
-		self.center_coords=(self.center_xcoord, self.center_ycoord)
-		self.distance=distance(self.center_xcoord, self.center_ycoord, survivor.center_xcoord, survivor.center_ycoord)
+		self.distance=self.vector.distance_to(survivor.vector)
 	def prepare(self):
 		self.image=update_zombie_state_image(self)
-		self.angle=angle_finder(self.center_xcoord, self.center_ycoord , self.path[0][0], self.path[0][1])
+		self.distance_from_next_path_point, self.angle_to_next_path_point=(self.vector-self.path[0]).as_polar()
 		self.rotated_image = rotate_image(self, 'zombie')
-		self.rect = self.rotated_image.get_rect(centerx=self.center_xcoord, centery=self.center_ycoord)
+		self.rect = self.rotated_image.get_rect(center=self.vector)
 		self.mask = pygame.mask.from_surface(self.rotated_image,0)
 		if self.body_motion=='attack' and self.current_state_number==self.attack_state_number:
 			if pygame.sprite.collide_mask(self, survivor):
@@ -1518,7 +1511,7 @@ class Zombie(pygame.sprite.Sprite):
 			self.bullets_in.add(bullet)
 			self.health-=bullet.weapon_originated.damage
 	def update_path(self):
-		if (self.center_xcoord-self.attack_distance)<=survivor.center_xcoord and (self.center_xcoord+self.attack_distance)>=survivor.center_xcoord and (self.center_ycoord-self.attack_distance)<=survivor.center_ycoord and (self.center_ycoord+self.attack_distance)>=survivor.center_ycoord:
+		if survivor.vector.distance_to(self.vector)<=self.attack_distance:
 			if self.body_motion!='attack':
 				self.body_motion='attack'
 				self.current_state_number=0
@@ -1528,7 +1521,9 @@ class Zombie(pygame.sprite.Sprite):
 			self.current_state_number=0
 			self.max_number_of_states=self.max_number_of_walking_states
 		if len(self.path)==1:
-			self.path=[(survivor.center_xcoord,survivor.center_ycoord)]
+			self.path=[survivor.vector]
+			self.velocity=self.path[0]-self.vector
+			self.velocity.scale_to_length(self.speed)
 
 class Wall_Check:
 	def __init__(self, node1, node2, width):
@@ -1589,7 +1584,7 @@ class Weapon(pygame.sprite.Sprite):
 				survivor.body_motion=None
 			self.x_distance=pol2cart(self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle)[0] # from survivor head to top of weapon
 			self.y_distance=pol2cart(self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle)[1] # from survivor head to tip of weapon
-			self.new_projectile_coords=(self.x_distance+survivor.center_xcoord, self.y_distance+survivor.center_ycoord)
+			self.new_projectile_coords=(self.x_distance+survivor.vector[0], self.y_distance+survivor.vector[1])
 			now=time.time()
 			if (now-self.last_time_bullet_shot>=self.bullet_delay):
 				if GameState['MouseButtonDown']:
@@ -1625,7 +1620,7 @@ class Weapon(pygame.sprite.Sprite):
 				survivor.body_motion=None
 			self.x_distance=pol2cart(self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle)[0] # from survivor head to top of weapon
 			self.y_distance=pol2cart(self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle)[1] # from survivor head to tip of weapon
-			self.new_projectile_coords=(self.x_distance+survivor.center_xcoord, self.y_distance+survivor.center_ycoord)
+			self.new_projectile_coords=(self.x_distance+survivor.vector[0], self.y_distance+survivor.vector[1])
 			if GameState['MouseButtonDown']:
 				total_number=1
 				bullets_fired=0
@@ -1727,14 +1722,22 @@ class Round:
 		now=time.time()
 		for i, zombie_quantity in enumerate(self.zombie_quantities):
 			if zombie_quantity>0 and ((self.zombie_last_times[i]==0) or ((now-self.zombie_last_times[i]>self.zombie_delays[i]))):
-				generated_zombie=self.zombie_generater(i)
-				generated_zombie.current_room=find_current_location((generated_zombie.center_xcoord, generated_zombie.center_ycoord), current_map.rooms)
+				generated_zombie=self.zombie_generater(i) 
+				generated_zombie.current_room=find_current_location(generated_zombie.vector, current_map.rooms)
 				generated_zombie.current_room.entities_on.add(generated_zombie)
-				generated_zombie.current_area=find_current_location((generated_zombie.center_xcoord, generated_zombie.center_ycoord), current_map.areas)
+				generated_zombie.current_area=find_current_location(generated_zombie.vector, current_map.areas)
 				generated_zombie.path=deepcopy(current_map.paths[(generated_zombie.current_area.center_xcoord,generated_zombie.current_area.center_ycoord),(survivor.current_area.center_xcoord, survivor.current_area.center_ycoord)][0])
+				if not len(generated_zombie.path)==1:
+					generated_zombie.path=generated_zombie.path[1::]
+				else:
+					generated_zombie.path=[surivor.vector]
 				generated_zombie.distance=current_map.paths[(generated_zombie.current_area.center_xcoord,generated_zombie.current_area.center_ycoord),(survivor.current_area.center_xcoord, survivor.current_area.center_ycoord)][1]
+				generated_zombie.velocity=generated_zombie.path[0]-generated_zombie.vector
+				generated_zombie.angle_to_next_path_point=generated_zombie.vector.angle_to(generated_zombie.path[0])
+				generated_zombie.velocity.scale_to_length(generated_zombie.speed)
 				self.zombie_last_times[i]=now
 				self.zombie_quantities[i]-=1
+
 		if len(GameState['zombies_collection'])>=current_round.zombie_cap and not self.delays_doubled:
 			self.zombie_delays=[i*3 for i in self.zombie_delays]
 			self.delays_doubled=True
@@ -1744,7 +1747,7 @@ class Round:
 	def zombie_generater(self, number):
 		rand_number=int(random.random()*len(current_map.zombie_spawns))
 		if number==0:
-			generated_zombie=Zombie(current_map.zombie_spawns[rand_number].xcoord, current_map.zombie_spawns[rand_number].ycoord, 0, current_map.zombie_spawns[rand_number], 16, number, 8, 6, 20)
+			generated_zombie=Zombie(current_map.zombie_spawns[rand_number].xcoord, current_map.zombie_spawns[rand_number].ycoord, 2.5, current_map.zombie_spawns[rand_number], 16, number, 8, 6, 20)
 		if number==1:
 			generated_zombie=Zombie(current_map.zombie_spawns[rand_number].xcoord, current_map.zombie_spawns[rand_number].ycoord, 4, current_map.zombie_spawns[rand_number], 32, number, 20, 12, 23)		
 		return generated_zombie
@@ -1755,7 +1758,7 @@ walls=[[(164, 98),(184, 590)], [(164, 590), (568,609)], [(164,78),(1175,98)], [(
 nodes=[(231,325),(231,302), (568,325), (568,301),(375,396), (375,420), (441,397), (420,396), (542, 389), (543, 555), (573, 556), (831, 392), (611, 324), (632, 326), (673, 230), (672, 206), (1115, 206), (1114, 228), (959, 327), (796, 557), (827, 560),(959, 551),(1120, 330),(1120, 362), (989,553)]
 areas=[[(806, 546), (814, 571)], [(549, 546), (559, 590)], [(559, 546), (568, 570)], [(813, 546), (822, 590)], [(164, 98), (278, 152)], [(278, 98), (392, 152)], [(164, 152), (278, 206)], [(278, 152), (392, 206)], [(392, 98), (506, 152)], [(506, 98), (620, 152)], [(392, 152), (506, 206)], [(506, 152), (620, 206)], [(164, 206), (278, 260)], [(278, 206), (392, 260)], [(164, 260), (278, 314)], [(278, 260), (392, 314)], [(392, 206), (506, 260)], [(506, 206), (620, 260)], [(392, 260), (506, 314)], [(506, 260), (620, 314)], [(184, 314), (238, 337)], [(238, 314), (293, 337)], [(184, 337), (238, 360)], [(238, 337), (293, 360)], [(293, 314), (347, 337)], [(347, 314), (402, 337)], [(293, 337), (347, 360)], [(347, 337), (402, 360)], [(184, 360), (238, 383)], [(238, 360), (293, 383)], [(184, 383), (238, 407)], [(238, 383), (293, 407)], [(293, 360), (347, 383)], [(347, 360), (402, 383)], [(293, 383), (347, 407)], [(347, 383), (402, 407)], [(402, 314), (439, 337)], [(439, 314), (476, 337)], [(402, 337), (439, 360)], [(439, 337), (476, 360)], [(476, 314), (513, 337)], [(513, 314), (551, 337)], [(476, 337), (513, 360)], [(513, 337), (551, 360)], [(402, 360), (439, 383)], [(439, 360), (476, 383)], [(402, 383), (439, 407)], [(439, 383), (476, 407)], [(476, 360), (513, 383)], [(513, 360), (551, 383)], [(476, 383), (513, 407)], [(513, 383), (551, 407)], [(551, 314), (568, 335)], [(568, 314), (585, 335)], [(551, 335), (568, 356)], [(568, 335), (585, 356)], [(585, 314), (602, 335)], [(602, 314), (620, 335)], [(585, 335), (602, 356)], [(602, 335), (620, 356)], [(551, 356), (568, 377)], [(568, 356), (585, 377)], [(551, 377), (568, 399)], [(568, 377), (585, 399)], [(585, 356), (602, 377)], [(602, 356), (620, 377)], [(585, 377), (602, 399)], [(602, 377), (620, 399)], [(184, 411), (245, 455)], [(245, 411), (307, 455)], [(184, 455), (245, 500)], [(245, 455), (307, 500)], [(307, 411), (368, 455)], [(368, 411), (430, 455)], [(307, 455), (368, 500)], [(368, 455), (430, 500)], [(184, 500), (245, 545)], [(245, 500), (307, 545)], [(184, 545), (245, 590)], [(245, 545), (307, 590)], [(307, 500), (368, 545)], [(368, 500), (430, 545)], [(307, 545), (368, 590)], [(368, 545), (430, 590)], [(430, 407), (446, 430)], [(446, 407), (462, 430)], [(430, 430), (446, 453)], [(446, 430), (462, 453)], [(462, 407), (478, 430)], [(478, 407), (494, 430)], [(462, 430), (478, 453)], [(478, 430), (494, 453)], [(430, 453), (446, 476)], [(446, 453), (462, 476)], [(430, 476), (446, 500)], [(446, 476), (462, 500)], [(462, 453), (478, 476)], [(478, 453), (494, 476)], [(462, 476), (478, 500)], [(478, 476), (494, 500)], [(430, 500), (446, 522)], [(446, 500), (462, 522)], [(430, 522), (446, 545)], [(446, 522), (462, 545)], [(462, 500), (478, 522)], [(478, 500), (494, 522)], [(462, 522), (478, 545)], [(478, 522), (494, 545)], [(430, 545), (446, 567)], [(446, 545), (462, 567)], [(430, 567), (446, 590)], [(446, 567), (462, 590)], [(462, 545), (478, 567)], [(478, 545), (494, 567)], [(462, 567), (478, 590)], [(478, 567), (494, 590)], [(494, 407), (508, 430)], [(508, 407), (522, 430)], [(494, 430), (508, 453)], [(508, 430), (522, 453)], [(522, 407), (536, 430)], [(536, 407), (550, 430)], [(522, 430), (536, 453)], [(536, 430), (550, 453)], [(494, 453), (508, 476)], [(508, 453), (522, 476)], [(494, 476), (508, 500)], [(508, 476), (522, 500)], [(522, 453), (536, 476)], [(536, 453), (550, 476)], [(522, 476), (536, 500)], [(536, 476), (550, 500)], [(494, 500), (508, 522)], [(508, 500), (522, 522)], [(494, 522), (508, 545)], [(508, 522), (522, 545)], [(522, 500), (536, 522)], [(536, 500), (550, 522)], [(522, 522), (536, 545)], [(536, 522), (550, 545)], [(494, 545), (508, 567)], [(508, 545), (522, 567)], [(494, 567), (508, 590)], [(508, 567), (522, 590)], [(522, 545), (536, 567)], [(536, 545), (550, 567)], [(522, 567), (536, 590)], [(536, 567), (550, 590)], [(568, 417), (597, 437)], [(597, 417), (627, 437)], [(568, 437), (597, 458)], [(597, 437), (627, 458)], [(627, 417), (656, 437)], [(656, 417), (686, 437)], [(627, 437), (656, 458)], [(656, 437), (686, 458)], [(568, 458), (597, 479)], [(597, 458), (627, 479)], [(568, 479), (597, 500)], [(597, 479), (627, 500)], [(627, 458), (656, 479)], [(656, 458), (686, 479)], [(627, 479), (656, 500)], [(656, 479), (686, 500)], [(686, 417), (716, 437)], [(716, 417), (746, 437)], [(686, 437), (716, 458)], [(716, 437), (746, 458)], [(746, 417), (776, 437)], [(776, 417), (806, 437)], [(746, 437), (776, 458)], [(776, 437), (806, 458)], [(686, 458), (716, 479)], [(716, 458), (746, 479)], [(686, 479), (716, 500)], [(716, 479), (746, 500)], [(746, 458), (776, 479)], [(776, 458), (806, 479)], [(746, 479), (776, 500)], [(776, 479), (806, 500)], [(568, 500), (597, 517)], [(597, 500), (627, 517)], [(568, 517), (597, 535)], [(597, 517), (627, 535)], [(627, 500), (656, 517)], [(656, 500), (686, 517)], [(627, 517), (656, 535)], [(656, 517), (686, 535)], [(568, 535), (597, 553)], [(597, 535), (627, 553)], [(568, 553), (597, 571)], [(597, 553), (627, 571)], [(627, 535), (656, 553)], [(656, 535), (686, 553)], [(627, 553), (656, 571)], [(656, 553), (686, 571)], [(686, 500), (716, 517)], [(716, 500), (746, 517)], [(686, 517), (716, 535)], [(716, 517), (746, 535)], [(746, 500), (776, 517)], [(776, 500), (806, 517)], [(746, 517), (776, 535)], [(776, 517), (806, 535)], [(686, 535), (716, 553)], [(716, 535), (746, 553)], [(686, 553), (716, 571)], [(716, 553), (746, 571)], [(746, 535), (776, 553)], [(776, 535), (806, 553)], [(746, 553), (776, 571)], [(776, 553), (806, 571)], [(369, 407), (383, 408)], [(383, 407), (397, 408)], [(369, 408), (383, 410)], [(383, 408), (397, 410)], [(397, 407), (411, 408)], [(411, 407), (426, 408)], [(397, 408), (411, 410)], [(411, 408), (426, 410)], [(369, 410), (383, 412)], [(383, 410), (397, 412)], [(369, 412), (383, 414)], [(383, 412), (397, 414)], [(397, 410), (411, 412)], [(411, 410), (426, 412)], [(397, 412), (411, 414)], [(411, 412), (426, 414)], [(822, 400), (858, 447)], [(858, 400), (894, 447)], [(822, 447), (858, 495)], [(858, 447), (894, 495)], [(894, 400), (930, 447)], [(930, 400), (966, 447)], [(894, 447), (930, 495)], [(930, 447), (966, 495)], [(822, 495), (858, 542)], [(858, 495), (894, 542)], [(822, 542), (858, 590)], [(858, 542), (894, 590)], [(894, 495), (930, 542)], [(930, 495), (966, 542)], [(894, 542), (930, 590)], [(930, 542), (966, 590)], [(966, 544), (969, 555)], [(969, 544), (973, 555)], [(966, 555), (969, 567)], [(969, 555), (973, 567)], [(973, 544), (977, 555)], [(977, 544), (981, 555)], [(973, 555), (977, 567)], [(977, 555), (981, 567)], [(966, 567), (969, 578)], [(969, 567), (973, 578)], [(966, 578), (969, 590)], [(969, 578), (973, 590)], [(973, 567), (977, 578)], [(977, 567), (981, 578)], [(973, 578), (977, 590)], [(977, 578), (981, 590)], [(981, 353), (1002, 381)], [(1002, 353), (1023, 381)], [(981, 381), (1002, 410)], [(1002, 381), (1023, 410)], [(1023, 353), (1044, 381)], [(1044, 353), (1066, 381)], [(1023, 381), (1044, 410)], [(1044, 381), (1066, 410)], [(981, 410), (1002, 439)], [(1002, 410), (1023, 439)], [(981, 439), (1002, 468)], [(1002, 439), (1023, 468)], [(1023, 410), (1044, 439)], [(1044, 410), (1066, 439)], [(1023, 439), (1044, 468)], [(1044, 439), (1066, 468)], [(1066, 353), (1088, 381)], [(1088, 353), (1111, 381)], [(1066, 381), (1088, 410)], [(1088, 381), (1111, 410)], [(1111, 353), (1134, 381)], [(1134, 353), (1157, 381)], [(1111, 381), (1134, 410)], [(1134, 381), (1157, 410)], [(1066, 410), (1088, 439)], [(1088, 410), (1111, 439)], [(1066, 439), (1088, 468)], [(1088, 439), (1111, 468)], [(1111, 410), (1134, 439)], [(1134, 410), (1157, 439)], [(1111, 439), (1134, 468)], [(1134, 439), (1157, 468)], [(981, 468), (1002, 498)], [(1002, 468), (1023, 498)], [(981, 498), (1002, 529)], [(1002, 498), (1023, 529)], [(1023, 468), (1044, 498)], [(1044, 468), (1066, 498)], [(1023, 498), (1044, 529)], [(1044, 498), (1066, 529)], [(981, 529), (1002, 559)], [(1002, 529), (1023, 559)], [(981, 559), (1002, 590)], [(1002, 559), (1023, 590)], [(1023, 529), (1044, 559)], [(1044, 529), (1066, 559)], [(1023, 559), (1044, 590)], [(1044, 559), (1066, 590)], [(1066, 468), (1088, 498)], [(1088, 468), (1111, 498)], [(1066, 498), (1088, 529)], [(1088, 498), (1111, 529)], [(1111, 468), (1134, 498)], [(1134, 468), (1157, 498)], [(1111, 498), (1134, 529)], [(1134, 498), (1157, 529)], [(1066, 529), (1088, 559)], [(1088, 529), (1111, 559)], [(1066, 559), (1088, 590)], [(1088, 559), (1111, 590)], [(1111, 529), (1134, 559)], [(1134, 529), (1157, 559)], [(1111, 559), (1134, 590)], [(1134, 559), (1157, 590)], [(620, 218), (664, 249)], [(664, 218), (709, 249)], [(620, 249), (664, 281)], [(664, 249), (709, 281)], [(709, 218), (754, 249)], [(754, 218), (799, 249)], [(709, 249), (754, 281)], [(754, 249), (799, 281)], [(620, 281), (664, 313)], [(664, 281), (709, 313)], [(620, 313), (664, 345)], [(664, 313), (709, 345)], [(709, 281), (754, 313)], [(754, 281), (799, 313)], [(709, 313), (754, 345)], [(754, 313), (799, 345)], [(799, 218), (843, 247)], [(843, 218), (888, 247)], [(799, 247), (843, 277)], [(843, 247), (888, 277)], [(888, 218), (933, 247)], [(933, 218), (978, 247)], [(888, 247), (933, 277)], [(933, 247), (978, 277)], [(799, 277), (843, 307)], [(843, 277), (888, 307)], [(799, 307), (843, 337)], [(843, 307), (888, 337)], [(888, 277), (933, 307)], [(933, 277), (978, 307)], [(888, 307), (933, 337)], [(933, 307), (978, 337)], [(799, 337), (840, 339)], [(840, 337), (882, 339)], [(799, 339), (840, 341)], [(840, 339), (882, 341)], [(882, 337), (924, 339)], [(924, 337), (966, 339)], [(882, 339), (924, 341)], [(924, 339), (966, 341)], [(799, 341), (840, 343)], [(840, 341), (882, 343)], [(799, 343), (840, 345)], [(840, 343), (882, 345)], [(882, 341), (924, 343)], [(924, 341), (966, 343)], [(882, 343), (924, 345)], [(924, 343), (966, 345)], [(978, 218), (1022, 247)], [(1022, 218), (1067, 247)], [(978, 247), (1022, 277)], [(1022, 247), (1067, 277)], [(1067, 218), (1112, 247)], [(1112, 218), (1157, 247)], [(1067, 247), (1112, 277)], [(1112, 247), (1157, 277)], [(978, 277), (1022, 307)], [(1022, 277), (1067, 307)], [(978, 307), (1022, 337)], [(1022, 307), (1067, 337)], [(1067, 277), (1112, 307)], [(1112, 277), (1157, 307)], [(1067, 307), (1112, 337)], [(1112, 307), (1157, 337)], [(1108, 337), (1120, 341)], [(1120, 337), (1132, 341)], [(1108, 341), (1120, 345)], [(1120, 341), (1132, 345)], [(1132, 337), (1144, 341)], [(1144, 337), (1157, 341)], [(1132, 341), (1144, 345)], [(1144, 341), (1157, 345)], [(1108, 345), (1120, 349)], [(1120, 345), (1132, 349)], [(1108, 349), (1120, 353)], [(1120, 349), (1132, 353)], [(1132, 345), (1144, 349)], [(1144, 345), (1157, 349)], [(1132, 349), (1144, 353)], [(1144, 349), (1157, 353)], [(620, 98), (664, 128)], [(664, 98), (709, 128)], [(620, 128), (664, 158)], [(664, 128), (709, 158)], [(709, 98), (754, 128)], [(754, 98), (799, 128)], [(709, 128), (754, 158)], [(754, 128), (799, 158)], [(620, 158), (664, 188)], [(664, 158), (709, 188)], [(620, 188), (664, 218)], [(664, 188), (709, 218)], [(709, 158), (754, 188)], [(754, 158), (799, 188)], [(709, 188), (754, 218)], [(754, 188), (799, 218)], [(799, 98), (843, 128)], [(843, 98), (888, 128)], [(799, 128), (843, 158)], [(843, 128), (888, 158)], [(888, 98), (933, 128)], [(933, 98), (978, 128)], [(888, 128), (933, 158)], [(933, 128), (978, 158)], [(799, 158), (843, 188)], [(843, 158), (888, 188)], [(799, 188), (843, 218)], [(843, 188), (888, 218)], [(888, 158), (933, 188)], [(933, 158), (978, 188)], [(888, 188), (933, 218)], [(933, 188), (978, 218)], [(978, 98), (1022, 128)], [(1022, 98), (1067, 128)], [(978, 128), (1022, 158)], [(1022, 128), (1067, 158)], [(1067, 98), (1112, 128)], [(1112, 98), (1157, 128)], [(1067, 128), (1112, 158)], [(1112, 128), (1157, 158)], [(978, 158), (1022, 188)], [(1022, 158), (1067, 188)], [(978, 188), (1022, 218)], [(1022, 188), (1067, 218)], [(1067, 158), (1112, 188)], [(1112, 158), (1157, 188)], [(1067, 188), (1112, 218)], [(1112, 188), (1157, 218)], [(620, 345), (664, 358)], [(664, 345), (709, 358)], [(620, 358), (664, 372)], [(664, 358), (709, 372)], [(709, 345), (753, 358)], [(753, 345), (798, 358)], [(709, 358), (753, 372)], [(753, 358), (798, 372)], [(620, 372), (664, 386)], [(664, 372), (709, 386)], [(620, 386), (664, 400)], [(664, 386), (709, 400)], [(709, 372), (753, 386)], [(753, 372), (798, 386)], [(709, 386), (753, 400)], [(753, 386), (798, 400)], [(798, 345), (840, 358)], [(840, 345), (882, 358)], [(798, 358), (840, 372)], [(840, 358), (882, 372)], [(882, 345), (924, 358)], [(924, 345), (966, 358)], [(882, 358), (924, 372)], [(924, 358), (966, 372)], [(798, 372), (840, 386)], [(840, 372), (882, 386)], [(798, 386), (840, 400)], [(840, 386), (882, 400)], [(882, 372), (924, 386)], [(924, 372), (966, 386)], [(882, 386), (924, 400)], [(924, 386), (966, 400)]]
 
-map_1=Map(pygame.image.load('Maps/map1.png'), [(190,400)], rooms, areas, (-370,-200), walls, nodes)
+map_1=Map(pygame.image.load('Maps/map1.png'), [(200,200)], rooms, areas, (-370,-200), walls, nodes)
 GameState['maps'].append(map_1)
 
 GameState['rounds']=[]
@@ -1768,11 +1771,11 @@ for zombie_spawn in current_map.zombie_spawns:
 	zombie_spawn.find_area()
 
 survivor = Survivor(250, 350, 3)
-survivor.current_room=find_current_location((survivor.center_xcoord, survivor.center_ycoord), current_map.rooms)
-survivor.current_area=find_current_location((survivor.center_xcoord, survivor.center_ycoord), current_map.areas)
+survivor.current_room=find_current_location(survivor.vector, current_map.rooms)
+survivor.current_area=find_current_location(survivor.vector, current_map.areas)
 
-survivor.weapon.distance_from_survivor_to_tip_of_weapon=distance(survivor.center_xcoord, survivor.center_ycoord, survivor.center_xcoord+survivor.weapon.weapon_size[0], survivor.center_ycoord+survivor.weapon.weapon_size[1])
-survivor.weapon.angle_from_survivor_to_tip_of_weapon=angle_finder(survivor.center_xcoord, survivor.center_ycoord, survivor.center_xcoord+survivor.weapon.weapon_size[0], survivor.center_ycoord+survivor.weapon.weapon_size[1])
+survivor.weapon.distance_from_survivor_to_tip_of_weapon=distance(survivor.vector[0], survivor.vector[1], survivor.vector[0]+survivor.weapon.weapon_size[0], survivor.vector[1]+survivor.weapon.weapon_size[1])
+survivor.weapon.angle_from_survivor_to_tip_of_weapon=angle_finder(survivor.vector[0], survivor.vector[1], survivor.vector[0]+survivor.weapon.weapon_size[0], survivor.vector[1]+survivor.weapon.weapon_size[1])
 
 
 # g=deepcopy(current_map.original_graph)
@@ -1889,8 +1892,7 @@ def main():
 		# Look for pause or quit
 		for event in GameState['events']:
 			if event.type==MOUSEMOTION:  # If mouse was pressed, updates cursor's location
-				GameState['xcoord_cursor'] = event.pos[0]
-				GameState['ycoord_cursor'] = event.pos[1]
+				GameState['cursor_vector'] = event.pos
 			if event.type==KEYDOWN:
 				if event.key==112 and pause==False:
 					pause=True
