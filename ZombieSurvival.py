@@ -1745,7 +1745,7 @@ class Round:
 	def zombie_generater(self, number):
 		rand_number=int(random.random()*len(current_map.zombie_spawns))
 		if number==0:
-			generated_zombie=Zombie(current_map.zombie_spawns[rand_number].xcoord, current_map.zombie_spawns[rand_number].ycoord, 0, current_map.zombie_spawns[rand_number], 16, number, 8, 6, 20)
+			generated_zombie=Zombie(current_map.zombie_spawns[rand_number].xcoord, current_map.zombie_spawns[rand_number].ycoord, 2.5, current_map.zombie_spawns[rand_number], 16, number, 8, 6, 20)
 		if number==1:
 			generated_zombie=Zombie(current_map.zombie_spawns[rand_number].xcoord, current_map.zombie_spawns[rand_number].ycoord, 4, current_map.zombie_spawns[rand_number], 32, number, 20, 12, 23)		
 		return generated_zombie
