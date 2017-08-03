@@ -198,22 +198,27 @@ def move_zombies():
 	# For each area that has at least one zombie on it, finds shortest path from that area to the survivor's area and gives it to each zombie that's on it
 	if survivor.switched_areas:
 		for zombie in GameState['zombies_collection']:
-			generated_path=current_map.paths[(zombie.current_area.center_xcoord,zombie.current_area.center_ycoord),(survivor.current_area.center_xcoord, survivor.current_area.center_ycoord)][0]
+			zombie.path=current_map.paths[(zombie.current_area.center_xcoord,zombie.current_area.center_ycoord),(survivor.current_area.center_xcoord, survivor.current_area.center_ycoord)][0]
 			# If the len of the path is 1, that means that the zombie is on the survivor's area. else, the zombie goes to the second node because the first is the center of the zombie's current area
-			if not len(generated_path)==1:
-				zombie.path=generated_path[1::]
-				zombie.distance=current_map.paths[(zombie.current_area.center_xcoord,zombie.current_area.center_ycoord),(survivor.current_area.center_xcoord, survivor.current_area.center_ycoord)][1]
+			if not len(zombie.path)==1:
+				distance_to_subtract1=Vector2(zombie.path[0]).distance_to(Vector2(zombie.path[1]))
+				distance_to_subtract2=Vector2(zombie.path[-1]).distance_to(Vector2(zombie.path[-2]))
+				zombie.path=zombie.path[1::]
+				total_distance_to_subtract=distance_to_subtract1+distance_to_subtract2
+				zombie.base_length_of_path_to_survivor=current_map.paths[(zombie.current_area.center_xcoord,zombie.current_area.center_ycoord),(survivor.current_area.center_xcoord, survivor.current_area.center_ycoord)][1]
+				zombie.base_length_of_path_to_survivor-=total_distance_to_subtract
 			else:
 				zombie.path=[survivor.vector]
 				zombie.velocity=zombie.path[0]-zombie.vector
 				zombie.velocity.scale_to_length(zombie.speed)
-				zombie.distance=zombie.vector.distance_to(survivor.vector)
+				zombie.length_of_path_to_survivor=zombie.vector.distance_to(survivor.vector)
+
 	# for each zombie...
 	for zombie in GameState['zombies_collection']:
 		# updates the zombie path so that tha last coordinate is the survivor's coordinates
 		zombie.update_path()
 		# update direction that zombie should face
-		zombie.distance_from_next_path_point, zombie.angle_to_next_path_point=(zombie.vector-zombie.path[0]).as_polar()
+		zombie.distance_from_next_path_point, zombie.angle_to_next_path_point=(zombie.path[0]-zombie.vector).as_polar()
 		# draw the zombie
 		zombie.prepare()
 		zombie.draw()
@@ -227,7 +232,6 @@ def move_zombies():
 
 		zombie.velocity=zombie.path[0]-zombie.vector
 		zombie.velocity.scale_to_length(zombie.speed)
-		zombie.angle_to_next_path_point=zombie.vector.angle_to(zombie.path[0])
 
 		# find future zombie location coordinates
 		if zombie.body_motion!='attack':
@@ -252,8 +256,18 @@ def move_zombies():
 				zombie.current_area.entities_on.remove(zombie)
 				zombie.current_area=find_current_location(zombie.vector, current_map.areas)
 				zombie.current_area.entities_on.add(zombie)
-			# find the distance between the survivor and the zombie
-			zombie.distance=zombie.vector.distance_to(survivor.vector)
+
+		# If the len of the path is 1, that means that the zombie is on the survivor's area. else, the zombie goes to the second node because the first is the center of the zombie's current area
+		if not len(zombie.path)==1:
+			distance_to_add1=Vector2(zombie.vector).distance_to(Vector2(zombie.path[-0]))
+			distance_to_add2=Vector2(survivor.vector).distance_to(Vector2(zombie.path[-2]))
+			total_distance_to_add=distance_to_add1+distance_to_add2
+			zombie.length_of_path_to_survivor=zombie.base_length_of_path_to_survivor+total_distance_to_add
+		else:
+			zombie.path=[survivor.vector]
+			zombie.velocity=zombie.path[0]-zombie.vector
+			zombie.velocity.scale_to_length(zombie.speed)
+			zombie.length_of_path_to_survivor=zombie.vector.distance_to(survivor.vector)
 
 def cursor_actions_tracker():
 	GameState['MouseButtonPressed']=False
@@ -354,10 +368,10 @@ def find_current_location(coords, locations): # finds current location
 		if location.rect.collidepoint(coords[0], coords[1]):
 			return location
 	closest_location=None
-	distance=0
+	distance=99999999
 	for location in locations:
 		d=location.center_coords.distance_to(coords)
-		if d<distance:
+		if d<=distance:
 			distance=d
 			closest_location=location
 	return closest_location
@@ -1299,7 +1313,6 @@ class Survivor(pygame.sprite.Sprite):
 		# Rotate Body
 		location = self.vector
 		survivor.angle_to_rotate_body=(GameState['cursor_vector']-survivor.vector).angle_to(GameState['cursor_vector']-survivor.weapon.new_projectile_coords)+survivor.angle_from_center_to_cursor
-		print survivor.angle_to_rotate_body
 		rotated_body_sprite = pygame.transform.rotate(self.body_image, -(self.angle_to_rotate_body))
 		self.body_rect=rotated_body_sprite.get_rect()
 		self.body_rect.center = self.vector
@@ -1494,6 +1507,8 @@ class Zombie(pygame.sprite.Sprite):
 		self.current_area=area
 		self.switched_areas=True
 		self.distance=self.vector.distance_to(survivor.vector)
+		self.length_of_path_to_survivor=0
+		self.base_length_of_path_to_survivor=0
 	def prepare(self):
 		self.image=update_zombie_state_image(self)
 		self.distance_from_next_path_point, self.angle_to_next_path_point=(self.vector-self.path[0]).as_polar()
@@ -1714,7 +1729,7 @@ Grenade('Grenades/Grenade1/grenade1.png', 2, 2, (15,30))
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
-		self.zombie_quantities=[10,10,0,0]
+		self.zombie_quantities=[1,0,0,0]
 		self.zombie_delays=[3,3,0,0]
 		self.zombie_last_times=[0,0,0,0]
 		self.delays_doubled=False
@@ -1728,11 +1743,16 @@ class Round:
 				generated_zombie.current_room.entities_on.add(generated_zombie)
 				generated_zombie.current_area=find_current_location(generated_zombie.vector, current_map.areas)
 				generated_zombie.path=deepcopy(current_map.paths[(generated_zombie.current_area.center_xcoord,generated_zombie.current_area.center_ycoord),(survivor.current_area.center_xcoord, survivor.current_area.center_ycoord)][0])
-				if not len(generated_zombie.path)==1:
+				if len(generated_zombie.path)!=1:
+					distance_to_subtract1=Vector2(generated_zombie.path[0]).distance_to(Vector2(generated_zombie.path[1]))
+					distance_to_subtract2=Vector2(generated_zombie.path[-1]).distance_to(Vector2(generated_zombie.path[-2]))
 					generated_zombie.path=generated_zombie.path[1::]
+					total_distance_to_subtract=distance_to_subtract1+distance_to_subtract2
+					generated_zombie.length_of_path_to_survivor	
+					generated_zombie.base_length_of_path_to_survivor-=total_distance_to_subtract
 				else:
 					generated_zombie.path=[surivor.vector]
-				generated_zombie.distance=current_map.paths[(generated_zombie.current_area.center_xcoord,generated_zombie.current_area.center_ycoord),(survivor.current_area.center_xcoord, survivor.current_area.center_ycoord)][1]
+					generated_zombie.length_of_path_to_survivor=generated_zombie.vector.distance_to(survivor.vector)
 				generated_zombie.velocity=generated_zombie.path[0]-generated_zombie.vector
 				generated_zombie.angle_to_next_path_point=generated_zombie.vector.angle_to(generated_zombie.path[0])
 				generated_zombie.velocity.scale_to_length(generated_zombie.speed)

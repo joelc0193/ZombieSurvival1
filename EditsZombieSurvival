@@ -1,5 +1,3 @@
-zombie.distance
-
 Redo graph wall_check with thicker walls
 
 Make healing syringe like in killing floor
@@ -25,5 +23,3 @@ Make it so that when character switches area, zombie doesn't go back to the same
 Make Zombie Chase Closest object.
 
 Check:
-
-zombie.distance=distance(zombie.center_xcoord, zombie.center_ycoord, character.center_xcoord, character.center_ycoord): Change this so that it finds the distance based on the path's distance from the dictionary
