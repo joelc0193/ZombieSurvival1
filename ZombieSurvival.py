@@ -259,7 +259,7 @@ def move_zombies():
 def new_cursor_location():
 	for event in GameState['events']:
 		if event.type==MOUSEMOTION:  # If mouse was pressed, updates cursor's location
-			GameState['cursor_vector'] = event.pos
+			GameState['cursor_vector'] = Vector2(event.pos)
 		# If mouse button was clicked, sets flag so that generate_function knows to keep generating bullets
 		if event.type==MOUSEBUTTONDOWN:
 			GameState['MouseButtonDown']=True
@@ -1289,7 +1289,9 @@ class Survivor(pygame.sprite.Sprite):
 	def rotate_survivor(self):
 		# Rotate Body
 		location = self.vector
-		rotated_body_sprite = pygame.transform.rotate(self.body_image, -self.angle_from_center_to_cursor)
+		survivor.angle_to_rotate_body=(GameState['cursor_vector']-survivor.vector).angle_to(GameState['cursor_vector']-survivor.weapon.new_projectile_coords)+survivor.angle_from_center_to_cursor
+		print survivor.angle_to_rotate_body
+		rotated_body_sprite = pygame.transform.rotate(self.body_image, -(self.angle_to_rotate_body))
 		self.body_rect=rotated_body_sprite.get_rect()
 		self.body_rect.center = self.vector
 		self.rect=self.body_rect
@@ -1588,7 +1590,7 @@ class Weapon(pygame.sprite.Sprite):
 							survivor.current_body_state_number=0
 							survivor.max_body_state_number=2
 							survivor.update_feet_state_image_delay=.1
-							bullet = Projectile(self.new_projectile_coords, survivor.bullet_speed, survivor.angle_from_center_to_cursor, bullet_number, total_number, self)
+							bullet = Projectile(self.new_projectile_coords, survivor.bullet_speed, survivor.angle_to_rotate_body, bullet_number, total_number, self)
 							bullet.current_area=find_current_location(bullet.vector, current_map.areas)
 							bullet.current_area.entities_on.add(bullet)
 							self.current_mag_ammo-=1
@@ -1621,7 +1623,7 @@ class Weapon(pygame.sprite.Sprite):
 						survivor.current_body_state_number=0
 						survivor.max_body_state_number=2
 						survivor.update_feet_state_image_delay=.1
-						bullet = Projectile(self.new_projectile_coords, survivor.bullet_speed, survivor.angle_from_center_to_cursor, bullet_number, total_number, self)
+						bullet = Projectile(self.new_projectile_coords, survivor.bullet_speed, survivor.angle_to_rotate_body, bullet_number, total_number, self)
 						bullet.current_area=find_current_location(bullet.vector, current_map.areas)
 						bullet.current_area.entities_on.add(bullet)
 						self.current_mag_ammo-=1
@@ -1886,7 +1888,7 @@ def main():
 		# Look for pause or quit
 		for event in GameState['events']:
 			if event.type==MOUSEMOTION:  # If mouse was pressed, updates cursor's location
-				GameState['cursor_vector'] = event.pos
+				GameState['cursor_vector'] = Vector2(event.pos)
 			if event.type==KEYDOWN:
 				if event.key==112 and pause==False:
 					pause=True
