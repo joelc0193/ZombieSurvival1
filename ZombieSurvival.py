@@ -1313,7 +1313,7 @@ class Survivor(pygame.sprite.Sprite):
 		# Rotate Body
 		location = self.vector
 		survivor.angle_to_rotate_body=(GameState['cursor_vector']-survivor.vector).angle_to(GameState['cursor_vector']-survivor.weapon.new_projectile_coords)+survivor.angle_from_center_to_cursor
-		rotated_body_sprite = pygame.transform.rotate(self.body_image, -(self.angle_to_rotate_body))
+		rotated_body_sprite = pygame.transform.rotate(self.body_image, -(self.angle_from_center_to_cursor))
 		self.body_rect=rotated_body_sprite.get_rect()
 		self.body_rect.center = self.vector
 		self.rect=self.body_rect
@@ -1670,7 +1670,7 @@ price=10
 price_per_mag=2
 fire_rate=1
 bullet_image='bullet.png'
-weapon_size=Vector2(15,10)
+weapon_size=Vector2(25,10)
 damage=100
 max_mag_ammo=12
 max_weapon_ammo=80
