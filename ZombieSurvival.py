@@ -256,13 +256,25 @@ def move_zombies():
 			# find the distance between the survivor and the zombie
 			zombie.distance=zombie.vector.distance_to(survivor.vector)
 
-def new_cursor_location():
+def cursor_actions_tracker():
+	GameState['MouseButtonPressed']=False
 	for event in GameState['events']:
 		if event.type==MOUSEMOTION:  # If mouse was pressed, updates cursor's location
 			GameState['cursor_vector'] = Vector2(event.pos)
+					# Look for pause or quit
+		if event.type==KEYDOWN:
+			if event.key==112 and GameState['paused']==False:
+				GameState['paused']=True
+			elif event.key==112 and GameState['paused']==True:
+				GameState['paused']=False
+		if event.type==QUIT or (event.type==KEYDOWN and event.key==27):  # If close window or esc button was pressed, stops game
+			pygame.quit()
+			sys.exit()
+
 		# If mouse button was clicked, sets flag so that generate_function knows to keep generating bullets
 		if event.type==MOUSEBUTTONDOWN:
 			GameState['MouseButtonDown']=True
+			GameState['MouseButtonPressed']=True
 		elif event.type==MOUSEBUTTONUP: # If mouse button was released, sets flag so that no more projectiles are produced
 			GameState['MouseButtonDown']=False
 def update_projectile_locations(): # updates the bullets
@@ -593,19 +605,18 @@ def menu_displayer():
 	DISPLAYSURF.blit(survivor.weapon.weapon_image, (850,610))
 
 def pause_menu():
-	for event in GameState['events']:
-			if event.type==MOUSEBUTTONDOWN:
-				point=GameState['cursor_vector']
-				GameState['active_tab'].color=INDIGOBLUE
-				if player_tab.rect.collidepoint(point):
-					GameState['active_tab']=player_tab
-				elif weapons_tab.rect.collidepoint(point):
-					GameState['active_tab']=weapons_tab
-				elif explosives_tab.rect.collidepoint(point):
-					GameState['active_tab']=explosives_tab
-				elif turrets_tab.rect.collidepoint(point):
-					GameState['active_tab']=turrets_tab
-				GameState['active_tab'].color=OXFORDBLUE
+	if GameState['MouseButtonPressed']:
+		point=GameState['cursor_vector']
+		GameState['active_tab'].color=INDIGOBLUE
+		if player_tab.rect.collidepoint(point):
+			GameState['active_tab']=player_tab
+		elif weapons_tab.rect.collidepoint(point):
+			GameState['active_tab']=weapons_tab
+		elif explosives_tab.rect.collidepoint(point):
+			GameState['active_tab']=explosives_tab
+		elif turrets_tab.rect.collidepoint(point):
+			GameState['active_tab']=turrets_tab
+		GameState['active_tab'].color=OXFORDBLUE
 
 	# Main Menu
 	rect=pygame.Rect(300,100,700,500)
@@ -768,21 +779,20 @@ class Player_Tab:
 	def tab_handler(self):
 		i=0
 		rects=[]
-		for event in GameState['events']:
-			if event.type==MOUSEBUTTONDOWN:
-				point=GameState['cursor_vector']
-				for item in GameState['menu_items']:
-					i+=1
-					i=i%len(GameState['colors'])
-					if item.rect.collidepoint(point):
-						if isinstance(item, Upgrade_Button):
-							if not survivor.money-item.field_upgrade_cost[0]<0:
-								survivor.money-=item.field_upgrade_cost[0]
-								field_upgrade_cost=item.field_upgrade_cost[0]
-								field_upgrade=item.field_upgrades
-								x = getattr(survivor, item.weapon_field)
-								setattr(survivor, item.weapon_field, x+field_upgrade[0])
-								del field_upgrade[0]
+		if GameState['MouseButtonPressed']:
+			point=GameState['cursor_vector']
+			for item in GameState['menu_items']:
+				i+=1
+				i=i%len(GameState['colors'])
+				if item.rect.collidepoint(point):
+					if isinstance(item, Upgrade_Button):
+						if not survivor.money-item.field_upgrade_cost[0]<0:
+							survivor.money-=item.field_upgrade_cost[0]
+							field_upgrade_cost=item.field_upgrade_cost[0]
+							field_upgrade=item.field_upgrades
+							x = getattr(survivor, item.weapon_field)
+							setattr(survivor, item.weapon_field, x+field_upgrade[0])
+							del field_upgrade[0]
 
 		pygame.sprite.Group.empty(GameState['menu_items'])
 
@@ -903,22 +913,21 @@ class Weapons_Tab:
 	def tab_handler(self):
 		i=0
 		rects=[]
-		for event in GameState['events']:
-			if event.type==MOUSEBUTTONDOWN:
-				point=GameState['cursor_vector']
-				for item in GameState['menu_items']:
-					i+=1
-					i=i%len(GameState['colors'])
-					if item.rect.collidepoint(point):
-						if isinstance(item, Upgrade_Button):
-							if not survivor.money-item.field_upgrade_cost<0:
-								survivor.money-=item.field_upgrade_cost
-								weapon=item.weapon
-								field_upgrade_cost=item.field_upgrade_cost
-								field_upgrades=item.field_upgrades
-								x = getattr(weapon, item.weapon_field)
-								setattr(weapon, item.weapon_field, x+field_upgrades[0])
-								del field_upgrades[0]
+		if GameState['MouseButtonPressed']:
+			point=GameState['cursor_vector']
+			for item in GameState['menu_items']:
+				i+=1
+				i=i%len(GameState['colors'])
+				if item.rect.collidepoint(point):
+					if isinstance(item, Upgrade_Button):
+						if not survivor.money-item.field_upgrade_cost<0:
+							survivor.money-=item.field_upgrade_cost
+							weapon=item.weapon
+							field_upgrade_cost=item.field_upgrade_cost
+							field_upgrades=item.field_upgrades
+							x = getattr(weapon, item.weapon_field)
+							setattr(weapon, item.weapon_field, x+field_upgrades[0])
+							del field_upgrades[0]
 
 		pygame.sprite.Group.empty(GameState['menu_items'])
 
@@ -1076,6 +1085,7 @@ GameState={
 # Keep track of direction of bullet
 'cursor_vector':Vector2(),
 'MouseButtonDown':False,
+'MouseButtonPressed':False,
 # Projectiles to keep track of
 'projectiles':pygame.sprite.Group(),
 # Angle between cursor and survivor
@@ -1372,7 +1382,7 @@ class Survivor(pygame.sprite.Sprite):
 				survivor.max_body_state_number=19
 				survivor.current_body_state_number=0
 			else:
-				if GameState['MouseButtonDown']:
+				if GameState['MouseButtonPressed']:
 						survivor.body_motion='shoot'
 						survivor.current_body_state_number=0
 						survivor.max_body_state_number=2
@@ -1614,7 +1624,7 @@ class Weapon(pygame.sprite.Sprite):
 			self.new_projectile_coords=Vector2()
 			self.new_projectile_coords.from_polar((self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle_from_center_to_cursor))
 			self.new_projectile_coords+=survivor.vector
-			if GameState['MouseButtonDown']:
+			if GameState['MouseButtonPressed']:
 				total_number=1
 				bullets_fired=0
 				for bullet_number in range(1,total_number+1):
@@ -1628,7 +1638,7 @@ class Weapon(pygame.sprite.Sprite):
 						bullet.current_area.entities_on.add(bullet)
 						self.current_mag_ammo-=1
 						bullets_fired+=1
-						GameState['MouseButtonDown']=False
+						GameState['MouseButtonPressed']=False
 					else:
 						break
 			if survivor.weapon.current_weapon_ammo>0 and survivor.weapon.current_mag_ammo==0 and survivor.body_motion!='reload':
@@ -1637,7 +1647,7 @@ class Weapon(pygame.sprite.Sprite):
 				survivor.current_body_state_number=0
 				survivor.update_body_state_image_delay=.05
 			self.bullet_shot=True
-			if GameState['MouseButtonDown']==False and self.bullet_shot:
+			if GameState['MouseButtonPressed']==False and self.bullet_shot:
 				self.bullet_shot=False	
 
 name='handgun'
@@ -1882,26 +1892,16 @@ def main():
 	turrets_tab=Turrets_Tab()
 	GameState['active_tab']=player_tab
 	GameState['active_tab'].color=OXFORDBLUE
-	pause=False
+	GameState['paused']=False
 	while True:
 		GameState['events']=pygame.event.get()
-		# Look for pause or quit
-		for event in GameState['events']:
-			if event.type==MOUSEMOTION:  # If mouse was pressed, updates cursor's location
-				GameState['cursor_vector'] = Vector2(event.pos)
-			if event.type==KEYDOWN:
-				if event.key==112 and pause==False:
-					pause=True
-				elif event.key==112 and pause==True:
-					pause=False
-			if event.type==QUIT or (event.type==KEYDOWN and event.key==27):  # If close window or esc button was pressed, stops game
-				pygame.quit()
-				sys.exit()
+		# Determines the location of cursor and if quit game
+		cursor_actions_tracker()
 		# If pause, open pause menu
-		if pause:
+		if GameState['paused']:
 			pause_menu()
 		# If not pause, continue game
-		if not pause:
+		if not GameState['paused']:
 			# Draws the game. (rooms, walls, areas, nodes)
 			draw_game([0, 0, 0,0])
 			# Gets all the events
@@ -1915,8 +1915,6 @@ def main():
 			current_round.zombie_handler()
 			# Moves Zombies
 			move_zombies()
-			# Determines the location of cursor and if quit game
-			new_cursor_location()
 			# Updates and displays all game bars onto the screen
 			menu_displayer()
 			# Draw survivor
