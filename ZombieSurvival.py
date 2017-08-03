@@ -212,7 +212,6 @@ def move_zombies():
 	for zombie in GameState['zombies_collection']:
 		# updates the zombie path so that tha last coordinate is the survivor's coordinates
 		zombie.update_path()
-		zombie.following_path=True
 		# update direction that zombie should face
 		zombie.distance_from_next_path_point, zombie.angle_to_next_path_point=(zombie.vector-zombie.path[0]).as_polar()
 		# draw the zombie
@@ -1494,7 +1493,6 @@ class Zombie(pygame.sprite.Sprite):
 		self.max_number_of_attacking_states=max_number_of_attacking_states
 		self.current_area=area
 		self.switched_areas=True
-		self.following_path=False
 		self.distance=self.vector.distance_to(survivor.vector)
 	def prepare(self):
 		self.image=update_zombie_state_image(self)
