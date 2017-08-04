@@ -4,45 +4,70 @@ from pygame.math import Vector2
 from math import *
 from copy import deepcopy
 
-# Read all images
-Images={}
-SURFACEWIDTH=100
-SURFACEHEIGHT=100
-for dirpath, dirnames, filenames in os.walk('Characters/'):
-    for filename in filenames:
-    	if 'feet' in str(dirpath):
-    		scale=(35,35)
-    		location=(35,30)
-    	elif 'Zombie1' in str(dirpath):
-    		scale=(170,170)
-    		location=(-43,-36)
-    	else:
-    		scale=(50,50)
-    		location=(27,22)
-        file_path = os.path.join(dirpath, filename)
-        if imghdr.what(file_path):
-        	if filename[-6]in['1','2','3','4','5','6','7','8','9','0,']:
-        		surface =  pygame.Surface((SURFACEWIDTH, SURFACEHEIGHT), pygame.SRCALPHA, 32)
-        		surface.blit(pygame.transform.scale(pygame.image.load(str(dirpath)+'/'+str(filename)), scale), location)
-        		Images[str(dirpath)+filename[-6]+filename[-5]]=surface
-    		else:
-    			surface =  pygame.Surface((SURFACEWIDTH, SURFACEHEIGHT), pygame.SRCALPHA, 32)
-    			surface.blit(pygame.transform.scale(pygame.image.load(str(dirpath)+'/'+str(filename)), scale), location)
-    			Images[str(dirpath)+filename[-5]]=surface
+class Image_Store:
+	def __init__(self, key, size, scale):
+		self.key=key
+		self.size=size
+		self.scale=scale
 
-for dirpath, dirnames, filenames in os.walk('Grenades/'):
-    for filename in filenames:
-        if imghdr.what(file_path):
-        	if filename[-6]in['1','2','3','4','5','6','7','8','9','0,']:
-        		Images[str(dirpath)+filename[-6]+filename[-5]]=pygame.image.load(str(dirpath)+'/'+str(filename))
-    		else:
-    			Images[str(dirpath)+filename[-5]]=pygame.image.load(str(dirpath)+'/'+str(filename))
+
+# # Read all images from folder
+# list_of_all_image_store_objects=[]
+
+# Images={}
+# SURFACEWIDTH=100
+# SURFACEHEIGHT=100
+# for dirpath, dirnames, filenames in os.walk('Characters/'):
+#     for filename in filenames:
+#     	if 'feet' in str(dirpath):
+#     		scale=(35,35)
+#     		location=(35,30)
+#     	elif 'Zombie1' in str(dirpath):
+#     		scale=(170,170)
+#     		location=(-43,-36)
+#     	else:
+#     		scale=(50,50)
+#     		location=(27,22)
+#         file_path = os.path.join(dirpath, filename)
+#         if imghdr.what(file_path):
+#         	if filename[-6]in['1','2','3','4','5','6','7','8','9','0,']:
+#         		surface =  pygame.Surface((SURFACEWIDTH, SURFACEHEIGHT), pygame.SRCALPHA, 32)
+#         		surface.blit(pygame.transform.scale(pygame.image.load(str(dirpath)+'/'+str(filename)), scale), location)
+#         		key=str(dirpath)+filename[-6]+filename[-5]
+#     		else:
+#     			surface =  pygame.Surface((SURFACEWIDTH, SURFACEHEIGHT), pygame.SRCALPHA, 32)
+#     			surface.blit(pygame.transform.scale(pygame.image.load(str(dirpath)+'/'+str(filename)), scale), location)
+#     			key=str(dirpath)+filename[-5]
+#     		list_of_all_image_store_objects.append(Image_Store(key, surface.get_rect().size, scale))
+#     		Images[key]=pygame.image.tostring(surface, 'RGBA')
+
+# for dirpath, dirnames, filenames in os.walk('Grenades/'):
+#     for filename in filenames:
+# 		file_path = os.path.join(dirpath, filename)
+# 		if imghdr.what(file_path):
+# 			if filename[-6]in['1','2','3','4','5','6','7','8','9','0,']:
+# 				key=str(dirpath)+filename[-6]+filename[-5]
+# 			else:
+# 				key=str(dirpath)+filename[-5]
+# 			image=pygame.image.load(str(dirpath)+'/'+str(filename))
+# 			list_of_all_image_store_objects.append(Image_Store(key, image.get_rect().size, None))
+# 			Images[key]=pygame.image.tostring(image, 'RGBA')
+
+# with open('Image_Store_Info.pkl', 'wb') as output:
+#     pickle.dump(list_of_all_image_store_objects, output, pickle.HIGHEST_PROTOCOL)
+
 
 # with open('Images.pkl', 'wb') as output:
 #     pickle.dump(Images, output, pickle.HIGHEST_PROTOCOL)
 
-# with open('Images.pkl', 'rb') as input:
-#     Images = pickle.load(input)
+with open('Image_Store_Info.pkl', 'rb') as input:
+    list_of_all_image_store_objects = pickle.load(input)
+
+with open('Images.pkl', 'rb') as input:
+    Images = pickle.load(input)
+    for data in list_of_all_image_store_objects:
+    	if type(Images[data.key])==str:
+	    	Images[data.key]=pygame.image.fromstring(Images[data.key], data.size, 'RGBA')
 
 # Used to pickle the map paths graph, map paths dictionary, Images dictionary
 sys.setrecursionlimit(1000000000)
@@ -225,8 +250,9 @@ def move_zombies():
 		# update direction that zombie should face
 		zombie.distance_from_next_path_point, zombie.angle_to_next_path_point=(zombie.path[0]-zombie.vector).as_polar()
 		# draw the zombie
-		zombie.prepare()
-		zombie.draw()
+		if not zombie.frozen:
+			zombie.prepare()
+			zombie.draw()
 
 		# If zombie has reached the node that he was walking towards, and that node is not the survivor's location, deletes that node and zombie keeps going with journey
 		if zombie.vector==zombie.path[0]:
@@ -334,7 +360,7 @@ def update_projectile_locations(): # updates the bullets
 				zombies_hit=pygame.sprite.spritecollide(bullet.wall_check, GameState['zombies_collection'], False, pygame.sprite.collide_mask)
 				zombies_hit.sort(key=lambda x: x.distance, reverse=False)
 				for zombie in zombies_hit:
-					zombie.was_hit(bullet)
+					zombie.was_hit(bullet, bullet.weapon_originated.damage)
 					bullet.hit(zombie)
 					if bullet.penetration<=0:
 						bullet.remove=True
@@ -1540,38 +1566,26 @@ class Zombie(pygame.sprite.Sprite):
 		self.distance=self.vector.distance_to(survivor.vector)
 		self.length_of_path_to_survivor=0
 		self.base_length_of_path_to_survivor=0
-		self.affecting_grenades=[]
+		self.frozen=False
 	def prepare(self):
-		if len(self.affecting_grenades)>0:
-			for i, grenade in enumerate(self.affecting_grenades):
-				if grenade.grenade_box.grenade=='Grenade2':
-					if time.time()-grenade.time_of_effect>grenade.effect_duration:
-						self.image=update_zombie_state_image(self)
-						self.distance_from_next_path_point, self.angle_to_next_path_point=(self.vector-self.path[0]).as_polar()
-						self.rotated_image = rotate_image(self, 'zombie')
-						self.rect = self.rotated_image.get_rect(center=self.vector)
-						self.mask = pygame.mask.from_surface(self.rotated_image,0)
-						del self.affecting_grenades[i]
-		else:
-			self.image=update_zombie_state_image(self)
-			self.distance_from_next_path_point, self.angle_to_next_path_point=(self.vector-self.path[0]).as_polar()
-			self.rotated_image = rotate_image(self, 'zombie')
-			self.rect = self.rotated_image.get_rect(center=self.vector)
-			self.mask = pygame.mask.from_surface(self.rotated_image,0)
-
+		self.image=update_zombie_state_image(self)
+		self.distance_from_next_path_point, self.angle_to_next_path_point=(self.vector-self.path[0]).as_polar()
+		self.rotated_image = rotate_image(self, 'zombie')
+		self.rect = self.rotated_image.get_rect(center=self.vector)
+		self.mask = pygame.mask.from_surface(self.rotated_image,0)
+		
 		if self.body_motion=='attack' and self.current_state_number==self.attack_state_number:
 			if pygame.sprite.collide_mask(self, survivor):
 				survivor.was_hit(self)
 	def draw(self):
 		DISPLAYSURF.blit(self.rotated_image, (self.rect.left, self.rect.top))		
-	def was_hit(self, damaging_object):
+	def was_hit(self, damaging_object, damage):
 		if not self.bullets_in.has(damaging_object):
 			self.bullets_in.add(damaging_object)
-			self.health-=damaging_object.weapon_originated.damage
-			if self.health<-0:
+			self.health-=damage
+			if self.health<=0:
 				self.kill()
 				survivor.money+=1
-				print damaging_object.weapon_originated.damage
 	def update_path(self):
 		if survivor.vector.distance_to(self.vector)<=self.attack_distance:
 			if self.body_motion!='attack':
@@ -1751,9 +1765,7 @@ Weapon(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, w
 GameState['grenades']=pygame.sprite.Group()
 
 class Grenade_Box:
-	def __init__(self, grenade, damage, scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration):
-		self.grenade=grenade
-		self.image=pygame.image.load('Grenades/'+grenade+'/grenade.png')
+	def __init__(self, damage, scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down):
 		self.scale=scale
 		self.speed=speed
 		self.damage=damage
@@ -1769,64 +1781,73 @@ class Grenade_Box:
 		self.timer_upgrades=[-1, -2, -3, -4]
 		self.upgrade_timer_cost=3
 		self.slow_down=.2
-		self.image_containing_explosion_images=pygame.image.load('Grenades/'+self.grenade+'/Explosion.png')
 		self.explosion_images={}
 		self.grenades_left=3
 		self.image_explosion_number_that_damages=image_explosion_number_that_damages
 		self.maximum_explosion_image_number=maximum_explosion_image_number
 		self.effect_duration=effect_duration
-		if self.grenade=='Grenade1':
-			i=0
-			for y in range(0, 736, 164):
-				for x in range(0, 736, 164):
-					surface=pygame.Surface((82, 82), pygame.SRCALPHA, 32)
-					surface.blit(self.image_containing_explosion_images, (0,0), (x,y, 82, 82))
-					self.explosion_images[str(i)]=surface
-					i+=1
-		if self.grenade=='Grenade2':
-			i=0
-			for y in range(0, 320, 80):
-				for x in range(0, 400, 67):
-					surface=pygame.Surface((67, 80), pygame.SRCALPHA, 32)
-					surface.blit(self.image_containing_explosion_images, (0,0), (x,y, 67, 80))
-					self.explosion_images[str(i)]=surface
-					i+=1
+		self.slow_down=slow_down
+
+		# elif self.grenade=='Grenade2':
+		# 	Grenade2(self.image, self.scale, GameState['cursor_vector']-survivor.vector, survivor.vector, self, self.explosion_images)
+
+class Grenade1_Box(Grenade_Box):
+	def __init__(self, damage, scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down):
+		Grenade_Box.__init__(self, damage, scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down)
+		self.image=pygame.image.load('Grenades/Grenade1/grenade.png')
+		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade1/Explosion.png')
+
 	def generate_grenade(self):
-		Grenade(self.image, self.scale, GameState['cursor_vector']-survivor.vector, self.speed, survivor.vector, self.slow_down, self, self.explosion_images)
+			Grenade1(self, GameState['cursor_vector']-survivor.vector, survivor.vector)
+
+class Grenade2_Box(Grenade_Box):
+	def __init__(self, damage, scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down):
+		Grenade_Box.__init__(self, damage, scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down)
+		self.image=pygame.image.load('Grenades/Grenade2/grenade.png')
+		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade2/Explosion.png')
+		i=0
+		for y in range(0, 320, 80):
+			for x in range(0, 400, 67):
+				surface=pygame.Surface((67, 80), pygame.SRCALPHA, 32)
+				surface.blit(self.image_containing_explosion_images, (0,0), (x,y, 67, 80))
+				self.explosion_images[str(i)]=surface
+				i+=1
+	def generate_grenade(self):
+			Grenade2(self, GameState['cursor_vector']-survivor.vector, survivor.vector)
+
 
 class Grenade(pygame.sprite.Sprite):
-	def __init__(self, image, scale, velocity, speed, coords, slow_down, grenade_box, explosion_images_dict):
+	def __init__(self, grenade_box, velocity, coords):
 		pygame.sprite.Sprite.__init__(self, GameState['grenades_collection'])
-		self.image1=image
-		self.image=pygame.transform.scale(image, scale)
+		self.grenade_box=grenade_box
+		self.image1=self.grenade_box.image
+		self.image=pygame.transform.scale(self.grenade_box.image, self.grenade_box.scale)
 		self.rect=self.image.get_rect()
 		self.center_xcoord=None
 		self.center_ycoord=None
 		self.angle=None
-		self.weapon_originated=grenade_box
-		self.speed=speed
 		self.vector=deepcopy(coords)+survivor.vector
 		self.velocity=Vector2()
-		self.velocity.from_polar((self.speed, survivor.angle_from_center_to_cursor))
+		self.velocity.from_polar((self.grenade_box.speed, survivor.angle_from_center_to_cursor))
 		self.state='moving'
 		self.time_generated=time.time()
-		self.slow_down=slow_down
-		self.grenade_box=grenade_box
 		# Reading in Explosion picture and cropping it
 		self.current_explosion_image_number=0
 		self.maximum_explosion_image_number=self.grenade_box.maximum_explosion_image_number
 		self.time_of_last_generated_explosion_state=0
 		self.image_explosion_number_that_damages=self.grenade_box.image_explosion_number_that_damages
-		self.explosion_images=explosion_images_dict
+		self.explosion_images=self.grenade_box.explosion_images
 		self.effect_duration=self.grenade_box.effect_duration
+		self.affecting_zombies=None
+		self.speed=self.grenade_box.speed
 	def update(self):
 		self.vector+=self.velocity
-		self.speed-=self.slow_down
+		self.speed-=self.grenade_box.slow_down
 		if not self.velocity.length()==0:
 			if self.speed<0:
 				self.speed=0
 			self.velocity.scale_to_length(self.speed)
-		elif not self.state=='exploding' and time.time()-self.time_generated>self.weapon_originated.timer:
+		elif not self.state=='exploding' and time.time()-self.time_generated>self.grenade_box.timer:
 			self.state='exploding'
 			self.time_of_effect=time.time()
 			self.time_of_last_generated_explosion_state=time.time()
@@ -1834,11 +1855,6 @@ class Grenade(pygame.sprite.Sprite):
 		self.rect=self.image.get_rect()
 		self.rect.center=self.vector
 		self.draw()
-	def effect(self, zombie):
-		if self.grenade_box.grenade=='Grenade1':
-			zombie.was_hit(self)
-		elif self.grenade_box.grenade=='Grenade2':
-			zombie.affecting_grenades.append(self)
 	def draw(self):
 		if self.state=='moving':
 			DISPLAYSURF.blit(self.image, self.rect)
@@ -1854,6 +1870,18 @@ class Grenade(pygame.sprite.Sprite):
 				self.current_explosion_image_number+=1
 			if self.current_explosion_image_number==self.maximum_explosion_image_number:
 				self.kill()
+
+class Grenade1(Grenade):
+	def __init__(self, grenade_box, velocity, coords):
+		Grenade.__init__(self, grenade_box, velocity, coords)
+	def effect(self, zombie):
+		zombie.was_hit(self, self.grenade_box.damage)
+
+class Grenade2(Grenade):
+	def __init__(self, grenade_box, velocity, coords):
+		Grenade.__init__(self, grenade_box, velocity, coords)
+	def effect(self, zombie):
+		zombie.was_hit(self, self.grenade_box.damage)
 
 class Round:
 	def __init__(self, cap):
@@ -1928,11 +1956,11 @@ survivor.weapon.distance_from_survivor_to_tip_of_weapon, survivor.weapon.angle_f
 
 survivor.grenade_boxes=[]
 
-grenade_box1=Grenade_Box('Grenade1', 200, (10,20), 4.5, 5, 24, 0)
-survivor.grenade_boxes.append(grenade_box1)
+grenade1_box=Grenade1_Box(200, (10,20), 4.5, 5, 24, 0, .2)
+survivor.grenade_boxes.append(grenade1_box)
 
-grenade_box2=Grenade_Box('Grenade2', 200, (10,20), 4.5, 5, 24, 1)
-survivor.grenade_boxes.append(grenade_box2)
+grenade2_box=Grenade2_Box(200, (10,20), 4.5, 5, 24, 1, .2)
+survivor.grenade_boxes.append(grenade2_box)
 
 # g=deepcopy(current_map.original_graph)
 
