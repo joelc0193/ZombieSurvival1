@@ -1788,15 +1788,18 @@ class Grenade_Box:
 		self.effect_duration=effect_duration
 		self.slow_down=slow_down
 
-		# elif self.grenade=='Grenade2':
-		# 	Grenade2(self.image, self.scale, GameState['cursor_vector']-survivor.vector, survivor.vector, self, self.explosion_images)
-
 class Grenade1_Box(Grenade_Box):
 	def __init__(self, damage, scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down):
 		Grenade_Box.__init__(self, damage, scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down)
 		self.image=pygame.image.load('Grenades/Grenade1/grenade.png')
 		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade1/Explosion.png')
-
+		i=0
+		for y in range(0, 736, 164):
+			for x in range(0, 736, 164):
+				surface=pygame.Surface((82, 82), pygame.SRCALPHA, 32)
+				surface.blit(self.image_containing_explosion_images, (0,0), (x,y, 82, 82))
+				self.explosion_images[str(i)]=surface
+				i+=1
 	def generate_grenade(self):
 			Grenade1(self, GameState['cursor_vector']-survivor.vector, survivor.vector)
 
@@ -1814,7 +1817,6 @@ class Grenade2_Box(Grenade_Box):
 				i+=1
 	def generate_grenade(self):
 			Grenade2(self, GameState['cursor_vector']-survivor.vector, survivor.vector)
-
 
 class Grenade(pygame.sprite.Sprite):
 	def __init__(self, grenade_box, velocity, coords):
@@ -1856,11 +1858,8 @@ class Grenade(pygame.sprite.Sprite):
 		self.rect.center=self.vector
 		self.draw()
 	def draw(self):
-		if self.state=='moving':
-			DISPLAYSURF.blit(self.image, self.rect)
-		elif self.state=='exploding':
+		if self.state=='exploding':
 			self.image=self.explosion_images[str(self.current_explosion_image_number)]
-			DISPLAYSURF.blit(self.image, self.rect)
 			if self.current_explosion_image_number==self.image_explosion_number_that_damages:
 				zombies_hit = pygame.sprite.spritecollide(self, GameState['zombies_collection'], False, pygame.sprite.collide_mask)
 				for zombie in zombies_hit:
@@ -1870,6 +1869,7 @@ class Grenade(pygame.sprite.Sprite):
 				self.current_explosion_image_number+=1
 			if self.current_explosion_image_number==self.maximum_explosion_image_number:
 				self.kill()
+		DISPLAYSURF.blit(self.image, self.rect)
 
 class Grenade1(Grenade):
 	def __init__(self, grenade_box, velocity, coords):
