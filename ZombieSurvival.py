@@ -1871,8 +1871,8 @@ class Grenade(pygame.sprite.Sprite):
 		if self.state=='exploding':
 			self.image=self.explosion_images[str(self.current_explosion_image_number)]
 			if self.current_explosion_image_number==self.image_explosion_number_that_damages:
-				zombies_hit = pygame.sprite.spritecollide(self, GameState['zombies_collection'], False, pygame.sprite.collide_mask)
-				for zombie in zombies_hit:
+				self.zombies_hit = pygame.sprite.spritecollide(self, GameState['zombies_collection'], False, pygame.sprite.collide_mask)
+				for zombie in self.zombies_hit:
 					self.effect(zombie)
 			if time.time()-self.time_of_last_generated_explosion_state>self.grenade_box_update_image_delay:
 				self.time_of_last_generated_explosion_state=time.time()
@@ -1887,7 +1887,7 @@ class Grenade1(Grenade):
 		self.grenade_box_update_image_delay=.03
 
 	def effect(self, zombie):
-		zombie.was_hit(self, self.grenade_box.damage)
+		zombie.was_hit(self, self.grenade_box.damage/len(self.zombies_hit))
 
 class Grenade2(Grenade):
 	def __init__(self, grenade_box, velocity, coords):
