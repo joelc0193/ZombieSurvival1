@@ -252,7 +252,7 @@ def move_zombies():
 		# draw the zombie
 		if not zombie.frozen:
 			zombie.prepare()
-			zombie.draw()
+		zombie.draw()
 
 		# If zombie has reached the node that he was walking towards, and that node is not the survivor's location, deletes that node and zombie keeps going with journey
 		if zombie.vector==zombie.path[0]:
@@ -265,7 +265,7 @@ def move_zombies():
 		zombie.velocity.scale_to_length(zombie.speed)
 
 		# find future zombie location coordinates
-		if zombie.body_motion!='attack':
+		if zombie.body_motion!='attack' and not zombie.frozen:
 			distance=(zombie.vector+zombie.velocity).distance_to(Vector2(zombie.path[0]))
 			if distance<=zombie.speed:
 				zombie.vector=Vector2(zombie.path[0])
@@ -1351,7 +1351,6 @@ class Survivor(pygame.sprite.Sprite):
 		self.images=Images
 		self.current_survivor_body_state_number=0
 		self.current_survivor_feet_state_number=0
-		self.grenades_box_1=None
 	def rotate_survivor(self):
 		# Rotate Body
 		location = self.vector
@@ -1405,6 +1404,7 @@ class Survivor(pygame.sprite.Sprite):
 		self.feet_rect=rotated_feet_sprite.get_rect()
 		self.feet_rect.center=self.vector
 		return rotated_body_sprite, rotated_feet_sprite
+
 	def update_state(self): # updates the self state image and rotates it
 		now=time.time()
 		self.find_body_motion()
@@ -1447,6 +1447,7 @@ class Survivor(pygame.sprite.Sprite):
 					survivor.update_body_state_image_delay=0.02
 					survivor.max_body_state_number=0
 					survivor.current_body_state_number=0
+
 	def grenade_handler(self):
 		for event in GameState['events']:
 			if event.type==KEYDOWN:
@@ -1567,6 +1568,7 @@ class Zombie(pygame.sprite.Sprite):
 		self.length_of_path_to_survivor=0
 		self.base_length_of_path_to_survivor=0
 		self.frozen=False
+
 	def prepare(self):
 		self.image=update_zombie_state_image(self)
 		self.distance_from_next_path_point, self.angle_to_next_path_point=(self.vector-self.path[0]).as_polar()
@@ -1577,8 +1579,10 @@ class Zombie(pygame.sprite.Sprite):
 		if self.body_motion=='attack' and self.current_state_number==self.attack_state_number:
 			if pygame.sprite.collide_mask(self, survivor):
 				survivor.was_hit(self)
+
 	def draw(self):
-		DISPLAYSURF.blit(self.rotated_image, (self.rect.left, self.rect.top))		
+		DISPLAYSURF.blit(self.rotated_image, (self.rect.left, self.rect.top))
+
 	def was_hit(self, damaging_object, damage):
 		if not self.bullets_in.has(damaging_object):
 			self.bullets_in.add(damaging_object)
@@ -1586,6 +1590,7 @@ class Zombie(pygame.sprite.Sprite):
 			if self.health<=0:
 				self.kill()
 				survivor.money+=1
+
 	def update_path(self):
 		if survivor.vector.distance_to(self.vector)<=self.attack_distance:
 			if self.body_motion!='attack':
@@ -1619,8 +1624,10 @@ class Wall_Check:
 		self.xcoord=min([self.node1[0], self.node2[0]])
 		self.ycoord=min([self.node1[1], self.node2[1]])
 		self.rect=self.image.get_rect(left=self.xcoord, top=self.ycoord)
+
 	def prepare(self):
 		self.mask=pygame.mask.from_surface(self.image)
+
 	def draw(self):
 		DISPLAYSURF.blit(self.image, (self.rect))
 
@@ -1782,11 +1789,12 @@ class Grenade_Box:
 		self.upgrade_timer_cost=3
 		self.slow_down=.2
 		self.explosion_images={}
-		self.grenades_left=3
+		self.grenades_left=20
 		self.image_explosion_number_that_damages=image_explosion_number_that_damages
 		self.maximum_explosion_image_number=maximum_explosion_image_number
 		self.effect_duration=effect_duration
 		self.slow_down=slow_down
+		self.update_state_image_delay=.03
 
 class Grenade1_Box(Grenade_Box):
 	def __init__(self, damage, scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down):
@@ -1842,6 +1850,8 @@ class Grenade(pygame.sprite.Sprite):
 		self.effect_duration=self.grenade_box.effect_duration
 		self.affecting_zombies=None
 		self.speed=self.grenade_box.speed
+		self.state='moving'
+		self.time_of_last_generated_explosion_state=time.time()
 	def update(self):
 		self.vector+=self.velocity
 		self.speed-=self.grenade_box.slow_down
@@ -1849,7 +1859,7 @@ class Grenade(pygame.sprite.Sprite):
 			if self.speed<0:
 				self.speed=0
 			self.velocity.scale_to_length(self.speed)
-		elif not self.state=='exploding' and time.time()-self.time_generated>self.grenade_box.timer:
+		elif not self.state=='exploding' and time.time()-self.time_generated>self.grenade_box.timer: # Initiates Effects
 			self.state='exploding'
 			self.time_of_effect=time.time()
 			self.time_of_last_generated_explosion_state=time.time()
@@ -1864,7 +1874,7 @@ class Grenade(pygame.sprite.Sprite):
 				zombies_hit = pygame.sprite.spritecollide(self, GameState['zombies_collection'], False, pygame.sprite.collide_mask)
 				for zombie in zombies_hit:
 					self.effect(zombie)
-			if time.time()-self.time_of_last_generated_explosion_state>.03:
+			if time.time()-self.time_of_last_generated_explosion_state>self.grenade_box_update_image_delay:
 				self.time_of_last_generated_explosion_state=time.time()
 				self.current_explosion_image_number+=1
 			if self.current_explosion_image_number==self.maximum_explosion_image_number:
@@ -1874,22 +1884,80 @@ class Grenade(pygame.sprite.Sprite):
 class Grenade1(Grenade):
 	def __init__(self, grenade_box, velocity, coords):
 		Grenade.__init__(self, grenade_box, velocity, coords)
+		self.grenade_box_update_image_delay=.03
+
 	def effect(self, zombie):
 		zombie.was_hit(self, self.grenade_box.damage)
 
 class Grenade2(Grenade):
 	def __init__(self, grenade_box, velocity, coords):
 		Grenade.__init__(self, grenade_box, velocity, coords)
+		self.start_effects=False
+		self.grenade_box_update_image_delay=.03
+
 	def effect(self, zombie):
 		zombie.was_hit(self, self.grenade_box.damage)
+
+	def update(self):
+		self.rect=self.image.get_rect()
+		self.rect.center=self.vector
+
+		# Updates effects
+		if self.state=='moving':
+			self.update_velocity()
+
+		# Initiates Explosion
+		if self.state=='exploding' and time.time()-self.time_generated>self.grenade_box.timer:
+			self.explosion_handler()
+
+		# Handles Effects
+		if self.start_effects:
+			self.effects_handler()
+
+		if not self.state==None:
+			self.draw()
+
+	def update_velocity(self):
+		self.vector+=self.velocity
+		self.speed-=self.grenade_box.slow_down
+		self.velocity.scale_to_length(self.speed)
+		if not self.velocity.length()==0:
+			if self.speed<0:
+				self.speed=0
+				self.state='exploding'
+		self.vector+=self.velocity
+
+	def explosion_handler(self):
+		self.image=self.explosion_images[str(self.current_explosion_image_number)]
+		if self.current_explosion_image_number==self.image_explosion_number_that_damages:
+			self.zombies_hit = pygame.sprite.spritecollide(self, GameState['zombies_collection'], False, pygame.sprite.collide_mask)
+			self.start_effects=True
+			self.time_of_effect=time.time()
+		if time.time()-self.time_of_last_generated_explosion_state>self.grenade_box_update_image_delay:
+			self.time_of_last_generated_explosion_state=time.time()
+			self.current_explosion_image_number+=1
+			if self.current_explosion_image_number==self.maximum_explosion_image_number:
+				self.state=None
+
+	def effects_handler(self):
+		for zombie in self.zombies_hit:
+			zombie.frozen=True
+			if time.time()-self.time_of_effect>self.effect_duration:
+				zombie.frozen=False
+				self.kill()
+
+	def draw(self):
+		DISPLAYSURF.blit(self.image, self.rect)
+
 
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
-		self.zombie_quantities=[1,0,0,0]
-		self.zombie_delays=[3,3,0,0]
+		self.zombie_quantities=[100,100,0,0]
+		self.zombie_delays=[.1,.1,0,0]
 		self.zombie_last_times=[0,0,0,0]
 		self.delays_doubled=False
+
 	def zombie_handler(self):
 		# Generates zombies
 		now=time.time()
@@ -1922,6 +1990,7 @@ class Round:
 		elif len(GameState['zombies_collection'])<current_round.zombie_cap and self.delays_doubled:
 			self.zombie_delays=[i/3 for i in self.zombie_delays]
 			self.delays_doubled=False
+
 	def zombie_generater(self, number):
 		rand_number=int(random.random()*len(current_map.zombie_spawns))
 		if number==0:
