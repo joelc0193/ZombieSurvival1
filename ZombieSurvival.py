@@ -124,7 +124,7 @@ def switched_areas(thing): # find if thing switched areas or not
 	else:
 		return False
 
-def update_survivor_location():  # MOves the survivor
+def update_survivor_location():  # Moves the survivor
 	for event in GameState['events']:
 		# Check to see if a key was pressed or released and updates the state of that keypress
 		if event.type==KEYUP or event.type==KEYDOWN:
@@ -1806,7 +1806,8 @@ class Grenade1_Box(Grenade_Box):
 	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down):
 		Grenade_Box.__init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down)
 		self.image=pygame.image.load('Grenades/Grenade1/grenade.png')
-		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade1/Explosion1.png')
+		# Read in Explosion Pics
+		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade1/Explosion.png')
 		i=0
 		for y in range(0, 768, 192):
 			for x in range(0, 960, 192):
@@ -1816,16 +1817,16 @@ class Grenade1_Box(Grenade_Box):
 					pygame.draw.circle(surface, (255,255,255,2), (surface.get_rect().width/2,surface.get_rect().height/2), (surface.get_rect().height/2)-10)
 				self.explosion_images[str(i)]=pygame.transform.scale(surface, self.explosion_scale)
 				i+=1
+
 	def generate_grenade(self):
 			Grenade1(self, GameState['cursor_vector']-survivor.vector, survivor.vector)
 
 class Grenade2_Box(Grenade_Box):
-	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free):
+	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free):
 		Grenade_Box.__init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down)
 		self.effects_scale=effects_scale
 		self.maximum_effects_image_number=maximum_effects_image_number
 		self.maximum_effects_image_number=maximum_effects_image_number 
-		self.pause_effects_image_number=pause_effects_image_number
 		self.image=pygame.image.load('Grenades/Grenade2/grenade.png')
 		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade2/Explosion.png')
 		self.update_effects_state_image_delay=update_effects_state_image_delay
@@ -1833,6 +1834,7 @@ class Grenade2_Box(Grenade_Box):
 		self.starting_effects_image_oscillation_number=starting_effects_image_oscillation_number
 		self.ending_effects_image_oscillation_number=ending_effects_image_oscillation_number
 		self.effects_image_number_zombie_breaks_free=effects_image_number_zombie_breaks_free
+		# Read in Explosion Pics
 		i=0
 		for y in range(0, 1152, 192):
 			for x in range(0, 960, 192):
@@ -1842,6 +1844,8 @@ class Grenade2_Box(Grenade_Box):
 					pygame.draw.circle(surface, (255,255,255,2), (surface.get_rect().width/2,surface.get_rect().height/2), (surface.get_rect().height/2)-10)
 				self.explosion_images[str(i)]=pygame.transform.scale(surface, self.explosion_scale)
 				i+=1
+
+		# Read in Effects Pics
 		self.image_containing_effects_images=pygame.image.load('Grenades/Grenade2/Effects.png')
 		i=0
 		for y in range(0, 1152, 192):
@@ -1855,12 +1859,11 @@ class Grenade2_Box(Grenade_Box):
 			Grenade2(self, GameState['cursor_vector']-survivor.vector, survivor.vector)
 
 class Grenade3_Box(Grenade_Box):
-	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number):
+	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number):
 		Grenade_Box.__init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down)
 		self.effects_scale=effects_scale
 		self.maximum_effects_image_number=maximum_effects_image_number
 		self.maximum_effects_image_number=maximum_effects_image_number 
-		self.pause_effects_image_number=pause_effects_image_number
 		self.image=pygame.image.load('Grenades/Grenade3/grenade.png')
 		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade3/Explosion.png')
 		self.update_effects_state_image_delay=update_effects_state_image_delay
@@ -1868,6 +1871,7 @@ class Grenade3_Box(Grenade_Box):
 		self.starting_effects_image_oscillation_number=starting_effects_image_oscillation_number
 		self.ending_effects_image_oscillation_number=ending_effects_image_oscillation_number
 		self.effects_image_number_zombie_breaks_free=effects_image_number_zombie_breaks_free
+		# Read in Explosion Pics
 		i=0
 		for y in range(0, 1152, 192):
 			for x in range(0, 960, 192):
@@ -1877,12 +1881,14 @@ class Grenade3_Box(Grenade_Box):
 					pygame.draw.circle(surface, (255,255,255,2), (surface.get_rect().width/2,surface.get_rect().height/2), (surface.get_rect().height/2)-10)
 				self.explosion_images[str(i)]=pygame.transform.scale(surface, self.explosion_scale)
 				i+=1
+
+		# Read in Explosion Pics
 		self.image_containing_effects_images=pygame.image.load('Grenades/Grenade3/Effects.png')
 		i=0
 		for y in range(0, 1152, 192):
 			for x in range(0, 960, 192):
 				surface=pygame.Surface((192, 192), pygame.SRCALPHA, 32)
-				surface.blit(self.image_containing_effects_images, (0,0), (x,y, 192, 192))
+				surface.blit(self.image_containing_effects_images, (0,-30), (x,y, 192, 192))
 				self.effects_images[str(i)]=surface
 				i+=1
 
@@ -1912,12 +1918,12 @@ class Grenade(pygame.sprite.Sprite):
 		self.image_explosion_number_that_damages=self.grenade_box.image_explosion_number_that_damages
 		self.explosion_images=self.grenade_box.explosion_images
 		self.effect_duration=self.grenade_box.effect_duration
-		self.affecting_zombies=None
 		self.speed=self.grenade_box.speed
 		self.state='moving'
 		self.time_of_last_generated_explosion_state=time.time()
 		self.mask=None
 	def update(self):
+		# Updates velocity and state
 		self.vector+=self.velocity
 		self.speed-=self.grenade_box.slow_down
 		if not self.velocity.length()==0:
@@ -1937,10 +1943,10 @@ class Grenade(pygame.sprite.Sprite):
 			self.image=self.explosion_images[str(self.current_explosion_image_number)]
 			self.mask=pygame.mask.from_surface(self.image, 1)
 			if self.current_explosion_image_number==self.image_explosion_number_that_damages:
-				self.zombies_hit=pygame.sprite.spritecollide(self, GameState['zombies_collection'], False, pygame.sprite.collide_mask)				
+				self.zombies_hit=pygame.sprite.spritecollide(self, GameState['zombies_collection'], False, pygame.sprite.collide_mask)			
 				pygame.display.update()
 				for zombie in self.zombies_hit:
-					self.effect(zombie)
+					zombie.was_hit(self, self.grenade_box.damage/len(self.zombies_hit))
 			if time.time()-self.time_of_last_generated_explosion_state>self.grenade_box.update_state_image_delay:
 				self.time_of_last_generated_explosion_state=time.time()
 				self.current_explosion_image_number+=1
@@ -1952,9 +1958,6 @@ class Grenade1(Grenade):
 	def __init__(self, grenade_box, velocity, coords):
 		Grenade.__init__(self, grenade_box, velocity, coords)
 
-	def effect(self, zombie):
-		zombie.was_hit(self, self.grenade_box.damage/len(self.zombies_hit))
-
 class Grenade2(Grenade):
 	def __init__(self, grenade_box, velocity, coords):
 		Grenade.__init__(self, grenade_box, velocity, coords)
@@ -1965,9 +1968,6 @@ class Grenade2(Grenade):
 		self.effects_image_number_going_up=True
 		self.effects_oscillating=False
 		self.update_effects_state_image_delay=self.grenade_box.update_effects_state_image_delay
-
-	def effect(self, zombie):
-		zombie.was_hit(self, self.grenade_box.damage)
 
 	def update(self):
 		self.rect=self.image.get_rect()
@@ -1985,6 +1985,7 @@ class Grenade2(Grenade):
 		if self.start_effects:
 			self.effects_handler()
 
+		# Draws actual Grenade
 		if not self.state==None:
 			self.draw()
 
@@ -2017,8 +2018,9 @@ class Grenade2(Grenade):
 		self.effects_image=self.grenade_box.effects_images[str(self.current_effects_image_number)]
 		self.increase_image_number=False
 		now=time.time()
-		updated_image=False
 		self.update_effects_state_image_delay=(self.grenade_box.effect_duration-(now-self.time_of_effect))*self.grenade_box.update_effects_state_image_delay
+		self.effects_active=now-self.time_of_effect<self.grenade_box.effect_duration
+		self.update_effects_image=now-self.time_of_last_generated_effect_state>self.update_effects_state_image_delay
 		for zombie in self.zombies_hit:
 			self.effects_image=pygame.transform.scale(self.effects_image, [int(i*self.grenade_box.effects_scale) for i in zombie.image.get_rect().size])
 			loc = zombie.image.get_rect().center
@@ -2026,18 +2028,19 @@ class Grenade2(Grenade):
 			rect = rotated_image.get_rect(center=zombie.vector)
 			DISPLAYSURF.blit(rotated_image, rect)
 
-			if self.current_effects_image_number==self.grenade_box.effects_image_number_zombie_breaks_free and now-self.time_of_effect>self.grenade_box.effect_duration:
+			if self.current_effects_image_number==self.grenade_box.effects_image_number_zombie_breaks_free and not self.effects_active:
 				zombie.frozen=False
 
-		if now-self.time_of_last_generated_effect_state>self.update_effects_state_image_delay:
-			updated_image=True
+		# Updates Effects Images
+		if self.update_effects_image:
+			self.time_of_last_generated_effect_state=time.time()
 			if not self.effects_oscillating:
 				self.current_effects_image_number+=1
 				if self.current_effects_image_number==self.grenade_box.starting_effects_image_oscillation_number:
 					self.effects_oscillating=True
 
 			if self.effects_oscillating:
-				if now-self.time_of_effect>self.grenade_box.effect_duration:
+				if not self.effects_active:
 					self.effects_image_number_going_up=True
 				if self.effects_image_number_going_up:
 					self.current_effects_image_number+=1
@@ -2048,8 +2051,6 @@ class Grenade2(Grenade):
 					if self.current_effects_image_number==self.grenade_box.starting_effects_image_oscillation_number:
 						self.effects_image_number_going_up=True
 
-		if updated_image:
-			self.time_of_last_generated_effect_state=time.time()
 		if self.current_effects_image_number==self.grenade_box.maximum_effects_image_number:
 			self.kill()
 
@@ -2069,9 +2070,6 @@ class Grenade3(Grenade):
 		self.last_time_of_burn_damage=0
 		self.zombies_hit=pygame.sprite.Group()
 
-	def effect(self, zombie):
-		zombie.was_hit(self, self.grenade_box.damage)
-
 	def update(self):
 		self.rect=self.image.get_rect()
 		self.rect.center=self.vector
@@ -2088,6 +2086,7 @@ class Grenade3(Grenade):
 		if self.start_effects:
 			self.effects_handler()
 
+		# Draws actual Grenade
 		if not self.state==None:
 			self.draw()
 
@@ -2120,7 +2119,6 @@ class Grenade3(Grenade):
 		self.effects_image=self.grenade_box.effects_images[str(self.current_effects_image_number)]
 		self.increase_image_number=False
 		now=time.time()
-		updated_image=False
 		self.update_effects_state_image_delay=self.grenade_box.update_effects_state_image_delay
 		self.effects_active=now-self.time_of_effect<self.grenade_box.effect_duration
 		self.update_effects_image=now-self.time_of_last_generated_effect_state>self.update_effects_state_image_delay
@@ -2132,12 +2130,10 @@ class Grenade3(Grenade):
 			rect = rotated_image.get_rect(center=zombie.vector)
 			DISPLAYSURF.blit(rotated_image, rect)
 
-			if self.current_effects_image_number==self.grenade_box.effects_image_number_zombie_breaks_free and self.effects_active:
-				zombie.frozen=False
-
 			if self.time_to_burn:
 				zombie.was_hit(self, self.grenade_box.damage)
 
+		# Updates Effects Images
 		if self.update_effects_image:
 			updated_image=True
 			self.time_of_last_generated_effect_state=now
@@ -2247,7 +2243,7 @@ damage=200
 scale=(10,20)
 explosion_scale=(100,100)
 speed=4.5
-image_explosion_number_that_damages=9
+image_explosion_number_that_damages=5
 maximum_explosion_image_number=20
 effect_duration=0
 slow_down=.2
@@ -2262,7 +2258,6 @@ speed=4.5
 image_explosion_number_that_damages=5
 maximum_explosion_image_number=14
 maximum_effects_image_number=25
-pause_effects_image_number=17
 effect_duration=5
 slow_down=.2
 update_effects_state_image_delay=0.03
@@ -2270,25 +2265,24 @@ number_of_starting_effects_image=5
 starting_effects_image_oscillation_number=8
 ending_effects_image_oscillation_number=14
 effects_image_number_zombie_breaks_free=18
-grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free)
+grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free)
 survivor.grenade_boxes.append(grenade2_box)
 
 damage=10
 scale=(10,20)
-effects_scale=.4
+effects_scale=.3
 explosion_scale=(500,500)
 speed=4.5
 image_explosion_number_that_damages=5
 maximum_explosion_image_number=14
 maximum_effects_image_number=20
-pause_effects_image_number=17
 effect_duration=5
 slow_down=.2
 update_effects_state_image_delay=0.03
 number_of_starting_effects_image=0
 starting_effects_image_oscillation_number=0
 ending_effects_image_oscillation_number=19
-grenade3_box=Grenade3_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number)
+grenade3_box=Grenade3_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number)
 survivor.grenade_boxes.append(grenade3_box)
 
 # g=deepcopy(current_map.original_graph)
@@ -2415,19 +2409,18 @@ def main():
 		if not GameState['paused']:
 			# Draws the game. (rooms, walls, areas, nodes)
 			draw_game([0, 0, 0,0])
-			# Gets all the events
 			# Moves and draws survivor
 			update_survivor_location()
 			# Makes bullets based on time of click and time elapsed between last time click was checked and now
 			survivor.weapon.bullet_handler()
-			# Grenade Handler
-			survivor.grenade_handler()
 			# Updates each bullet's location and draws it on DISPLAYSURF
 			update_projectile_locations()
 			# Calls the generate function of each spawn location
 			current_round.zombie_handler()
 			# Moves Zombies
 			move_zombies()
+			# Grenade Handler
+			survivor.grenade_handler()
 			# Updates and displays all game bars onto the screen
 			menu_displayer()
 			# Draw survivor
