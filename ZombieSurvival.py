@@ -1786,7 +1786,7 @@ class Grenade_Box:
 		self.area_covered=10
 		self.area_covered_upgrades=[1,2,3,4]
 		self.upgrade_area_covered_cost=3
-		self.ammo_capacity=max_mag_ammo
+		self.ammo_capacity=3
 		self.ammo_capacity_upgrades=[1,2,3,4]
 		self.upgrade_ammo_capacity_cost=3
 		self.timer=2
@@ -1795,7 +1795,7 @@ class Grenade_Box:
 		self.slow_down=.2
 		self.explosion_images={}
 		self.effects_images={}
-		self.grenades_left=20
+		self.grenades_left=1
 		self.image_explosion_number_that_damages=image_explosion_number_that_damages
 		self.maximum_explosion_image_number=maximum_explosion_image_number
 		self.effect_duration=effect_duration
@@ -2136,7 +2136,7 @@ class Grenade3(Grenade):
 				zombie.frozen=False
 
 			if self.time_to_burn:
-				zombie.was_hit(self, damage)
+				zombie.was_hit(self, self.grenade_box.damage)
 
 		if self.update_effects_image:
 			updated_image=True
@@ -2169,7 +2169,7 @@ class Grenade3(Grenade):
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
-		self.zombie_quantities=[100,100,0,0]
+		self.zombie_quantities=[1,0,0,0]
 		self.zombie_delays=[.1,.1,0,0]
 		self.zombie_last_times=[0,0,0,0]
 		self.delays_doubled=False
