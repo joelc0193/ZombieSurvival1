@@ -1004,7 +1004,7 @@ class Explosives_Tab:
 		surface_left=350
 		surface_top=210
 		surface_width=600
-		surface_height=100*len(survivor.grenade_boxes)-len(survivor.grenade_boxes)
+		surface_height=100*len(survivor.grenade_boxes)-(2*len(survivor.grenade_boxes))
 		surface=pygame.Surface((surface_width, surface_height))
 		surface.fill(INDIGOBLUE)
 
@@ -1090,7 +1090,7 @@ class Explosives_Tab:
 				text_surface_obj = text_obj.render('$'+str(grenade_box.upgrade_ammo_capacity_cost), True, BLACK)
 				# Upgrade Ammo Capacity Box
 				button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, grenade_box, 'ammo_capacity', grenade_box.upgrade_ammo_capacity_cost, grenade_box.ammo_capacity_upgrades, text_surface_obj)
-			TOP+=HEIGHT-1
+			TOP+=HEIGHT-2
 			if surface_height>350:
 				for event in GameState['events']:
 					if event.type==MOUSEBUTTONDOWN:
@@ -1110,9 +1110,8 @@ class Explosives_Tab:
 					if not (item.rect1.top-GameState['place_to_start']<350 or (item.rect1.top+item.height)-GameState['place_to_start']<0):
 						item.rect1=pygame.Rect(-10,-10,1,1)
 						item.rect=pygame.Rect(-10,-10,1,1)
-						print 'here'
 					item.draw()
-			DISPLAYSURF.blit(surface, (surface_left, surface_top), (0, GameState['place_to_start'], surface_width, 350))
+			DISPLAYSURF.blit(surface, (surface_left, surface_top), (0, GameState['place_to_start'], surface_width, 349))
 	def tab_handler(self):
 		rects=[]
 		if GameState['MouseButtonPressed']:
