@@ -463,11 +463,11 @@ def menu_displayer():
 	pygame.draw.rect(DISPLAYSURF, BLACK, menu_outline, 2)
 
 	
-	# word: 'Armor'
+	# word: 'Health'
 	SPACEAWAYFROMLEFT=10
 	SPACEAWAYFROMTOP=10
 	health_text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 16)
-	health_text_surface_obj = health_text_obj.render('Armor:', True, BLACK)
+	health_text_surface_obj = health_text_obj.render('Health:', True, BLACK)
 	DISPLAYSURF.blit(health_text_surface_obj, (MENUTOPLEFT[0]+SPACEAWAYFROMLEFT, SPACEAWAYFROMTOP))
 	# word: 'Armor'
 	SPACEAWAYFROMLEFT=8
@@ -476,23 +476,23 @@ def menu_displayer():
 	health_text_surface_obj = health_text_obj.render('Armor:', True, BLACK)
 	DISPLAYSURF.blit(health_text_surface_obj, (MENUTOPLEFT[0]+SPACEAWAYFROMLEFT, SPACEAWAYFROMTOP))
 	
-	# Armor Bar Outline
+	# Health Bar Outline
 	BARWIDTH=200
 	BARHEIGHT=13
 	SPACEAWAYFROMLEFT=50
 	SPACEAWAYFROMTOP=15
-	health_bar=pygame.Rect(MENUTOPLEFT[0]+SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP,BARWIDTH, BARHEIGHT)
-	pygame.draw.rect(DISPLAYSURF, BLACK, health_bar,2)
+	health_bar_outline=pygame.Rect(MENUTOPLEFT[0]+SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP,BARWIDTH, BARHEIGHT)
+	pygame.draw.rect(DISPLAYSURF, BLACK, health_bar_outline,2)
 
 	# Armor Bar Outline
 	BARWIDTH=200
 	BARHEIGHT=13
 	SPACEAWAYFROMLEFT=50
 	SPACEAWAYFROMTOP=40
-	armor_bar=pygame.Rect(MENUTOPLEFT[0]+SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP,BARWIDTH, BARHEIGHT)
-	pygame.draw.rect(DISPLAYSURF, BLACK, armor_bar,2)
+	armor_bar_outline=pygame.Rect(MENUTOPLEFT[0]+SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP,BARWIDTH, BARHEIGHT)
+	pygame.draw.rect(DISPLAYSURF, BLACK, armor_bar_outline,2)
 
-	# Armor Bar
+	# Health Bar
 	BARMAXWIDTH=197
 	if not survivor.current_health<=0:
 		BARWIDTH=(float(survivor.current_health)/survivor.max_health)*BARMAXWIDTH
@@ -522,19 +522,17 @@ def menu_displayer():
 	health_text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 14)
 	if survivor.current_health>=0:
 		health_text_surface_obj = health_text_obj.render(str(survivor.current_health)+'/'+str(survivor.max_health), True, BLACK)
-		health_text_surface_obj_rect=health_text_surface_obj.get_rect(center=health_bar.center)
 	else:
 		health_text_surface_obj = health_text_obj.render('0/0', True, BLACK)
-		health_text_surface_obj_rect=health_text_surface_obj.get_rect(center=health_bar.center)
+	health_text_surface_obj_rect=health_text_surface_obj.get_rect(center=health_bar_outline.center)
 	DISPLAYSURF.blit(health_text_surface_obj, health_text_surface_obj_rect)
 	# Armor Fraction
 	armor_text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 14)
 	if survivor.current_armor>=0:
 		armor_text_surface_obj = armor_text_obj.render(str(survivor.current_armor)+'/'+str(survivor.max_armor), True, BLACK)
-		armor_text_surface_obj_rect=armor_text_surface_obj.get_rect(center=armor_bar.center)
 	else:
 		armor_text_surface_obj = armor_text_obj.render('0/0', True, BLACK)
-		armor_text_surface_obj_rect=armor_text_surface_obj.get_rect(center=armor_bar.center)
+	armor_text_surface_obj_rect=armor_text_surface_obj.get_rect(center=armor_bar_outline.center)
 	DISPLAYSURF.blit(armor_text_surface_obj, armor_text_surface_obj_rect)
 
 	# Money counter
@@ -707,12 +705,12 @@ class Player_Tab:
 		TOP=260
 		WIDTH=600
 		HEIGHT=100
-		# Max Armor Container
+		# Max Health Container
 		item = Menu_Item(LEFT+50, TOP+10, 235, 40, 'max_health', INDIGOBLUE, BLACK)
 		item.draw()
-		# Max Armor Text
+		# Max Health Text
 		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-		text_surface_obj = text_obj.render('Max Armor: '+str(survivor.max_health), True, BLACK)
+		text_surface_obj = text_obj.render('Max Health: '+str(survivor.max_health), True, BLACK)
 		text_surface_obj_rect=text_surface_obj.get_rect(topleft=((LEFT+70, TOP+10)))
 		DISPLAYSURF.blit(text_surface_obj, text_surface_obj_rect)
 		# Next Upgrade
@@ -2432,6 +2430,8 @@ def main():
 		GameState['events']=pygame.event.get()
 		# Determines the location of cursor and if quit game
 		cursor_actions_tracker()
+		# Draws the game. (rooms, walls, areas, nodes)
+		draw_game([0, 0, 0,0])
 		# Updates and displays all game bars onto the screen
 		menu_displayer()
 		# If pause, open pause menu
@@ -2439,8 +2439,6 @@ def main():
 			pause_menu()
 		# If not pause, continue game
 		if not GameState['paused']:
-			# Draws the game. (rooms, walls, areas, nodes)
-			draw_game([0, 0, 0,0])
 			# Gets all the events
 			# Moves and draws survivor
 			update_survivor_location()
