@@ -126,6 +126,7 @@ def switched_areas(thing): # find if thing switched areas or not
 
 def update_survivor_location():  # MOves the survivor
 	for event in GameState['events']:
+		print event
 		# Check to see if a key was pressed or released and updates the state of that keypress
 		if event.type==KEYUP or event.type==KEYDOWN:
 			if event.key==273 or event.key==119:
@@ -313,10 +314,10 @@ def cursor_actions_tracker():
 			sys.exit()
 
 		# If mouse button was clicked, sets flag so that generate_function knows to keep generating bullets
-		if event.type==MOUSEBUTTONDOWN:
+		if event.type==MOUSEBUTTONDOWN and event.button==1:
 			GameState['MouseButtonDown']=True
 			GameState['MouseButtonPressed']=True
-		elif event.type==MOUSEBUTTONUP: # If mouse button was released, sets flag so that no more projectiles are produced
+		elif event.type==MOUSEBUTTONUP and event.button==1: # If mouse button was released, sets flag so that no more projectiles are produced
 			GameState['MouseButtonDown']=False
 def update_projectile_locations(): # updates the bullets
 	for bullet in GameState['projectiles']: # For each projectile
@@ -955,7 +956,23 @@ class Weapons_Tab:
 				text_surface_obj = text_obj.render('$'+str(weapon.upgrade_max_weapon_ammo_cost), True, BLACK)
 				text_surface_obj_rect=text_surface_obj.get_rect(center=button.rect.center)
 				surface.blit(text_surface_obj, text_surface_obj_rect)
-			TOP+=HEIGHT
+			TOP+=HEIGHT-1
+			if surface_height>350:
+				for event in GameState['events']:
+					if event.type==MOUSEBUTTONDOWN:
+						if GameState['big_blue_square'].collidepoint(event.pos):
+							if event.button==4:
+								GameState['place_to_start']-=2
+							elif event.button==5:
+								GameState['place_to_start']+=2
+				if GameState['place_to_start']<=0:
+					GameState['place_to_start']=0
+				elif GameState['place_to_start']+350>=surface_height:
+					GameState['place_to_start']=surface_height-350
+			for item in GameState['menu_items']:
+				if isinstance(item, Upgrade_Button):
+					item.rect=pygame.Rect(item.left+surface_left, item.top+surface_top-GameState['place_to_start'], item.width, item.height)
+			DISPLAYSURF.blit(surface, (surface_left, surface_top), (0, GameState['place_to_start'], surface_width, 350))
 
 	def tab_handler(self):
 		i=0
@@ -1095,9 +1112,6 @@ class Explosives_Tab:
 				text_surface_obj_rect=text_surface_obj.get_rect(center=button.rect.center)
 				surface.blit(text_surface_obj, text_surface_obj_rect)
 			TOP+=HEIGHT-1
-			for item in GameState['menu_items']:
-				if isinstance(item, Upgrade_Button):
-					item.rect=pygame.Rect(item.left+surface_left, item.top+surface_top, item.width, item.height)
 			if surface_height>350:
 				for event in GameState['events']:
 					if event.type==MOUSEBUTTONDOWN:
@@ -1110,6 +1124,9 @@ class Explosives_Tab:
 					GameState['place_to_start']=0
 				elif GameState['place_to_start']+350>=surface_height:
 					GameState['place_to_start']=surface_height-350
+			for item in GameState['menu_items']:
+				if isinstance(item, Upgrade_Button):
+					item.rect=pygame.Rect(item.left+surface_left, item.top+surface_top-GameState['place_to_start'], item.width, item.height)
 			DISPLAYSURF.blit(surface, (surface_left, surface_top), (0, GameState['place_to_start'], surface_width, 350))
 	def tab_handler(self):
 		rects=[]
@@ -2504,7 +2521,6 @@ def main():
 	GameState['paused']=False
 	while True:
 		GameState['events']=pygame.event.get()
-		print len(GameState['events'])
 		# Determines the location of cursor and if quit game
 		cursor_actions_tracker()
 		# Draws the game. (rooms, walls, areas, nodes)
