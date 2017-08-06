@@ -2432,6 +2432,8 @@ def main():
 		GameState['events']=pygame.event.get()
 		# Determines the location of cursor and if quit game
 		cursor_actions_tracker()
+		# Updates and displays all game bars onto the screen
+		menu_displayer()
 		# If pause, open pause menu
 		if GameState['paused']:
 			pause_menu()
@@ -2444,16 +2446,14 @@ def main():
 			update_survivor_location()
 			# Makes bullets based on time of click and time elapsed between last time click was checked and now
 			survivor.weapon.bullet_handler()
-			# Grenade Handler
-			survivor.grenade_handler()
 			# Updates each bullet's location and draws it on DISPLAYSURF
 			update_projectile_locations()
 			# Calls the generate function of each spawn location
 			current_round.zombie_handler()
 			# Moves Zombies
 			move_zombies()
-			# Updates and displays all game bars onto the screen
-			menu_displayer()
+			# Grenade Handler
+			survivor.grenade_handler()
 			# Draw survivor
 			survivor.prepare()
 			survivor.draw()
