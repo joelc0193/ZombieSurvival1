@@ -380,14 +380,20 @@ def rotate_image(thing,string): # rotates images
 		thing.rect.center = thing.vector
 		return rotated_sprite
 	elif string=='bullet':
-		loc = thing.image.get_rect().center  #rot_image is not defined 
+		loc = thing.image.get_rect().center  
 		rot_sprite = pygame.transform.rotate(thing.image, -thing.angle)
 		rot_sprite.get_rect().center = loc
 		return rot_sprite
 	elif string=='wall_check':
-		loc = thing.image.get_rect().center  #rot_image is not defined 
+		loc = thing.image.get_rect().center  
 		rot_sprite = pygame.transform.rotate(thing.image, -thing.angle+90)
 		return rot_sprite
+	elif string=='turret':
+		loc = thing.image.get_rect().center  
+		rot_sprite = pygame.transform.rotate(thing.image, -thing.angle)
+		rot_sprite.get_rect().center = loc
+		return rot_sprite
+		
 
 def find_current_location(coords, locations): # finds current location
 	for location in locations:
@@ -1529,8 +1535,8 @@ class Projectile(pygame.sprite.Sprite):
 		pygame.sprite.Sprite.__init__(self, GameState['projectiles'])
 		self.weapon_originated=weapon
 		self.image=pygame.image.load('Bullets/bullet.png')
-		self.width=5
-		self.height=5
+		self.width=7
+		self.height=7
 		self.remove_later=False
 		self.image=pygame.transform.scale(self.image, (self.width, self.height))
 		self.color = color
@@ -2227,6 +2233,69 @@ class Grenade3(Grenade):
 	def draw(self):
 		DISPLAYSURF.blit(self.image, self.rect)
 
+class Turret:
+	def __init__(self, damage, shooting_delay, coords, bullet_speed, scale, weapon_size):
+		self.image=pygame.transform.scale(pygame.image.load('Turrets/Turret0/turret.png'), scale)
+		self.rotated_image=self.image
+		self.weapon_size=Vector2(weapon_size)
+		self.rect=self.image.get_rect().center=coords
+		self.damage=damage
+		self.shooting_delay=shooting_delay
+		self.vector=Vector2(coords)
+		self.closest_target=None
+		self.bullet_speed=bullet_speed
+		self.angle=100
+		self.angle_to_target=0
+		self.target=None
+		self.angle_from_center_to_target=0
+		self.current_area=None
+		self.last_time_bullet_shot=0
+		self.ammo_left=100000000
+		self.penetration=2
+		self.bullet_speed=40
+		self.angular_velocity=1
+	def prepare(self):
+		self.target=None
+		self.distance_to_target=99999
+		self.angle_from_center_to_target=0
+		for zombie in GameState['zombies_collection']:
+			current_look=current_map.paths[(self.current_area.center_xcoord,self.current_area.center_ycoord),(zombie.current_area.center_xcoord, zombie.current_area.center_ycoord)]
+			if len(current_look[0])<=2:
+				if self.vector.distance_to(zombie.vector)>=self.distance_from_center_to_tip_of_weapon:
+					self.distance_to_target=current_look[1]
+					self.target=zombie
+		if not self.target==None:
+			self.distance_to_target, self.angle_from_center_to_target=(self.target.vector-self.vector).as_polar()
+			self.rotated_image=pygame.transform.rotate(self.image, -self.angle_from_center_to_target-90)
+			self.rect=self.rotated_image.get_rect()
+			self.rect.center=self.vector
+		if self.target!=None:
+			self.bullet_handler()
+	def draw(self):
+		DISPLAYSURF.blit(self.rotated_image, self.rect)
+
+	def bullet_handler(self):
+		self.new_projectile_coords=Vector2()
+		self.new_projectile_coords.from_polar((self.distance_from_center_to_tip_of_weapon, self.angle_from_center_to_tip_of_weapon+self.angle_from_center_to_target))
+		self.new_projectile_coords+=self.vector
+		now=time.time()
+		if (now-self.last_time_bullet_shot>=self.shooting_delay):
+			self.last_time_bullet_shot=now-self.shooting_delay
+			total_number=int(round((now-self.last_time_bullet_shot)/self.shooting_delay))
+			bullets_fired=0
+			for bullet_number in range(1,total_number+1):
+				if self.ammo_left>0:
+					bullet = Projectile(self.new_projectile_coords, self.bullet_speed, self.angle_from_center_to_target, bullet_number, total_number, self)
+					bullet.current_area=find_current_location(bullet.vector, current_map.areas)
+					bullet.current_area.entities_on.add(bullet)
+					self.ammo_left-=1
+					bullets_fired+=1
+					self.last_time_bullet_shot=now
+				else:
+					break
+
+turret0=Turret(0, .1, (300,250), 3, (100,150), (70,0))
+
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
@@ -2454,6 +2523,10 @@ for wall in current_map.rooms:
 for index in range(0,len(current_map.areas)):
 	current_map.nodes.append((current_map.areas[index].center_coords[0],current_map.areas[index].center_coords[1]))
 
+turret0.current_area=find_current_location(turret0.vector, current_map.areas)
+
+turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
+
 def main():
 	pygame.init()
 	global fpsClock, DISPLAYSURF, GameState, survivor, current_map, player_tab, weapons_tab, explosives_tab, turrets_tab
@@ -2494,6 +2567,8 @@ def main():
 			# Draw survivor
 			survivor.prepare()
 			survivor.draw()
+			turret0.prepare()
+			turret0.draw()
 		# updates game window with final DISPLAYSURF
 		pygame.display.update()
 		# Waits a certin amount of time before starting loop again
