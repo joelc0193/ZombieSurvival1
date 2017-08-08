@@ -4,6 +4,9 @@ from pygame.math import Vector2
 from math import *
 from copy import deepcopy
 
+pygame.init()
+
+
 class Image_Store:
 	def __init__(self, key, size, scale):
 		self.key=key
@@ -1317,9 +1320,9 @@ class Explosives_Tab:
 				if event.type==MOUSEBUTTONDOWN:
 					if GameState['big_blue_square'].collidepoint(event.pos):
 						if event.button==4:
-							GameState['place_to_start']-=2
+							GameState['place_to_start']-=20
 						elif event.button==5:
-							GameState['place_to_start']+=2
+							GameState['place_to_start']+=20
 			if GameState['place_to_start']<=0:
 				GameState['place_to_start']=0
 			elif GameState['place_to_start']+350>=surface_height:
@@ -1428,25 +1431,25 @@ class Turrets_Tab:
 					text_surface_obj = text_obj.render('$'+str(turret.upgrade_penetration_cost), True, BLACK)
 					# Upgrade Penetration Box
 					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, turret, 'penetration', turret.upgrade_penetration_cost, turret.penetration_upgrades, text_surface_obj)
-				# # Timer Container
-				# item = Menu_Item(surface, LEFT+340, TOP+50, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
-				# item.draw()
-				# # Timer Text
-				# text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				# text_surface_obj = text_obj.render('Timer: '+str(turret.timer), True, BLACK)
-				# text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+350, TOP+50))
-				# surface.blit(text_surface_obj, text_surface_obj_rect)
-				# if not len(turret.timer_upgrades)==0:
-				# 	# Next Upgrade
-				# 	text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-				# 	text_surface_obj = text_obj.render(str(turret.timer_upgrades[0]), True, GREEN)
-				# 	text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
-				# 	surface.blit(text_surface_obj, text_surface_obj_rect)
-				# 	# Upgrade Timer Cost
-				# 	text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-				# 	text_surface_obj = text_obj.render('$'+str(turret.upgrade_timer_cost), True, BLACK)
-				# 	# Upgrade Timer Box
-				# 	button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, turret, 'timer', turret.upgrade_timer_cost, turret.timer_upgrades, text_surface_obj)
+				# Buy Ammo Container
+				item = Menu_Item(surface, LEFT+340, TOP+10, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
+				item.draw()
+				# Buy Ammo Text
+				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+				text_surface_obj = text_obj.render('Ammo: '+str(turret.ammo_left), True, BLACK)
+				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+350, TOP+50))
+				surface.blit(text_surface_obj, text_surface_obj_rect)
+				if not turret.ammo_left>=999:
+					# Next Upgrade
+					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+					text_surface_obj = text_obj.render(str(turret.buy_ammo_quantity[0]), True, GREEN)
+					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
+					surface.blit(text_surface_obj, text_surface_obj_rect)
+					# Upgrade Buy Ammo Cost
+					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+					text_surface_obj = text_obj.render('$'+str(turret.buy_ammo_cost), True, BLACK)
+					# Upgrade Buy Ammo Box
+					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'buy', RED, BLACK, turret, 'ammo_left', turret.buy_ammo_cost, turret.buy_ammo_quantity, text_surface_obj)
 				# Ammo Capacity Container
 				# item = Menu_Item(surface, LEFT+340, TOP+10, 240, 40, 'ammo_capacity', INDIGOBLUE, INDIGOBLUE)
 				# item.draw()
@@ -1478,7 +1481,7 @@ class Turrets_Tab:
 				item.draw()
 				# Picture
 				surface.blit(pygame.transform.scale(turret.image, (90,90)), (LEFT+15, TOP+5))
-				# Damage Container
+			# Damage Container
 				item = Menu_Item(surface, LEFT+110, TOP+10, 190, 40, 'damage', INDIGOBLUE, INDIGOBLUE)
 				item.draw()
 				# Damage Text
@@ -1486,37 +1489,28 @@ class Turrets_Tab:
 				text_surface_obj = text_obj.render('Damage: '+str(turret.damage), True, BLACK)
 				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+120, TOP+10))
 				surface.blit(text_surface_obj, text_surface_obj_rect)
-				# Next Upgrade
-				if not len(turret.damage_upgrades)==0:
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('+'+str(turret.damage_upgrades[0]), True, GREEN)
-					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
-					surface.blit(text_surface_obj, text_surface_obj_rect)
-					# Upgrade Damage Cost
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('$'+str(turret.upgrade_damage_cost), True, BLACK)
-					# Upgrade Damage Box
-					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, turret, 'damage', turret.upgrade_damage_cost, turret.damage_upgrades, text_surface_obj)
-				# Penetration Container
+			# Penetration Container
 				item = Menu_Item(surface, LEFT+110, TOP+50, 210, 40, 'penetration', INDIGOBLUE, INDIGOBLUE)
 				item.draw()
 				# Penetration Text
 				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
 				text_surface_obj = text_obj.render('Penetration: '+str(turret.penetration), True, BLACK)
 				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+120, TOP+50))
+				surface.blit(text_surface_obj, text_surface_obj_rect)				
+			# Buy Turret Container
+				item = Menu_Item(surface, LEFT+340, TOP+10, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
+				item.draw()
+				# Buy Turret Text
+				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+				text_surface_obj = text_obj.render('Buy Turret: '+str(turret.buy_turret_cost), True, BLACK)
+				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+350, TOP+30))
 				surface.blit(text_surface_obj, text_surface_obj_rect)
-				if not len(turret.penetration_upgrades)==0:
-					# Next Upgrade
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('+'+str(turret.penetration_upgrades[0]), True, GREEN)
-					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
-					surface.blit(text_surface_obj, text_surface_obj_rect)
-					# Upgrade Penetration Cost
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('$'+str(turret.upgrade_penetration_cost), True, BLACK)
-					# Upgrade Penetration Box
-					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, turret, 'penetration', turret.upgrade_penetration_cost, turret.penetration_upgrades, text_surface_obj)
-				# # Timer Container
+				# Buy Turret Cost
+				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				text_surface_obj = text_obj.render('$'+str(turret.buy_turret_cost), True, BLACK)
+				# Buy Turret Box
+				button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top+8, 30, 20, 'buy_turret', RED, BLACK, turret, 'whatever', turret.buy_turret_cost, 0, text_surface_obj)
+					# # Timer Container
 				# item = Menu_Item(surface, LEFT+340, TOP+50, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
 				# item.draw()
 				# # Timer Text
@@ -1561,9 +1555,9 @@ class Turrets_Tab:
 				if event.type==MOUSEBUTTONDOWN:
 					if GameState['big_blue_square'].collidepoint(event.pos):
 						if event.button==4:
-							GameState['place_to_start']-=2
+							GameState['place_to_start']-=20
 						elif event.button==5:
-							GameState['place_to_start']+=2
+							GameState['place_to_start']+=20
 			if GameState['place_to_start']<=0:
 				GameState['place_to_start']=0
 			elif GameState['place_to_start']+350>=surface_height:
@@ -1590,9 +1584,15 @@ class Turrets_Tab:
 							weapon=item.weapon
 							field_upgrade_cost=item.field_upgrade_cost
 							field_upgrades=item.field_upgrades
-							x = getattr(weapon, item.weapon_field)
-							setattr(weapon, item.weapon_field, x+field_upgrades[0])
-							del field_upgrades[0]
+							if not item.name=='buy_turret':
+								x = getattr(weapon, item.weapon_field)
+								setattr(weapon, item.weapon_field, x+field_upgrades[0])
+							if item.name=='buy_turret':
+								GameState['placing_turret']=True
+								GameState['turret_to_buy']=item.weapon
+								GameState['MouseButtonPressed']=False
+							if item.name=='upgrade':
+								del field_upgrades[0]
 		pygame.sprite.Group.empty(GameState['menu_items'])
 
 
@@ -1635,7 +1635,9 @@ GameState={
 'menu_items':pygame.sprite.Group(),
 'active_tab':None,
 'place_to_start':0,
-'big_blue_square':None
+'big_blue_square':None,
+'placing_turret':False,
+'turret_to_buy':None
 }
 
 class Map:
@@ -2695,7 +2697,7 @@ class Grenade3(Grenade):
 
 class Turret(pygame.sprite.Sprite):
 	def __init__(self, damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, number):
-		pygame.sprite.Sprite.__init__(self, GameState['active_turrets'])
+		pygame.sprite.Sprite.__init__(self)
 		self.image=pygame.transform.scale(pygame.image.load('Turrets/Turret0/turret.png'), scale)
 		self.number=number
 		self.number_text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
@@ -2704,9 +2706,12 @@ class Turret(pygame.sprite.Sprite):
 		self.image.blit(self.number_text_surface_obj, self.number_text_surface_obj_rect)
 		self.weapon_size=Vector2(weapon_size)
 		self.rect=self.image.get_rect(center=coords)
+		self.buy_turret_cost=20
 		self.damage=damage
 		self.damage_upgrades=[5,4,3,2]
 		self.upgrade_damage_cost=20
+		self.buy_ammo_quantity=[50]
+		self.buy_ammo_cost=100
 		self.penetration=penetration
 		self.penetration_upgrades=[5,4,3,2]
 		self.upgrade_penetration_cost=20
@@ -2744,17 +2749,18 @@ class Turret(pygame.sprite.Sprite):
 
 		self.target=None
 		self.distance_to_target=99999
-		if self.ammo_left>0:
-			for zombie in GameState['active_zombies']:
-				current_look=current_map.paths[(self.current_area.center_xcoord,self.current_area.center_ycoord),(zombie.current_area.center_xcoord, zombie.current_area.center_ycoord)]
-				if len(current_look[0])<=2:
-					distance=self.vector.distance_to(zombie.vector)
-					if distance>=self.distance_from_center_to_tip_of_weapon and distance<self.distance_to_target:
-						# wall_check=Wall_Check(self.vector, zombie.vector, 7)
-						# walls_hit = pygame.sprite.spritecollide(wall_check, current_map.walls, False, pygame.sprite.collide_mask)
-						# if not walls_hit:
-						self.distance_to_target=distance
-						self.target=zombie
+		if not GameState['turret_to_buy']==self:
+			if self.ammo_left>0:
+				for zombie in GameState['active_zombies']:
+					current_look=current_map.paths[(self.current_area.center_xcoord,self.current_area.center_ycoord),(zombie.current_area.center_xcoord, zombie.current_area.center_ycoord)]
+					if len(current_look[0])<=2:
+						distance=self.vector.distance_to(zombie.vector)
+						if distance>=self.distance_from_center_to_tip_of_weapon and distance<self.distance_to_target:
+							# wall_check=Wall_Check(self.vector, zombie.vector, 7)
+							# walls_hit = pygame.sprite.spritecollide(wall_check, current_map.walls, False, pygame.sprite.collide_mask)
+							# if not walls_hit:
+							self.distance_to_target=distance
+							self.target=zombie
 
 		if not self.target==None:
 			self.distance_to_target, self.angle_from_center_to_target=(self.target.vector-self.vector).as_polar()
@@ -2786,6 +2792,49 @@ class Turret(pygame.sprite.Sprite):
 				else:
 					break
 
+damage=100
+shooting_delay=1
+coords=[0,0]
+bullet_speed=50
+scale=(120,120)
+weapon_size=(70,0)
+bullet_scale=(7,7)
+turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, 0)
+turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
+GameState['turrets_collection'].add(turret0)
+
+damage=100
+shooting_delay=1
+coords=[0,0]
+bullet_speed=50
+scale=(120,120)
+weapon_size=(70,0)
+bullet_scale=(7,7)
+turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, 0)
+turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
+GameState['turrets_collection'].add(turret0)
+
+damage=100
+shooting_delay=1
+coords=[0,0]
+bullet_speed=50
+scale=(120,120)
+weapon_size=(70,0)
+bullet_scale=(7,7)
+turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, 0)
+turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
+GameState['turrets_collection'].add(turret0)
+
+damage=100
+shooting_delay=1
+coords=[0,0]
+bullet_speed=50
+scale=(120,120)
+weapon_size=(70,0)
+bullet_scale=(7,7)
+turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, 0)
+turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
+GameState['turrets_collection'].add(turret0)
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
@@ -2836,15 +2885,13 @@ class Round:
 		return generated_zombie
 
 def turrets_handler():
-	GameState['J_pressed']=False
-	for event in GameState['events']:
-		if event.type==KEYDOWN and event.unicode=='j':
-			GameState['J_pressed']=True
-
-	if GameState['J_pressed']:
+	for turret in GameState['active_turrets']:
+		turret.prepare()
+		turret.draw()
+	if GameState['MouseButtonPressed']:
 		damage=100
 		shooting_delay=1
-		coords=survivor.vector
+		coords=GameState['cursor_vector']
 		bullet_speed=50
 		scale=(120,120)
 		weapon_size=(70,0)
@@ -2852,9 +2899,9 @@ def turrets_handler():
 		turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, len(GameState['active_turrets'])+1)
 		turret0.current_area=find_current_location(turret0.vector, current_map.areas)
 		turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
-	for turret in GameState['active_turrets']:
-		turret.prepare()
-		turret.draw()
+		GameState['active_turrets'].add(turret0)
+		GameState['turret_to_buy']=None
+		GameState['placing_turret']=False
 
 GameState['maps']=[]
 rooms=[[(184,98),(620,314)], [(184,314),(620,410)], [(184,410),(430,590)], [(430,410),(557,590)], [(557,410),(814,590)], [(814,410),(975,590)], [(975,345),(1157,590)], [(620,218),(1157,345)], [(620,98),(1157,218)], [(620,345),(975,410)]]
@@ -3094,9 +3141,7 @@ for wall in current_map.rooms:
 for index in range(0,len(current_map.areas)):
 	current_map.nodes.append((current_map.areas[index].center_coords[0],current_map.areas[index].center_coords[1]))
 
-
 def main():
-	pygame.init()
 	global fpsClock, DISPLAYSURF, GameState, survivor, current_map, player_tab, weapons_tab, explosives_tab, turrets_tab
 	# Menu Items
 	player_tab=Player_Tab()
@@ -3122,6 +3167,14 @@ def main():
 		# If pause, open pause menu
 		if GameState['paused']:
 			pause_menu()
+			if GameState['placing_turret']:
+				draw_game([0,0,0,0])
+				if GameState['turret_to_buy']!=None:
+					GameState['turret_to_buy'].vector=GameState['cursor_vector']
+					GameState['turret_to_buy'].prepare()
+					GameState['turret_to_buy'].draw()
+					turrets_handler()
+
 		# If not pause, continue game
 		if not GameState['paused']:
 			# Gets all the events
