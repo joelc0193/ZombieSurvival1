@@ -655,27 +655,33 @@ def pause_menu():
 			GameState['active_tab'].color=INDIGOBLUE
 			GameState['active_tab']=player_tab
 			GameState['other_active_tab']=GameState['buy_tab']
+			GameState['place_to_start']=0
 		elif weapons_tab.rect.collidepoint(point):
 			GameState['other_active_tab'].color=INDIGOBLUE
 			GameState['active_tab'].color=INDIGOBLUE
 			GameState['active_tab']=weapons_tab
 			GameState['other_active_tab']=GameState['buy_tab']	
+			GameState['place_to_start']=0
 		elif explosives_tab.rect.collidepoint(point):
 			GameState['other_active_tab'].color=INDIGOBLUE
 			GameState['active_tab'].color=INDIGOBLUE
 			GameState['active_tab']=explosives_tab
 			GameState['other_active_tab']=GameState['buy_tab']
+			GameState['place_to_start']=0
 		elif turrets_tab.rect.collidepoint(point):
 			GameState['other_active_tab'].color=INDIGOBLUE
 			GameState['active_tab'].color=INDIGOBLUE
 			GameState['active_tab']=turrets_tab
 			GameState['other_active_tab']=GameState['buy_tab']
+			GameState['place_to_start']=0
 		elif GameState['upgrades_tab'].rect.collidepoint(point):
 			GameState['other_active_tab'].color=INDIGOBLUE
 			GameState['other_active_tab']=GameState['upgrades_tab']
+			GameState['place_to_start']=0
 		elif GameState['buy_tab'].rect.collidepoint(point):
 			GameState['other_active_tab'].color=INDIGOBLUE
 			GameState['other_active_tab']=GameState['buy_tab']
+			GameState['place_to_start']=0
 		GameState['active_tab'].color=OXFORDBLUE
 		GameState['other_active_tab'].color=OXFORDBLUE
 
@@ -1376,7 +1382,9 @@ class Turrets_Tab:
 			surface_height=99*len(GameState['active_turrets'])+2
 			surface=pygame.Surface((surface_width, surface_height))
 			surface.fill(INDIGOBLUE)
-			for turret in GameState['active_turrets']:
+			lis=GameState['active_turrets'].sprites()
+			lis.sort(key=lambda x: x.number, reverse=False)
+			for turret in lis:
 			# Big Tab
 				item = Menu_Item(surface, LEFT, TOP, WIDTH, HEIGHT, None, INDIGOBLUE, BLACK)
 				item.draw()
