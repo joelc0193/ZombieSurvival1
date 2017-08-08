@@ -749,7 +749,7 @@ class Player_Tab:
 		surface_left=350
 		surface_top=210
 		surface_width=600
-		surface_height=100*len(survivor.grenade_boxes)
+		surface_height=100*len(survivor.explosives_boxes)
 		surface=pygame.Surface((surface_width, surface_height))
 		# Max Health Container
 		item = Menu_Item(DISPLAYSURF,LEFT+50, TOP+10, 235, 40, 'max_health', INDIGOBLUE, BLACK)
@@ -1131,179 +1131,178 @@ class Explosives_Tab:
 		surface_width=600
 
 		if GameState['other_active_tab']==GameState['upgrades_tab']:
-			surface_height=99*len(survivor.grenade_boxes)+2
+			surface_height=99*len(survivor.explosives_boxes)+2
 			surface=pygame.Surface((surface_width, surface_height))
 			surface.fill(INDIGOBLUE)
-			for grenade_box in survivor.grenade_boxes:
+			for explosive_box in survivor.explosives_boxes:
 			# Big Tab
 				item = Menu_Item(surface, LEFT, TOP, WIDTH, HEIGHT, None, INDIGOBLUE, BLACK)
 				item.draw()
 				# Picture
-				surface.blit(pygame.transform.scale(grenade_box.image, (70,90)), (LEFT+20, TOP+5))
+				surface.blit(pygame.transform.scale(explosive_box.image, (70,90)), (LEFT+20, TOP+5))
 				# Damage Container
 				item = Menu_Item(surface, LEFT+110, TOP+10, 190, 40, 'damage', INDIGOBLUE, INDIGOBLUE)
 				item.draw()
 				# Damage Text
 				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				text_surface_obj = text_obj.render('Damage: '+str(grenade_box.damage), True, BLACK)
+				text_surface_obj = text_obj.render('Damage: '+str(explosive_box.damage), True, BLACK)
 				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+120, TOP+10))
 				surface.blit(text_surface_obj, text_surface_obj_rect)
 				# Next Upgrade
-				if not len(grenade_box.damage_upgrades)==0:
+				if not len(explosive_box.damage_upgrades)==0:
 					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('+'+str(grenade_box.damage_upgrades[0]), True, GREEN)
+					text_surface_obj = text_obj.render('+'+str(explosive_box.damage_upgrades[0]), True, GREEN)
 					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
 					surface.blit(text_surface_obj, text_surface_obj_rect)
 					# Upgrade Damage Cost
 					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('$'+str(grenade_box.upgrade_damage_cost), True, BLACK)
+					text_surface_obj = text_obj.render('$'+str(explosive_box.upgrade_damage_cost), True, BLACK)
 					# Upgrade Damage Box
-					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, grenade_box, 'damage', grenade_box.upgrade_damage_cost, grenade_box.damage_upgrades, text_surface_obj)
+					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, explosive_box, 'damage', explosive_box.upgrade_damage_cost, explosive_box.damage_upgrades, text_surface_obj)
 				# Area Covered Container
 				item = Menu_Item(surface, LEFT+110, TOP+50, 210, 40, 'area_covered', INDIGOBLUE, INDIGOBLUE)
 				item.draw()
 				# Area Covered Text
 				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				text_surface_obj = text_obj.render('Area Covered: '+str(grenade_box.area_covered), True, BLACK)
+				text_surface_obj = text_obj.render('Area Covered: '+str(explosive_box.area_covered), True, BLACK)
 				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+120, TOP+50))
 				surface.blit(text_surface_obj, text_surface_obj_rect)
-				if not len(grenade_box.area_covered_upgrades)==0:
+				if not len(explosive_box.area_covered_upgrades)==0:
 					# Next Upgrade
 					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('+'+str(grenade_box.area_covered_upgrades[0]), True, GREEN)
+					text_surface_obj = text_obj.render('+'+str(explosive_box.area_covered_upgrades[0]), True, GREEN)
 					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
 					surface.blit(text_surface_obj, text_surface_obj_rect)
 					# Upgrade Area Covered Cost
 					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('$'+str(grenade_box.upgrade_area_covered_cost), True, BLACK)
+					text_surface_obj = text_obj.render('$'+str(explosive_box.upgrade_area_covered_cost), True, BLACK)
 					# Upgrade Area Covered Box
-					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, grenade_box, 'area_covered', grenade_box.upgrade_area_covered_cost, grenade_box.area_covered_upgrades, text_surface_obj)
+					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, explosive_box, 'area_covered', explosive_box.upgrade_area_covered_cost, explosive_box.area_covered_upgrades, text_surface_obj)
 				# Timer Container
 				item = Menu_Item(surface, LEFT+340, TOP+50, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
 				item.draw()
 				# Timer Text
 				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				text_surface_obj = text_obj.render('Timer: '+str(grenade_box.timer), True, BLACK)
+				text_surface_obj = text_obj.render('Timer: '+str(explosive_box.timer), True, BLACK)
 				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+350, TOP+50))
 				surface.blit(text_surface_obj, text_surface_obj_rect)
-				if not len(grenade_box.timer_upgrades)==0:
+				if not len(explosive_box.timer_upgrades)==0:
 					# Next Upgrade
 					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render(str(grenade_box.timer_upgrades[0]), True, GREEN)
+					text_surface_obj = text_obj.render(str(explosive_box.timer_upgrades[0]), True, GREEN)
 					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
 					surface.blit(text_surface_obj, text_surface_obj_rect)
 					# Upgrade Timer Cost
 					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('$'+str(grenade_box.upgrade_timer_cost), True, BLACK)
+					text_surface_obj = text_obj.render('$'+str(explosive_box.upgrade_timer_cost), True, BLACK)
 					# Upgrade Timer Box
-					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, grenade_box, 'timer', grenade_box.upgrade_timer_cost, grenade_box.timer_upgrades, text_surface_obj)
+					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, explosive_box, 'timer', explosive_box.upgrade_timer_cost, explosive_box.timer_upgrades, text_surface_obj)
 				# Ammo Capacity Container
 				item = Menu_Item(surface, LEFT+340, TOP+10, 240, 40, 'ammo_capacity', INDIGOBLUE, INDIGOBLUE)
 				item.draw()
 				# Ammo Capacity Text
 				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				text_surface_obj = text_obj.render('Ammo Capacity: '+str(grenade_box.ammo_capacity), True, BLACK)
+				text_surface_obj = text_obj.render('Ammo Capacity: '+str(explosive_box.ammo_capacity), True, BLACK)
 				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+343, TOP+10))
 				surface.blit(text_surface_obj, text_surface_obj_rect)
-				if not len(grenade_box.ammo_capacity_upgrades)==0:
+				if not len(explosive_box.ammo_capacity_upgrades)==0:
 					# Next Upgrade
 					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('+'+str(grenade_box.ammo_capacity_upgrades[0]), True, GREEN)
+					text_surface_obj = text_obj.render('+'+str(explosive_box.ammo_capacity_upgrades[0]), True, GREEN)
 					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
 					surface.blit(text_surface_obj, text_surface_obj_rect)
 					# Upgrade Ammo Capacity Cost
 					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('$'+str(grenade_box.upgrade_ammo_capacity_cost), True, BLACK)
+					text_surface_obj = text_obj.render('$'+str(explosive_box.upgrade_ammo_capacity_cost), True, BLACK)
 					# Upgrade Ammo Capacity Box
-					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, grenade_box, 'ammo_capacity', grenade_box.upgrade_ammo_capacity_cost, grenade_box.ammo_capacity_upgrades, text_surface_obj)
+					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, explosive_box, 'ammo_capacity', explosive_box.upgrade_ammo_capacity_cost, explosive_box.ammo_capacity_upgrades, text_surface_obj)
 				TOP+=HEIGHT-1
 
 		if GameState['other_active_tab']==GameState['buy_tab']:
-			surface_height=99*len(survivor.grenade_boxes)+2
+			surface_height=99*len(survivor.explosives_boxes)+2
 			surface=pygame.Surface((surface_width, surface_height))
 			surface.fill(INDIGOBLUE)
-			for grenade_box in survivor.grenade_boxes:
+			for explosive_box in survivor.explosives_boxes:
 			# Big Tab
 				item = Menu_Item(surface, LEFT, TOP, WIDTH, HEIGHT, None, INDIGOBLUE, BLACK)
 				item.draw()
 				# Picture
-				surface.blit(pygame.transform.scale(grenade_box.image, (70,90)), (LEFT+20, TOP+5))
-				# Damage Container
-				item = Menu_Item(surface, LEFT+110, TOP+10, 190, 40, 'damage', INDIGOBLUE, INDIGOBLUE)
+				surface.blit(pygame.transform.scale(explosive_box.image, (70,90)), (LEFT+20, TOP+5))
+				# Explosives Left Container
+				item = Menu_Item(surface, LEFT+110, TOP+10, 190, 40, 'explosives_left', INDIGOBLUE, INDIGOBLUE)
 				item.draw()
-				# Damage Text
+				# Explosives Left Text
 				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				text_surface_obj = text_obj.render('Damage: '+str(grenade_box.damage), True, BLACK)
+				text_surface_obj = text_obj.render('Explosives Left: '+str(explosive_box.explosives_left), True, BLACK)
 				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+120, TOP+10))
 				surface.blit(text_surface_obj, text_surface_obj_rect)
 				# Next Upgrade
-				if not len(grenade_box.damage_upgrades)==0:
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('+'+str(grenade_box.damage_upgrades[0]), True, GREEN)
-					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
-					surface.blit(text_surface_obj, text_surface_obj_rect)
-					# Upgrade Damage Cost
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('$'+str(grenade_box.upgrade_damage_cost), True, BLACK)
-					# Upgrade Damage Box
-					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, grenade_box, 'damage', grenade_box.upgrade_damage_cost, grenade_box.damage_upgrades, text_surface_obj)
-				# Area Covered Container
-				item = Menu_Item(surface, LEFT+110, TOP+50, 210, 40, 'area_covered', INDIGOBLUE, INDIGOBLUE)
-				item.draw()
-				# Area Covered Text
-				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				text_surface_obj = text_obj.render('Area Covered: '+str(grenade_box.area_covered), True, BLACK)
-				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+120, TOP+50))
+				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				text_surface_obj = text_obj.render('+'+str(explosive_box.buy_explosive_amount[0]), True, GREEN)
+				text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
 				surface.blit(text_surface_obj, text_surface_obj_rect)
-				if not len(grenade_box.area_covered_upgrades)==0:
-					# Next Upgrade
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('+'+str(grenade_box.area_covered_upgrades[0]), True, GREEN)
-					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
-					surface.blit(text_surface_obj, text_surface_obj_rect)
-					# Upgrade Area Covered Cost
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('$'+str(grenade_box.upgrade_area_covered_cost), True, BLACK)
-					# Upgrade Area Covered Box
-					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, grenade_box, 'area_covered', grenade_box.upgrade_area_covered_cost, grenade_box.area_covered_upgrades, text_surface_obj)
-				# Timer Container
-				item = Menu_Item(surface, LEFT+340, TOP+50, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
-				item.draw()
-				# Timer Text
-				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				text_surface_obj = text_obj.render('Timer: '+str(grenade_box.timer), True, BLACK)
-				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+350, TOP+50))
-				surface.blit(text_surface_obj, text_surface_obj_rect)
-				if not len(grenade_box.timer_upgrades)==0:
-					# Next Upgrade
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render(str(grenade_box.timer_upgrades[0]), True, GREEN)
-					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
-					surface.blit(text_surface_obj, text_surface_obj_rect)
-					# Upgrade Timer Cost
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('$'+str(grenade_box.upgrade_timer_cost), True, BLACK)
-					# Upgrade Timer Box
-					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, grenade_box, 'timer', grenade_box.upgrade_timer_cost, grenade_box.timer_upgrades, text_surface_obj)
-				# Ammo Capacity Container
-				item = Menu_Item(surface, LEFT+340, TOP+10, 240, 40, 'ammo_capacity', INDIGOBLUE, INDIGOBLUE)
-				item.draw()
-				# Ammo Capacity Text
-				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				text_surface_obj = text_obj.render('Ammo Capacity: '+str(grenade_box.ammo_capacity), True, BLACK)
-				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+343, TOP+10))
-				surface.blit(text_surface_obj, text_surface_obj_rect)
-				if not len(grenade_box.ammo_capacity_upgrades)==0:
-					# Next Upgrade
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('+'+str(grenade_box.ammo_capacity_upgrades[0]), True, GREEN)
-					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
-					surface.blit(text_surface_obj, text_surface_obj_rect)
-					# Upgrade Ammo Capacity Cost
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-					text_surface_obj = text_obj.render('$'+str(grenade_box.upgrade_ammo_capacity_cost), True, BLACK)
-					# Upgrade Ammo Capacity Box
-					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, grenade_box, 'ammo_capacity', grenade_box.upgrade_ammo_capacity_cost, grenade_box.ammo_capacity_upgrades, text_surface_obj)
+				# Buy Explosive Cost
+				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				text_surface_obj = text_obj.render('$'+str(explosive_box.buy_explosives_cost), True, BLACK)
+				# Buy Explosive Box
+				button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'buy', RED, BLACK, explosive_box, 'explosives_left', explosive_box.buy_explosives_cost, explosive_box.buy_explosive_amount, text_surface_obj)
+				# # Area Covered Container
+				# item = Menu_Item(surface, LEFT+110, TOP+50, 210, 40, 'area_covered', INDIGOBLUE, INDIGOBLUE)
+				# item.draw()
+				# # Area Covered Text
+				# text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+				# text_surface_obj = text_obj.render('Area Covered: '+str(explosive_box.area_covered), True, BLACK)
+				# text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+120, TOP+50))
+				# surface.blit(text_surface_obj, text_surface_obj_rect)
+				# if not len(explosive_box.area_covered_upgrades)==0:
+				# 	# Next Upgrade
+				# 	text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				# 	text_surface_obj = text_obj.render('+'+str(explosive_box.area_covered_upgrades[0]), True, GREEN)
+				# 	text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
+				# 	surface.blit(text_surface_obj, text_surface_obj_rect)
+				# 	# Upgrade Area Covered Cost
+				# 	text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				# 	text_surface_obj = text_obj.render('$'+str(explosive_box.upgrade_area_covered_cost), True, BLACK)
+				# 	# Upgrade Area Covered Box
+				# 	button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, explosive_box, 'area_covered', explosive_box.upgrade_area_covered_cost, explosive_box.area_covered_upgrades, text_surface_obj)
+				# # Timer Container
+				# item = Menu_Item(surface, LEFT+340, TOP+50, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
+				# item.draw()
+				# # Timer Text
+				# text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+				# text_surface_obj = text_obj.render('Timer: '+str(explosive_box.timer), True, BLACK)
+				# text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+350, TOP+50))
+				# surface.blit(text_surface_obj, text_surface_obj_rect)
+				# if not len(explosive_box.timer_upgrades)==0:
+				# 	# Next Upgrade
+				# 	text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				# 	text_surface_obj = text_obj.render(str(explosive_box.timer_upgrades[0]), True, GREEN)
+				# 	text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
+				# 	surface.blit(text_surface_obj, text_surface_obj_rect)
+				# 	# Upgrade Timer Cost
+				# 	text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				# 	text_surface_obj = text_obj.render('$'+str(explosive_box.upgrade_timer_cost), True, BLACK)
+				# 	# Upgrade Timer Box
+				# 	button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, explosive_box, 'timer', explosive_box.upgrade_timer_cost, explosive_box.timer_upgrades, text_surface_obj)
+				# # Ammo Capacity Container
+				# item = Menu_Item(surface, LEFT+340, TOP+10, 240, 40, 'ammo_capacity', INDIGOBLUE, INDIGOBLUE)
+				# item.draw()
+				# # Ammo Capacity Text
+				# text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+				# text_surface_obj = text_obj.render('Ammo Capacity: '+str(explosive_box.ammo_capacity), True, BLACK)
+				# text_surface_obj_rect=text_surface_obj.get_rect(topleft=(LEFT+343, TOP+10))
+				# surface.blit(text_surface_obj, text_surface_obj_rect)
+				# if not len(explosive_box.ammo_capacity_upgrades)==0:
+				# 	# Next Upgrade
+				# 	text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				# 	text_surface_obj = text_obj.render('+'+str(explosive_box.ammo_capacity_upgrades[0]), True, GREEN)
+				# 	text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
+				# 	surface.blit(text_surface_obj, text_surface_obj_rect)
+				# 	# Upgrade Ammo Capacity Cost
+				# 	text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				# 	text_surface_obj = text_obj.render('$'+str(explosive_box.upgrade_ammo_capacity_cost), True, BLACK)
+				# 	# Upgrade Ammo Capacity Box
+				# 	button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, explosive_box, 'ammo_capacity', explosive_box.upgrade_ammo_capacity_cost, explosive_box.ammo_capacity_upgrades, text_surface_obj)
 				TOP+=HEIGHT-1
 	
 
@@ -1343,7 +1342,8 @@ class Explosives_Tab:
 							field_upgrades=item.field_upgrades
 							x = getattr(weapon, item.weapon_field)
 							setattr(weapon, item.weapon_field, x+field_upgrades[0])
-							del field_upgrades[0]
+							if item.name=='upgrade':
+								del field_upgrades[0]
 		pygame.sprite.Group.empty(GameState['menu_items'])
 
 class Turrets_Tab:
@@ -1937,21 +1937,21 @@ class Survivor(pygame.sprite.Sprite):
 					survivor.max_body_state_number=0
 					survivor.current_body_state_number=0
 
-	def grenade_handler(self):
+	def explosives_handler(self):
 		for event in GameState['events']:
 			if event.type==KEYDOWN:
 				if event.unicode=='7':
-					if survivor.grenade_boxes[0].grenades_left>0:
-						survivor.grenade_boxes[0].grenades_left-=1
-						survivor.grenade_boxes[0].generate_grenade()
+					if survivor.explosives_boxes[0].explosives_left>0:
+						survivor.explosives_boxes[0].explosives_left-=1
+						survivor.explosives_boxes[0].generate_explosive()
 				elif event.unicode=='8':
-					if survivor.grenade_boxes[1].grenades_left>0:
-						survivor.grenade_boxes[1].grenades_left-=1
-						survivor.grenade_boxes[1].generate_grenade()
+					if survivor.explosives_boxes[1].explosives_left>0:
+						survivor.explosives_boxes[1].explosives_left-=1
+						survivor.explosives_boxes[1].generate_explosive()
 				elif event.unicode=='9':
-					if survivor.grenade_boxes[2].grenades_left>0:
-						survivor.grenade_boxes[2].grenades_left-=1
-						survivor.grenade_boxes[2].generate_grenade()
+					if survivor.explosives_boxes[2].explosives_left>0:
+						survivor.explosives_boxes[2].explosives_left-=1
+						survivor.explosives_boxes[2].generate_explosive()
 
 		GameState['active_explosives'].update()
 
@@ -2265,10 +2265,10 @@ upgrade_max_mag_ammo_cost=5
 upgrade_max_weapon_ammo_cost=3
 Weapon(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
 
-GameState['grenades']=pygame.sprite.Group()
+GameState['explosives_collection']=pygame.sprite.Group()
 
 class Explosives_Box:
-	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down):
+	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount):
 		self.scale=scale
 		self.explosion_scale=explosion_scale
 		self.speed=speed
@@ -2282,12 +2282,14 @@ class Explosives_Box:
 		self.ammo_capacity_upgrades=[1,2,3,4]
 		self.upgrade_ammo_capacity_cost=3
 		self.timer=2
+		self.buy_explosive_amount=[buy_explosive_amount]
+		self.buy_explosives_cost=2
 		self.timer_upgrades=[-1, -2, -3, -4]
 		self.upgrade_timer_cost=3
 		self.slow_down=.2
 		self.explosion_images={}
 		self.effects_images={}
-		self.grenades_left=10
+		self.explosives_left=10
 		self.image_explosion_number_that_damages=image_explosion_number_that_damages
 		self.maximum_explosion_image_number=maximum_explosion_image_number
 		self.effect_duration=effect_duration
@@ -2295,8 +2297,8 @@ class Explosives_Box:
 		self.update_state_image_delay=.03
 
 class Grenade1_Box(Explosives_Box):
-	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down):
-		Explosives_Box.__init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down)
+	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount):
+		Explosives_Box.__init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount)
 		self.image=pygame.image.load('Grenades/Grenade1/grenade.png')
 		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade1/Explosion1.png')
 		i=0
@@ -2308,12 +2310,12 @@ class Grenade1_Box(Explosives_Box):
 					pygame.draw.circle(surface, (255,255,255,2), (surface.get_rect().width/2,surface.get_rect().height/2), (surface.get_rect().height/2)-10)
 				self.explosion_images[str(i)]=surface
 				i+=1
-	def generate_grenade(self):
+	def generate_explosive(self):
 			Grenade1(self, GameState['cursor_vector']-survivor.vector, survivor.vector)
 
 class Grenade2_Box(Explosives_Box):
-	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free):
-		Explosives_Box.__init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down)
+	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free):
+		Explosives_Box.__init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount)
 		self.effects_scale=effects_scale
 		self.maximum_effects_image_number=maximum_effects_image_number
 		self.maximum_effects_image_number=maximum_effects_image_number 
@@ -2343,12 +2345,12 @@ class Grenade2_Box(Explosives_Box):
 				self.effects_images[str(i)]=surface
 				i+=1
 
-	def generate_grenade(self):
+	def generate_explosive(self):
 			Grenade2(self, GameState['cursor_vector']-survivor.vector, survivor.vector)
 
 class Grenade3_Box(Explosives_Box):
-	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number):
-		Explosives_Box.__init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down)
+	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number):
+		Explosives_Box.__init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount)
 		self.effects_scale=effects_scale
 		self.maximum_effects_image_number=maximum_effects_image_number
 		self.maximum_effects_image_number=maximum_effects_image_number 
@@ -2378,34 +2380,34 @@ class Grenade3_Box(Explosives_Box):
 				self.effects_images[str(i)]=surface
 				i+=1
 
-	def generate_grenade(self):
+	def generate_explosive(self):
 			Grenade3(self, GameState['cursor_vector']-survivor.vector, survivor.vector)
 
 
 class Grenade(pygame.sprite.Sprite):
-	def __init__(self, grenade_box, velocity, coords):
+	def __init__(self, explosive_box, velocity, coords):
 		pygame.sprite.Sprite.__init__(self, GameState['active_explosives'])
-		self.grenade_box=grenade_box
-		self.image1=self.grenade_box.image
-		self.image=pygame.transform.scale(self.grenade_box.image, self.grenade_box.scale)
+		self.explosive_box=explosive_box
+		self.image1=self.explosive_box.image
+		self.image=pygame.transform.scale(self.explosive_box.image, self.explosive_box.scale)
 		self.rect=self.image.get_rect()
 		self.center_xcoord=None
 		self.center_ycoord=None
 		self.angle=None
 		self.vector=deepcopy(coords)+survivor.vector
 		self.velocity=Vector2()
-		self.velocity.from_polar((self.grenade_box.speed, survivor.angle_from_center_to_cursor))
+		self.velocity.from_polar((self.explosive_box.speed, survivor.angle_from_center_to_cursor))
 		self.state='moving'
 		self.time_generated=time.time()
 		# Reading in Explosion picture and cropping it
 		self.current_explosion_image_number=0
-		self.maximum_explosion_image_number=self.grenade_box.maximum_explosion_image_number
+		self.maximum_explosion_image_number=self.explosive_box.maximum_explosion_image_number
 		self.time_of_last_generated_explosion_state=0
-		self.image_explosion_number_that_damages=self.grenade_box.image_explosion_number_that_damages
-		self.explosion_images=self.grenade_box.explosion_images
-		self.effect_duration=self.grenade_box.effect_duration
+		self.image_explosion_number_that_damages=self.explosive_box.image_explosion_number_that_damages
+		self.explosion_images=self.explosive_box.explosion_images
+		self.effect_duration=self.explosive_box.effect_duration
 		self.affecting_zombies=None
-		self.speed=self.grenade_box.speed
+		self.speed=self.explosive_box.speed
 		self.state='moving'
 		self.time_of_last_generated_explosion_state=time.time()
 		self.mask=None
@@ -2418,7 +2420,7 @@ class Grenade(pygame.sprite.Sprite):
 			self.update_velocity()
 
 		# Initiates Explosion
-		if self.state=='exploding' and time.time()-self.time_generated>self.grenade_box.timer:
+		if self.state=='exploding' and time.time()-self.time_generated>self.explosive_box.timer:
 			self.explosion_handler()
 
 		if not self.state==None:
@@ -2426,18 +2428,18 @@ class Grenade(pygame.sprite.Sprite):
 
 	def update_velocity(self):
 		self.vector+=self.velocity
-		self.speed-=self.grenade_box.slow_down
+		self.speed-=self.explosive_box.slow_down
 		self.velocity.scale_to_length(self.speed)
 		if not self.velocity.length()==0:
 			if self.speed<0:
 				self.speed=0
-				if time.time()-self.time_generated>self.grenade_box.timer:
+				if time.time()-self.time_generated>self.explosive_box.timer:
 					self.state='exploding'
 		self.vector+=self.velocity
 
 	def explosion_handler(self):
-		self.image=self.grenade_box.explosion_images[str(self.current_explosion_image_number)]
-		self.image=pygame.transform.scale(self.image, [i*self.grenade_box.area_covered for i in self.grenade_box.explosion_scale])
+		self.image=self.explosive_box.explosion_images[str(self.current_explosion_image_number)]
+		self.image=pygame.transform.scale(self.image, [i*self.explosive_box.area_covered for i in self.explosive_box.explosion_scale])
 		self.mask=pygame.mask.from_surface(self.image, 1)
 		self.rect=self.image.get_rect(center=self.vector)
 		DISPLAYSURF.blit(self.image, self.rect)
@@ -2448,7 +2450,7 @@ class Grenade(pygame.sprite.Sprite):
 					self.zombies_hit.add(zombie)
 			self.start_effects=True
 			self.time_of_effect=time.time()
-		if time.time()-self.time_of_last_generated_explosion_state>self.grenade_box.update_state_image_delay:
+		if time.time()-self.time_of_last_generated_explosion_state>self.explosive_box.update_state_image_delay:
 			self.time_of_last_generated_explosion_state=time.time()
 			self.current_explosion_image_number+=1
 			if self.current_explosion_image_number==self.maximum_explosion_image_number:
@@ -2458,25 +2460,25 @@ class Grenade(pygame.sprite.Sprite):
 		DISPLAYSURF.blit(self.image, self.rect)
 
 class Grenade1(Grenade):
-	def __init__(self, grenade_box, velocity, coords):
-		Grenade.__init__(self, grenade_box, velocity, coords)
+	def __init__(self, explosive_box, velocity, coords):
+		Grenade.__init__(self, explosive_box, velocity, coords)
 
 	def effect(self, zombie):
-		zombie.was_hit(self, self.grenade_box.damage/len(self.zombies_hit))
+		zombie.was_hit(self, self.explosive_box.damage/len(self.zombies_hit))
 
 class Grenade2(Grenade):
-	def __init__(self, grenade_box, velocity, coords):
-		Grenade.__init__(self, grenade_box, velocity, coords)
+	def __init__(self, explosive_box, velocity, coords):
+		Grenade.__init__(self, explosive_box, velocity, coords)
 		self.start_effects=False
-		self.current_effects_image_number=grenade_box.number_of_starting_effects_image
+		self.current_effects_image_number=explosive_box.number_of_starting_effects_image
 		self.time_of_last_generated_state=0
 		self.time_of_last_generated_effect_state=0
 		self.effects_image_number_going_up=True
 		self.effects_oscillating=False
-		self.update_effects_state_image_delay=self.grenade_box.update_effects_state_image_delay
+		self.update_effects_state_image_delay=self.explosive_box.update_effects_state_image_delay
 
 	def effect(self, zombie):
-		zombie.was_hit(self, self.grenade_box.damage)
+		zombie.was_hit(self, self.explosive_box.damage)
 
 	def update(self):
 		self.rect=self.image.get_rect()
@@ -2487,7 +2489,7 @@ class Grenade2(Grenade):
 			self.update_velocity()
 
 		# Initiates Explosion
-		if self.state=='exploding' and time.time()-self.time_generated>self.grenade_box.timer:
+		if self.state=='exploding' and time.time()-self.time_generated>self.explosive_box.timer:
 			self.explosion_handler()
 
 		# Handles Effects
@@ -2499,18 +2501,18 @@ class Grenade2(Grenade):
 
 	def update_velocity(self):
 		self.vector+=self.velocity
-		self.speed-=self.grenade_box.slow_down
+		self.speed-=self.explosive_box.slow_down
 		self.velocity.scale_to_length(self.speed)
 		if not self.velocity.length()==0:
 			if self.speed<0:
 				self.speed=0
-				if time.time()-self.time_generated>self.grenade_box.timer:
+				if time.time()-self.time_generated>self.explosive_box.timer:
 					self.state='exploding'
 		self.vector+=self.velocity
 
 	def explosion_handler(self):
-		self.image=self.grenade_box.explosion_images[str(self.current_explosion_image_number)]
-		self.image=pygame.transform.scale(self.image, [i*self.grenade_box.area_covered for i in self.grenade_box.explosion_scale])
+		self.image=self.explosive_box.explosion_images[str(self.current_explosion_image_number)]
+		self.image=pygame.transform.scale(self.image, [i*self.explosive_box.area_covered for i in self.explosive_box.explosion_scale])
 		self.mask=pygame.mask.from_surface(self.image, 1)
 		self.rect=self.image.get_rect(center=self.vector)
 		DISPLAYSURF.blit(self.image, self.rect)
@@ -2520,35 +2522,35 @@ class Grenade2(Grenade):
 				zombie.frozen=True
 			self.start_effects=True
 			self.time_of_effect=time.time()
-		if time.time()-self.time_of_last_generated_explosion_state>self.grenade_box.update_state_image_delay:
+		if time.time()-self.time_of_last_generated_explosion_state>self.explosive_box.update_state_image_delay:
 			self.time_of_last_generated_explosion_state=time.time()
 			self.current_explosion_image_number+=1
 			if self.current_explosion_image_number==self.maximum_explosion_image_number:
 				self.state=None
 
 	def effects_handler(self):
-		self.effects_image=self.grenade_box.effects_images[str(self.current_effects_image_number)]
+		self.effects_image=self.explosive_box.effects_images[str(self.current_effects_image_number)]
 		self.increase_image_number=False
 		now=time.time()
-		self.update_effects_state_image_delay=(self.grenade_box.effect_duration-(now-self.time_of_effect))*self.grenade_box.update_effects_state_image_delay
-		self.effects_active=now-self.time_of_effect<self.grenade_box.effect_duration
+		self.update_effects_state_image_delay=(self.explosive_box.effect_duration-(now-self.time_of_effect))*self.explosive_box.update_effects_state_image_delay
+		self.effects_active=now-self.time_of_effect<self.explosive_box.effect_duration
 		self.update_effects_image=now-self.time_of_last_generated_effect_state>self.update_effects_state_image_delay
-		self.update_effects_state_image_delay=(self.grenade_box.effect_duration-(now-self.time_of_effect))*self.grenade_box.update_effects_state_image_delay
+		self.update_effects_state_image_delay=(self.explosive_box.effect_duration-(now-self.time_of_effect))*self.explosive_box.update_effects_state_image_delay
 		for zombie in self.zombies_hit:
-			self.effects_image=pygame.transform.scale(self.effects_image, [int(i*self.grenade_box.effects_scale) for i in zombie.image.get_rect().size])
+			self.effects_image=pygame.transform.scale(self.effects_image, [int(i*self.explosive_box.effects_scale) for i in zombie.image.get_rect().size])
 			loc = zombie.image.get_rect().center
 			rotated_image = pygame.transform.rotate(self.effects_image, -zombie.angle_to_next_path_point-90)
 			rect = rotated_image.get_rect(center=zombie.vector)
 			DISPLAYSURF.blit(rotated_image, rect)
 
-			if self.current_effects_image_number==self.grenade_box.effects_image_number_zombie_breaks_free and not self.effects_active:
+			if self.current_effects_image_number==self.explosive_box.effects_image_number_zombie_breaks_free and not self.effects_active:
 				zombie.frozen=False
 
 		if self.update_effects_image:
 			self.time_of_last_generated_effect_state=time.time()
 			if not self.effects_oscillating:
 				self.current_effects_image_number+=1
-				if self.current_effects_image_number==self.grenade_box.starting_effects_image_oscillation_number:
+				if self.current_effects_image_number==self.explosive_box.starting_effects_image_oscillation_number:
 					self.effects_oscillating=True
 
 			if self.effects_oscillating:
@@ -2556,14 +2558,14 @@ class Grenade2(Grenade):
 					self.effects_image_number_going_up=True
 				if self.effects_image_number_going_up:
 					self.current_effects_image_number+=1
-					if self.current_effects_image_number==self.grenade_box.ending_effects_image_oscillation_number and self.effects_active:
+					if self.current_effects_image_number==self.explosive_box.ending_effects_image_oscillation_number and self.effects_active:
 						self.effects_image_number_going_up=False
 				elif not self.effects_image_number_going_up:
 					self.current_effects_image_number-=1
-					if self.current_effects_image_number==self.grenade_box.starting_effects_image_oscillation_number:
+					if self.current_effects_image_number==self.explosive_box.starting_effects_image_oscillation_number:
 						self.effects_image_number_going_up=True
 
-		if self.current_effects_image_number==self.grenade_box.maximum_effects_image_number:
+		if self.current_effects_image_number==self.explosive_box.maximum_effects_image_number:
 			self.kill()
 
 	def draw(self):
@@ -2571,20 +2573,20 @@ class Grenade2(Grenade):
 
 
 class Grenade3(Grenade):
-	def __init__(self, grenade_box, velocity, coords):
-		Grenade.__init__(self, grenade_box, velocity, coords)
+	def __init__(self, explosive_box, velocity, coords):
+		Grenade.__init__(self, explosive_box, velocity, coords)
 		self.start_effects=False
-		self.current_effects_image_number=grenade_box.number_of_starting_effects_image
+		self.current_effects_image_number=explosive_box.number_of_starting_effects_image
 		self.time_of_last_generated_state=0
 		self.time_of_last_generated_effect_state=0
 		self.effects_image_number_going_up=True
 		self.effects_oscillating=False
-		self.update_effects_state_image_delay=self.grenade_box.update_effects_state_image_delay
+		self.update_effects_state_image_delay=self.explosive_box.update_effects_state_image_delay
 		self.last_time_of_burn_damage=0
 		self.zombies_hit=pygame.sprite.Group()
 
 	def effect(self, zombie):
-		zombie.was_hit(self, self.grenade_box.damage)
+		zombie.was_hit(self, self.explosive_box.damage)
 
 	def update(self):
 		self.rect=self.image.get_rect()
@@ -2595,7 +2597,7 @@ class Grenade3(Grenade):
 			self.update_velocity()
 
 		# Initiates Explosion
-		if self.state=='exploding' and time.time()-self.time_generated>self.grenade_box.timer:
+		if self.state=='exploding' and time.time()-self.time_generated>self.explosive_box.timer:
 			self.explosion_handler()
 
 		# Handles Effects
@@ -2607,18 +2609,18 @@ class Grenade3(Grenade):
 
 	def update_velocity(self):
 		self.vector+=self.velocity
-		self.speed-=self.grenade_box.slow_down
+		self.speed-=self.explosive_box.slow_down
 		self.velocity.scale_to_length(self.speed)
 		if not self.velocity.length()==0:
 			if self.speed<0:
 				self.speed=0
-				if time.time()-self.time_generated>self.grenade_box.timer:
+				if time.time()-self.time_generated>self.explosive_box.timer:
 					self.state='exploding'
 		self.vector+=self.velocity
 
 	def explosion_handler(self):
-		self.image=self.grenade_box.explosion_images[str(self.current_explosion_image_number)]
-		self.image=pygame.transform.scale(self.image, [i*self.grenade_box.area_covered for i in self.grenade_box.explosion_scale])
+		self.image=self.explosive_box.explosion_images[str(self.current_explosion_image_number)]
+		self.image=pygame.transform.scale(self.image, [i*self.explosive_box.area_covered for i in self.explosive_box.explosion_scale])
 		self.mask=pygame.mask.from_surface(self.image, 1)
 		self.rect=self.image.get_rect(center=self.vector)
 		DISPLAYSURF.blit(self.image, self.rect)
@@ -2629,37 +2631,37 @@ class Grenade3(Grenade):
 					self.zombies_hit.add(zombie)
 			self.start_effects=True
 			self.time_of_effect=time.time()
-		if time.time()-self.time_of_last_generated_explosion_state>self.grenade_box.update_state_image_delay:
+		if time.time()-self.time_of_last_generated_explosion_state>self.explosive_box.update_state_image_delay:
 			self.time_of_last_generated_explosion_state=time.time()
 			self.current_explosion_image_number+=1
 			if self.current_explosion_image_number==self.maximum_explosion_image_number:
 				self.state=None
 
 	def effects_handler(self):
-		self.effects_image=self.grenade_box.effects_images[str(self.current_effects_image_number)]
+		self.effects_image=self.explosive_box.effects_images[str(self.current_effects_image_number)]
 		self.increase_image_number=False
 		now=time.time()
-		self.update_effects_state_image_delay=self.grenade_box.update_effects_state_image_delay
-		self.effects_active=now-self.time_of_effect<self.grenade_box.effect_duration
+		self.update_effects_state_image_delay=self.explosive_box.update_effects_state_image_delay
+		self.effects_active=now-self.time_of_effect<self.explosive_box.effect_duration
 		self.update_effects_image=now-self.time_of_last_generated_effect_state>self.update_effects_state_image_delay
 		self.time_to_burn=now-self.last_time_of_burn_damage>1
 		for zombie in self.zombies_hit:
-			self.effects_image=pygame.transform.scale(self.effects_image, [int(i*self.grenade_box.effects_scale) for i in zombie.image.get_rect().size])
+			self.effects_image=pygame.transform.scale(self.effects_image, [int(i*self.explosive_box.effects_scale) for i in zombie.image.get_rect().size])
 			loc = zombie.image.get_rect().center
 			rotated_image = pygame.transform.rotate(self.effects_image, -zombie.angle_to_next_path_point-90)
 			rect = rotated_image.get_rect(center=zombie.vector)
 			DISPLAYSURF.blit(rotated_image, rect)
 
-			if self.current_effects_image_number==self.grenade_box.effects_image_number_zombie_breaks_free and self.effects_active:
+			if self.current_effects_image_number==self.explosive_box.effects_image_number_zombie_breaks_free and self.effects_active:
 				zombie.frozen=False
 
 			if self.time_to_burn:
-				zombie.was_hit(self, self.grenade_box.damage)
+				zombie.was_hit(self, self.explosive_box.damage)
 
 		if self.update_effects_image:
 			self.time_of_last_generated_effect_state=now
 			if not self.effects_oscillating:
-				if self.current_effects_image_number==self.grenade_box.starting_effects_image_oscillation_number:
+				if self.current_effects_image_number==self.explosive_box.starting_effects_image_oscillation_number:
 					self.effects_oscillating=True
 				self.current_effects_image_number+=1
 
@@ -2668,16 +2670,16 @@ class Grenade3(Grenade):
 					self.effects_image_number_going_up=True
 				if self.effects_image_number_going_up:
 					self.current_effects_image_number+=1
-					if self.current_effects_image_number==self.grenade_box.ending_effects_image_oscillation_number and self.effects_active:
+					if self.current_effects_image_number==self.explosive_box.ending_effects_image_oscillation_number and self.effects_active:
 						self.effects_image_number_going_up=False
 				elif not self.effects_image_number_going_up:
 					self.current_effects_image_number-=1
-					if self.current_effects_image_number==self.grenade_box.starting_effects_image_oscillation_number:
+					if self.current_effects_image_number==self.explosive_box.starting_effects_image_oscillation_number:
 						self.effects_image_number_going_up=True
 
 		if self.time_to_burn:
 			self.last_time_of_burn_damage=now
-		if self.current_effects_image_number==self.grenade_box.maximum_effects_image_number and not self.effects_active:
+		if self.current_effects_image_number==self.explosive_box.maximum_effects_image_number and not self.effects_active:
 			self.kill()
 
 	def draw(self):
@@ -2870,7 +2872,7 @@ survivor.current_area=find_current_location(survivor.vector, current_map.areas)
 
 survivor.weapon.distance_from_survivor_to_tip_of_weapon, survivor.weapon.angle_from_survivor_to_tip_of_weapon=survivor.weapon.weapon_size.as_polar()
 
-survivor.grenade_boxes=[]
+survivor.explosives_boxes=[]
 
 
 
@@ -2882,8 +2884,9 @@ image_explosion_number_that_damages=9
 maximum_explosion_image_number=20
 effect_duration=0
 slow_down=.2
-grenade1_box=Grenade1_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down)
-survivor.grenade_boxes.append(grenade1_box)
+buy_explosive_amount=1
+grenade1_box=Grenade1_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount)
+survivor.explosives_boxes.append(grenade1_box)
 
 damage=0
 scale=(10,20)
@@ -2901,8 +2904,9 @@ number_of_starting_effects_image=5
 starting_effects_image_oscillation_number=8
 ending_effects_image_oscillation_number=14
 effects_image_number_zombie_breaks_free=18
-grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free)
-survivor.grenade_boxes.append(grenade2_box)
+buy_explosive_amount=1
+grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free)
+survivor.explosives_boxes.append(grenade2_box)
 
 damage=10
 scale=(10,20)
@@ -2919,8 +2923,9 @@ update_effects_state_image_delay=0.03
 number_of_starting_effects_image=0
 starting_effects_image_oscillation_number=0
 ending_effects_image_oscillation_number=19
-grenade3_box=Grenade3_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number)
-survivor.grenade_boxes.append(grenade3_box)
+buy_explosive_amount=1
+grenade3_box=Grenade3_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number)
+survivor.explosives_boxes.append(grenade3_box)
 
 damage=0
 scale=(10,20)
@@ -2938,8 +2943,9 @@ number_of_starting_effects_image=5
 starting_effects_image_oscillation_number=8
 ending_effects_image_oscillation_number=14
 effects_image_number_zombie_breaks_free=18
-grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free)
-survivor.grenade_boxes.append(grenade2_box)
+buy_explosive_amount=1
+grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free, buy_explosive_amount)
+survivor.explosives_boxes.append(grenade2_box)
 damage=0
 scale=(10,20)
 effects_scale=1
@@ -2956,8 +2962,9 @@ number_of_starting_effects_image=5
 starting_effects_image_oscillation_number=8
 ending_effects_image_oscillation_number=14
 effects_image_number_zombie_breaks_free=18
-grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free)
-survivor.grenade_boxes.append(grenade2_box)
+buy_explosive_amount=1
+grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free, buy_explosive_amount)
+survivor.explosives_boxes.append(grenade2_box)
 damage=0
 scale=(10,20)
 effects_scale=1
@@ -2974,8 +2981,9 @@ number_of_starting_effects_image=5
 starting_effects_image_oscillation_number=8
 ending_effects_image_oscillation_number=14
 effects_image_number_zombie_breaks_free=18
-grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free)
-survivor.grenade_boxes.append(grenade2_box)
+buy_explosive_amount=1
+grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free, buy_explosive_amount)
+survivor.explosives_boxes.append(grenade2_box)
 # g=deepcopy(current_map.original_graph)
 
 # for area in current_map.areas:
@@ -3120,7 +3128,7 @@ def main():
 			# Moves Zombies
 			move_zombies()
 			# Grenade Handler
-			survivor.grenade_handler()
+			survivor.explosives_handler()
 			# Turret Handler
 			turrets_handler()
 			# Draw survivor
