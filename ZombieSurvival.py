@@ -651,11 +651,12 @@ def menu_displayer():
 
 class Player_Tab:
 	def __init__(self):
-		self.rect= pygame.Rect(50,50,150,50)
+		self.rect=pygame.Rect(50,50,150,50)
 		self.text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 40)
 		self.text_surface_obj = self.text_obj.render('Player', True, BLACK)
 		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)	
 		self.color=INDIGOBLUE
+		self.rect1 = pygame.Rect(50+300,50+100,150,50)
 	def draw_tab(self):
 		# Draws the tab
 		pygame.draw.rect(pause_menu.main_menu_surface, self.color, self.rect)
@@ -798,6 +799,7 @@ class Weapons_Tab:
 		self.text_surface_obj = self.text_obj.render('Weapons', True, BLACK)
 		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)	
 		self.color=INDIGOBLUE
+		self.rect1 = pygame.Rect(200+300,50+100,150,50)
 	def draw_tab(self):
 		# Draws the tab
 		pygame.draw.rect(pause_menu.main_menu_surface, self.color, self.rect)
@@ -987,28 +989,7 @@ class Weapons_Tab:
 					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, weapon, 'max_weapon_ammo', weapon.upgrade_max_weapon_ammo_cost, weapon.max_weapon_ammo_upgrades, text_surface_obj)
 				TOP+=HEIGHT-1
 
-		if surface_height>350:
-			for event in GameState['events']:
-				if event.type==MOUSEBUTTONDOWN:
-					if GameState['big_blue_square'].collidepoint(event.pos):
-						if event.button==4:
-							GameState['place_to_start']-=2
-						elif event.button==5:
-							GameState['place_to_start']+=2
-			if GameState['place_to_start']<=0:
-				GameState['place_to_start']=0
-			elif GameState['place_to_start']+350>=surface_height:
-				GameState['place_to_start']=surface_height-350
-		for item in GameState['menu_items']:
-			if isinstance(item, Upgrade_Button):
-				item.rect1=pygame.Rect(item.left, item.top, item.width, item.height)
-				item.rect=pygame.Rect(surface_left+item.left, surface_top+item.top, item.width, item.height)
-				if not (item.rect1.top-GameState['place_to_start']<350 or (item.rect1.top+item.height)-GameState['place_to_start']<0):
-					item.rect1=pygame.Rect(-10,-10,1,1)
-					item.rect=pygame.Rect(-10,-10,1,1)
-				item.draw()
-		DISPLAYSURF.blit(surface, (surface_left, surface_top), (0, GameState['place_to_start'], surface_width, 348))
-		pygame.draw.rect(DISPLAYSURF, BLACK, (surface_left, surface_top, surface_width, 350), 2)
+		pause_menu.update_rects(surface, surface_width, surface_height)
 
 	def tab_handler(self):
 		i=0
@@ -1037,6 +1018,7 @@ class Explosives_Tab:
 		self.text_surface_obj = self.text_obj.render('Explosives', True, BLACK)
 		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)	
 		self.color=INDIGOBLUE
+		self.rect1 = pygame.Rect(350+300,50+100,150,50)
 	def draw_tab(self):
 		# Draws the tab
 		pygame.draw.rect(pause_menu.main_menu_surface, self.color, self.rect)
@@ -1054,6 +1036,8 @@ class Explosives_Tab:
 
 		if pause_menu.other_active_tab==pause_menu.upgrades_tab:
 			surface_height=99*len(survivor.explosives_boxes)+2
+			if surface_height<350:
+				surface_height=350
 			surface=pygame.Surface((surface_width, surface_height))
 			surface.fill(INDIGOBLUE)
 			for explosive_box in survivor.explosives_boxes:
@@ -1142,6 +1126,8 @@ class Explosives_Tab:
 
 		if pause_menu.other_active_tab==pause_menu.buy_tab:
 			surface_height=99*len(survivor.explosives_boxes)+2
+			if surface_height<350:
+				surface_height=350
 			surface=pygame.Surface((surface_width, surface_height))
 			surface.fill(INDIGOBLUE)
 			for explosive_box in survivor.explosives_boxes:
@@ -1227,33 +1213,29 @@ class Explosives_Tab:
 				# 	button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, explosive_box, 'ammo_capacity', explosive_box.upgrade_ammo_capacity_cost, explosive_box.ammo_capacity_upgrades, text_surface_obj)
 				TOP+=HEIGHT-1
 
-		if surface_height>350:
-			for event in GameState['events']:
-				if event.type==MOUSEBUTTONDOWN:
-					if GameState['big_blue_square'].collidepoint(event.pos):
-						if event.button==4:
-							GameState['place_to_start']-=20
-						elif event.button==5:
-							GameState['place_to_start']+=20
-			if GameState['place_to_start']<=0:
-				GameState['place_to_start']=0
-			elif GameState['place_to_start']+350>=surface_height:
-				GameState['place_to_start']=surface_height-350
-		for item in GameState['menu_items']:
-			if isinstance(item, Upgrade_Button):
-				item.rect1=pygame.Rect(surface_left+item.rect.left, surface_top+item.rect.top-GameState['place_to_start'], item.rect.width, item.rect.height)
-				item.draw()
-		DISPLAYSURF.blit(surface, (surface_left, surface_top), (0, GameState['place_to_start'], surface_width, 348))
-		pygame.draw.rect(DISPLAYSURF, BLACK, (surface_left, surface_top, surface_width, 350), 2)
+		pause_menu.update_rects(surface, surface_width, surface_height)
+
 	def tab_handler(self):
 		rects=[]
 		if GameState['MouseButtonPressed']:
 			point=GameState['cursor_vector']
 			for item in GameState['menu_items']:
-				if isinstance(item, Upgrade_Button):
-					if item.rect.collidepoint(point):
+				if item.rect1.collidepoint(point):
+					if isinstance(item, Upgrade_Button):
 						if not survivor.money-item.field_upgrade_cost<0:
-							item.action()
+							survivor.money-=item.field_upgrade_cost
+							weapon=item.weapon
+							field_upgrade_cost=item.field_upgrade_cost
+							field_upgrades=item.field_upgrades
+							if not item.name=='buy_turret':
+								x = getattr(weapon, item.weapon_field)
+								setattr(weapon, item.weapon_field, x+field_upgrades[0])
+							if item.name=='buy_turret':
+								GameState['placing_turret']=True
+								GameState['turret_to_buy']=item.weapon
+								GameState['MouseButtonPressed']=False
+							if item.name=='upgrade':
+								del field_upgrades[0]
 		pygame.sprite.Group.empty(GameState['menu_items'])
 
 class Turrets_Tab:
@@ -1263,6 +1245,7 @@ class Turrets_Tab:
 		self.text_surface_obj = self.text_obj.render('Turrets', True, BLACK)
 		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)	
 		self.color=INDIGOBLUE
+		self.rect1 = pygame.Rect(500+300,50+100,150,50)
 	def draw_tab(self):
 		# Draws the tab
 		pygame.draw.rect(pause_menu.main_menu_surface, self.color, self.rect)
@@ -1280,6 +1263,8 @@ class Turrets_Tab:
 
 		if pause_menu.other_active_tab==pause_menu.upgrades_tab:
 			surface_height=99*len(GameState['active_turrets'])+2
+			if surface_height<350:
+				surface_height=350
 			surface=pygame.Surface((surface_width, surface_height))
 			surface.fill(INDIGOBLUE)
 			lis=GameState['active_turrets'].sprites()
@@ -1370,6 +1355,8 @@ class Turrets_Tab:
 
 		elif pause_menu.other_active_tab==pause_menu.buy_tab:
 			surface_height=99*len(GameState['turrets_collection'])+2
+			if surface_height<350:
+				surface_height=350
 			surface=pygame.Surface((surface_width, surface_height))
 			surface.fill(INDIGOBLUE)
 			for turret in GameState['turrets_collection']:
@@ -1406,8 +1393,8 @@ class Turrets_Tab:
 				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
 				text_surface_obj = text_obj.render('$'+str(turret.buy_turret_cost), True, BLACK)
 				# Buy Turret Box
-				button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top+8, 30, 20, 'buy_turret', RED, BLACK, turret, 'whatever', turret.buy_turret_cost, 0, text_surface_obj)
-					# # Timer Container
+				button = Buy_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top+8, 30, 20, 'buy_turret', RED, BLACK, turret, 'ammo_left', turret.buy_turret_cost, 0, text_surface_obj)
+				# # Timer Container
 				# item = Menu_Item(surface, LEFT+340, TOP+50, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
 				# item.draw()
 				# # Timer Text
@@ -1447,48 +1434,18 @@ class Turrets_Tab:
 				# 	button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, turret, 'ammo_capacity', turret.upgrade_ammo_capacity_cost, turret.ammo_capacity_upgrades, text_surface_obj)
 				TOP+=HEIGHT-1
 
-		if surface_height>350:
-			for event in GameState['events']:
-				if event.type==MOUSEBUTTONDOWN:
-					if GameState['big_blue_square'].collidepoint(event.pos):
-						if event.button==4:
-							GameState['place_to_start']-=20
-						elif event.button==5:
-							GameState['place_to_start']+=20
-			if GameState['place_to_start']<=0:
-				GameState['place_to_start']=0
-			elif GameState['place_to_start']+350>=surface_height:
-				GameState['place_to_start']=surface_height-350
-		for item in GameState['menu_items']:
-			if isinstance(item, Upgrade_Button):
-				item.rect1=pygame.Rect(surface_left+item.rect.left, surface_top+item.rect.top-GameState['place_to_start'], item.rect.width, item.rect.height)
-				if not (item.rect1.top-GameState['place_to_start']<350 or (item.rect1.top+item.rect1.height)-GameState['place_to_start']<0):
-					item.rect1=pygame.Rect(-10,-10,1,1)
-					item.rect=pygame.Rect(-10,-10,1,1)
-				item.draw()
-		DISPLAYSURF.blit(surface, (surface_left, surface_top), (0, GameState['place_to_start'], surface_width, 348))
-		pygame.draw.rect(DISPLAYSURF, BLACK, (surface_left, surface_top, surface_width, 350), 2)
+		pause_menu.update_rects(surface, surface_width, surface_height)
+
 	def tab_handler(self):
 		rects=[]
 		if GameState['MouseButtonPressed']:
 			point=GameState['cursor_vector']
-			for item in GameState['menu_items']:
-				if item.rect.collidepoint(point):
-					if isinstance(item, Upgrade_Button):
-						if not survivor.money-item.field_upgrade_cost<0:
-							survivor.money-=item.field_upgrade_cost
-							weapon=item.weapon
-							field_upgrade_cost=item.field_upgrade_cost
-							field_upgrades=item.field_upgrades
-							if not item.name=='buy_turret':
-								x = getattr(weapon, item.weapon_field)
-								setattr(weapon, item.weapon_field, x+field_upgrades[0])
-							if item.name=='buy_turret':
-								GameState['placing_turret']=True
-								GameState['turret_to_buy']=item.weapon
-								GameState['MouseButtonPressed']=False
-							if item.name=='upgrade':
-								del field_upgrades[0]
+			for button in GameState['menu_items']:
+				if button.rect1.collidepoint(point):
+					if isinstance(button, Upgrade_Button) or isinstance(button, Buy_Button):
+						print 'here'
+						if not survivor.money-button.field_upgrade_cost<0:
+							button.action()
 		pygame.sprite.Group.empty(GameState['menu_items'])
 
 
@@ -1594,39 +1551,60 @@ class Menu_Item(pygame.sprite.Sprite):
 		self.color=color
 		self.color2=color2
 		self.surface=surface
+		self.rect1=pygame.Rect(left+300, top+100, width, height)
 
 	def draw(self):
 		pygame.draw.rect(self.surface, self.color, self.rect)
 		pygame.draw.rect(self.surface, self.color2, self.rect, 2)
+		
+	def action(self):
+		survivor.money-=self.field_upgrade_cost
+		x = getattr(self.weapon, self.weapon_field)
+		setattr(self.weapon, self.weapon_field, x+self.field_upgrades[0])
 
-
-class Upgrade_Button(Menu_Item):
+class Buy_Button(Menu_Item):
 	def __init__(self, surface, left, top, width, height, name, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj):
 		Menu_Item.__init__(self, surface, left, top, width, height, name, color, color2)
-		pygame.sprite.Sprite.__init__(self, GameState['menu_items'])
+		self.text_surface_obj=text_surface_obj
+		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)
 		self.weapon=weapon
 		self.weapon_field=weapon_field
 		self.field_upgrade_cost=field_upgrade_cost
 		self.field_upgrades=field_upgrades
 		self.surface=surface
 		self.text_surface_obj=text_surface_obj
-
-	def action(self):
-		survivor.money-=self.field_upgrade_cost
-		x = getattr(self.weapon, self.weapon_field)
-		setattr(self.weapon, self.weapon_field, x+self.field_upgrades[0])
-		del field_upgrades[0]
-
+	
 	def draw(self):
-		pygame.draw.rect(self.surface, self.color, self.rect)
-		pygame.draw.rect(self.surface, self.color2, self.rect, 2)
-
-		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)
+		super(Buy_Button, self).draw()
 		self.surface.blit(self.text_surface_obj, self.text_surface_obj_rect)
 
-class Buy_Button(Menu_Item):
-		def __init__(self, surface, left, top, width, height, name, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj):
-			Menu_Item.__init__(self, surface, left, top, width, height, name, color, color2)
+
+	def action(self):
+		GameState['placing_turret']=True
+		GameState['turret_to_buy']=self.weapon
+		GameState['MouseButtonPressed']=False
+
+class Upgrade_Button(Menu_Item):
+	def __init__(self, surface, left, top, width, height, name, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj):
+		Menu_Item.__init__(self, surface, left, top, width, height, name, color, color2)
+		pygame.sprite.Sprite.__init__(self, GameState['menu_items'])
+		self.text_surface_obj=text_surface_obj
+		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)
+		self.weapon=weapon
+		self.weapon_field=weapon_field
+		self.field_upgrade_cost=field_upgrade_cost
+		self.field_upgrades=field_upgrades
+		self.surface=surface
+
+	def action(self):
+		x = getattr(self.weapon, self.weapon_field)
+		setattr(self.weapon, self.weapon_field, x+self.field_upgrades[0])
+		del self.field_upgrades[0]
+
+	def draw(self):
+		super(Upgrade_Button, self).draw()
+		self.surface.blit(self.text_surface_obj, self.text_surface_obj_rect)
+
 
 class Pause_Menu:
 	def __init__(self):
@@ -1641,9 +1619,14 @@ class Pause_Menu:
 		self.money_text_surface_obj=self.money_text_obj.render('$'+str(survivor.money), True, WHITE)
 		self.money_text_surface_obj_rect=self.money_text_surface_obj.get_rect(center=self.money_background_surface_obj_rect.center)
 		self.line_under_tabs_rect=pygame.Rect((50,100), (601,10))
-		self.big_blue_square_behind_items_rect=pygame.Rect((50,110), (600,350))
-		self.buy_tab=Menu_Item(self.main_menu_surface, 50, 10, 150, 40, None, INDIGOBLUE, BLACK)
-		self.upgrades_tab=Menu_Item(self.main_menu_surface, 200, 10, 150, 40, None, INDIGOBLUE, BLACK)
+		self.big_blue_square_behind_items_surface=pygame.Surface((600,350))
+		self.big_blue_square_behind_items_surface.fill(INDIGOBLUE)
+		self.big_blue_square_behind_items_rect=self.big_blue_square_behind_items_surface.get_rect(topleft=(50,110))
+		self.big_blue_square_behind_items_rect1=self.big_blue_square_behind_items_surface.get_rect(topleft=(350,210))
+		self.buy_tab=Menu_Item(self.main_menu_surface, 50, 10, 150, 40, 'buy', INDIGOBLUE, BLACK)
+		self.upgrades_tab=Menu_Item(self.main_menu_surface, 200, 10, 150, 40, 'upgrades', INDIGOBLUE, BLACK)
+		self.buy_tab_rect1=pygame.Rect((50+self.main_x_offset, 10+self.main_y_offset), (150,40))
+		self.upgrades_tab_rect1=pygame.Rect((200+self.main_x_offset, 10+self.main_y_offset), (150,40))
 		self.player_tab=Player_Tab()
 		self.weapons_tab=Weapons_Tab()
 		self.explosives_tab=Explosives_Tab()
@@ -1657,35 +1640,35 @@ class Pause_Menu:
 		# Changing colors of tabs if it's pressed
 		if GameState['MouseButtonPressed']:
 			point=GameState['cursor_vector']
-			if player_tab.rect.collidepoint(point):
+			if self.player_tab.rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
 				self.active_tab.color=INDIGOBLUE
-				self.active_tab=player_tab
+				self.active_tab=self.player_tab
 				self.other_active_tab=self.buy_tab
 				GameState['place_to_start']=0
-			elif weapons_tab.rect.collidepoint(point):
+			elif self.weapons_tab.rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
 				self.active_tab.color=INDIGOBLUE
-				self.active_tab=weapons_tab
+				self.active_tab=self.weapons_tab
 				self.other_active_tab=self.buy_tab	
 				GameState['place_to_start']=0
-			elif explosives_tab.rect.collidepoint(point):
+			elif self.explosives_tab.rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
 				self.active_tab.color=INDIGOBLUE
-				self.active_tab=explosives_tab
+				self.active_tab=self.explosives_tab
 				self.other_active_tab=self.buy_tab
 				GameState['place_to_start']=0
-			elif turrets_tab.rect.collidepoint(point):
+			elif self.turrets_tab.rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
 				self.active_tab.color=INDIGOBLUE
-				self.active_tab=turrets_tab
+				self.active_tab=self.turrets_tab
 				self.other_active_tab=self.buy_tab
 				GameState['place_to_start']=0
-			elif self.upgrades_tab.rect.collidepoint(point):
+			elif self.upgrades_tab_rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
 				self.other_active_tab=self.upgrades_tab
 				GameState['place_to_start']=0
-			elif self.buy_tab.rect.collidepoint(point):
+			elif self.buy_tab_rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
 				self.other_active_tab=self.buy_tab
 				GameState['place_to_start']=0
@@ -1693,7 +1676,30 @@ class Pause_Menu:
 			self.other_active_tab.color=OXFORDBLUE
 
 		self.draw()
-			
+	
+	def update_rects(self, surface, surface_width, surface_height):
+
+		for event in GameState['events']:
+			if event.type==MOUSEBUTTONDOWN:
+				if self.big_blue_square_behind_items_rect1.collidepoint(event.pos):
+					if event.button==4:
+						GameState['place_to_start']-=20
+					elif event.button==5:
+						GameState['place_to_start']+=20
+		if GameState['place_to_start']<=0:
+			GameState['place_to_start']=0
+		elif GameState['place_to_start']+350>=surface_height:
+			GameState['place_to_start']=surface_height-350
+		for item in GameState['menu_items']:
+			if isinstance(item, Buy_Button) or isinstance(item, Upgrade_Button):
+				item.rect1=pygame.Rect(item.rect.left+350, 210+item.rect.top-GameState['place_to_start'], item.rect.width, item.rect.height)
+				if item.rect1.top>560 or (item.rect1.top+item.rect1.height)<210:
+					item.rect1=pygame.Rect(-10,-10,1,1)
+					item.rect=pygame.Rect(-10,-10,1,1)
+				item.draw()
+		self.big_blue_square_behind_items_surface.blit(surface, (0,0), (0, GameState['place_to_start'], surface_width, 349))
+
+
 	def draw(self):
 		#Draw Money
 		self.money_background_surface_obj.blit(self.money_text_surface_obj, self.money_text_surface_obj_rect)
@@ -1726,8 +1732,8 @@ class Pause_Menu:
 		pygame.draw.rect(self.main_menu_surface, BLACK, self.line_under_tabs_rect)
 
 		# Draw Big Blue Square Behind Items
-		pygame.draw.rect(self.main_menu_surface, INDIGOBLUE, self.big_blue_square_behind_items_rect)
-		pygame.draw.rect(self.main_menu_surface, INDIGOBLUE, self.big_blue_square_behind_items_rect, 2)
+		self.main_menu_surface.blit(self.big_blue_square_behind_items_surface, self.big_blue_square_behind_items_rect)
+		pygame.draw.rect(self.main_menu_surface, BLACK, self.big_blue_square_behind_items_rect, 2)
 
 		# Blit Pause Menu
 		DISPLAYSURF.blit(self.main_menu_surface, self.main_menu_surface_rect)
@@ -2908,6 +2914,10 @@ def turrets_handler():
 		GameState['active_turrets'].add(turret0)
 		GameState['turret_to_buy']=None
 		GameState['placing_turret']=False
+	if GameState['placing_turret']:
+		GameState['turret_to_buy'].vector=GameState['cursor_vector']
+		GameState['turret_to_buy'].prepare()
+		GameState['turret_to_buy'].draw()
 
 GameState['maps']=[]
 rooms=[[(184,98),(620,314)], [(184,314),(620,410)], [(184,410),(430,590)], [(430,410),(557,590)], [(557,410),(814,590)], [(814,410),(975,590)], [(975,345),(1157,590)], [(620,218),(1157,345)], [(620,98),(1157,218)], [(620,345),(975,410)]]
@@ -3165,11 +3175,7 @@ def main():
 			if GameState['placing_turret']:
 				draw_game([0,0,0,0])
 				if GameState['turret_to_buy']!=None:
-					GameState['turret_to_buy'].vector=GameState['cursor_vector']
-					GameState['turret_to_buy'].prepare()
-					GameState['turret_to_buy'].draw()
 					turrets_handler()
-
 		# If not pause, continue game
 		if not GameState['paused']:
 			# Gets all the events
