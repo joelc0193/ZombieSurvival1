@@ -674,85 +674,90 @@ class Player_Tab:
 		surface_height=350
 		surface=pygame.Surface((surface_width, surface_height))
 		surface.fill(INDIGOBLUE)
-		# Max Health Container
-		item = Menu_Item(surface, 50, 10, 235, 40, 'max_health', INDIGOBLUE, BLACK)
-		item.draw()
-		# Max Health Text
-		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-		text_surface_obj = text_obj.render('Max Health: '+str(survivor.max_health), True, BLACK)
-		text_surface_obj_rect=text_surface_obj.get_rect(topleft=((70, 10)))
-		surface.blit(text_surface_obj, text_surface_obj_rect)
-		# Next Upgrade
-		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-		if not len(survivor.max_health_upgrades)==0:
-			text_surface_obj = text_obj.render('+'+str(survivor.max_health_upgrades[0]), True, GREEN)
-			text_surface_obj_rect=text_surface_obj.get_rect(topleft=(text_surface_obj_rect.right,text_surface_obj_rect.top+10))
+		if pause_menu.other_active_tab==pause_menu.upgrades_tab:
+			# Max Health Container
+			item = Menu_Item(surface, 50, 10, 235, 40, 'max_health', INDIGOBLUE, BLACK)
+			item.draw()
+			# Max Health Text
+			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+			text_surface_obj = text_obj.render('Max Health: '+str(survivor.max_health), True, BLACK)
+			text_surface_obj_rect=text_surface_obj.get_rect(topleft=((70, 10)))
 			surface.blit(text_surface_obj, text_surface_obj_rect)
-			# Upgrade Damage Cost
+			# Next Upgrade
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-			text_surface_obj = text_obj.render('$'+str(survivor.upgrade_max_health_cost[0]), True, BLACK)
-			# Upgrade Damage Box
-			button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, survivor, 'max_health', survivor.upgrade_max_health_cost, survivor.max_health_upgrades, text_surface_obj)
+			if not len(survivor.max_health_upgrades)==0:
+				text_surface_obj = text_obj.render('+'+str(survivor.max_health_upgrades[0]), True, GREEN)
+				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(text_surface_obj_rect.right,text_surface_obj_rect.top+10))
+				surface.blit(text_surface_obj, text_surface_obj_rect)
+				# Upgrade Damage Cost
+				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				text_surface_obj = text_obj.render('$'+str(survivor.upgrade_max_health_cost[0]), True, BLACK)
+				# Upgrade Damage Box
+				button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, survivor, 'max_health', survivor.upgrade_max_health_cost[0], survivor.max_health_upgrades, text_surface_obj)
 
-		# Max Armor Container
-		item = Menu_Item(surface, 320, 10, 235, 40, 'max_armor', INDIGOBLUE, BLACK)
-		item.draw()
-		# Max Armor Text
-		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-		text_surface_obj = text_obj.render('Max Armor: '+str(survivor.max_armor), True, BLACK)
-		text_surface_obj_rect=text_surface_obj.get_rect(topleft=((330, 10)))
-		surface.blit(text_surface_obj, text_surface_obj_rect)
-		# Next Upgrade
-		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-		if not len(survivor.max_armor_upgrades)==0:
-			text_surface_obj = text_obj.render('+'+str(survivor.max_armor_upgrades[0]), True, GREEN)
-			text_surface_obj_rect=text_surface_obj.get_rect(topleft=(text_surface_obj_rect.right,text_surface_obj_rect.top+10))	
+			# Max Armor Container
+			item = Menu_Item(surface, 320, 10, 235, 40, 'max_armor', INDIGOBLUE, BLACK)
+			item.draw()
+			# Max Armor Text
+			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+			text_surface_obj = text_obj.render('Max Armor: '+str(survivor.max_armor), True, BLACK)
+			text_surface_obj_rect=text_surface_obj.get_rect(topleft=((330, 10)))
 			surface.blit(text_surface_obj, text_surface_obj_rect)
-			# Upgrade Armor Cost
+			# Next Upgrade
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-			text_surface_obj = text_obj.render('$'+str(survivor.upgrade_max_armor_cost[0]), True, BLACK)
-			# Upgrade Armor Box
-			button = Upgrade_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, survivor, 'max_armor', survivor.upgrade_max_armor_cost, survivor.max_armor_upgrades, text_surface_obj)
+			if not len(survivor.max_armor_upgrades)==0:
+				text_surface_obj = text_obj.render('+'+str(survivor.max_armor_upgrades[0]), True, GREEN)
+				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(text_surface_obj_rect.right,text_surface_obj_rect.top+10))	
+				surface.blit(text_surface_obj, text_surface_obj_rect)
+				# Upgrade Armor Cost
+				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				text_surface_obj = text_obj.render('$'+str(survivor.upgrade_max_armor_cost[0]), True, BLACK)
+				# Upgrade Armor Box
+				button = Upgrade_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, survivor, 'max_armor', survivor.upgrade_max_armor_cost[0], survivor.max_armor_upgrades, text_surface_obj)
 
-		# Max Speed Container
-		item = Menu_Item(surface, 50, 60, 190, 40, 'walk_speed', INDIGOBLUE, BLACK)
-		item.draw()
-		# Max Speed Text
-		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-		text_surface_obj = text_obj.render('Speed: '+str(survivor.walk_speed), True, BLACK)
-		text_surface_obj_rect=text_surface_obj.get_rect(topleft=((LEFT+70, TOP+10)))
-		surface.blit(text_surface_obj, text_surface_obj_rect)
-		# Next Upgrade
-		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-		if not len(survivor.walk_speed_upgrades)==0:
-			text_surface_obj = text_obj.render('+'+str(survivor.walk_speed_upgrades[0]), True, GREEN)	
-			text_surface_obj_rect=text_surface_obj.get_rect(topleft=(text_surface_obj_rect.right,text_surface_obj_rect.top+10))	
+			# Max Speed Container
+			item = Menu_Item(surface, 50, 60, 190, 40, 'walk_speed', INDIGOBLUE, BLACK)
+			item.draw()
+			# Max Speed Text
+			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+			text_surface_obj = text_obj.render('Speed: '+str(survivor.walk_speed), True, BLACK)
+			text_surface_obj_rect=text_surface_obj.get_rect(topleft=((LEFT+70, TOP+10)))
 			surface.blit(text_surface_obj, text_surface_obj_rect)
-			# Upgrade Max Speed Cost
+			# Next Upgrade
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-			text_surface_obj = text_obj.render('$'+str(survivor.upgrade_walk_speed_cost[0]), True, BLACK)
-			# Upgrade Max Speed Box
-			button = Upgrade_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, survivor, 'walk_speed', survivor.upgrade_walk_speed_cost, survivor.walk_speed_upgrades, text_surface_obj)
+			if not len(survivor.walk_speed_upgrades)==0:
+				text_surface_obj = text_obj.render('+'+str(survivor.walk_speed_upgrades[0]), True, GREEN)	
+				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(text_surface_obj_rect.right,text_surface_obj_rect.top+10))	
+				surface.blit(text_surface_obj, text_surface_obj_rect)
+				# Upgrade Max Speed Cost
+				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				text_surface_obj = text_obj.render('$'+str(survivor.upgrade_walk_speed_cost[0]), True, BLACK)
+				# Upgrade Max Speed Box
+				button = Upgrade_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, survivor, 'walk_speed', survivor.upgrade_walk_speed_cost[0], survivor.walk_speed_upgrades, text_surface_obj)
 
-		# Max Bullet Speed Container
-		item = Menu_Item(surface, 275, 60, 280, 40, 'bullet_speed', INDIGOBLUE, BLACK)
-		item.draw()
-		# Max Bullet Speed Text
-		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-		text_surface_obj = text_obj.render('Bullet Speed: '+str(survivor.bullet_speed), True, BLACK)
-		text_surface_obj_rect=text_surface_obj.get_rect(topleft=((290, 60)))
-		surface.blit(text_surface_obj, text_surface_obj_rect)
-		# Next Upgrade
-		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-		if not len(survivor.bullet_speed_upgrades)==0:
-			text_surface_obj = text_obj.render('+'+str(survivor.bullet_speed_upgrades[0]), True, GREEN)
-			text_surface_obj_rect=text_surface_obj.get_rect(topleft=(text_surface_obj_rect.right,text_surface_obj_rect.top+10))	
+			# Max Bullet Speed Container
+			item = Menu_Item(surface, 275, 60, 280, 40, 'bullet_speed', INDIGOBLUE, BLACK)
+			item.draw()
+			# Max Bullet Speed Text
+			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+			text_surface_obj = text_obj.render('Bullet Speed: '+str(survivor.bullet_speed), True, BLACK)
+			text_surface_obj_rect=text_surface_obj.get_rect(topleft=((290, 60)))
 			surface.blit(text_surface_obj, text_surface_obj_rect)
-			# Upgrade Buller Speed Cost
+			# Next Upgrade
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-			text_surface_obj = text_obj.render('$'+str(survivor.upgrade_bullet_speed_cost[0]), True, BLACK)
-			# Upgrade Bullet Speed Box
-			button = Upgrade_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, survivor, 'bullet_speed', survivor.upgrade_bullet_speed_cost, survivor.bullet_speed_upgrades, text_surface_obj)
+			if not len(survivor.bullet_speed_upgrades)==0:
+				text_surface_obj = text_obj.render('+'+str(survivor.bullet_speed_upgrades[0]), True, GREEN)
+				text_surface_obj_rect=text_surface_obj.get_rect(topleft=(text_surface_obj_rect.right,text_surface_obj_rect.top+10))	
+				surface.blit(text_surface_obj, text_surface_obj_rect)
+				# Upgrade Buller Speed Cost
+				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+				text_surface_obj = text_obj.render('$'+str(survivor.upgrade_bullet_speed_cost[0]), True, BLACK)
+				# Upgrade Bullet Speed Box
+				button = Upgrade_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, 'upgrade', RED, BLACK, survivor, 'bullet_speed', survivor.upgrade_bullet_speed_cost[0], survivor.bullet_speed_upgrades, text_surface_obj)
+
+		if pause_menu.other_active_tab==pause_menu.buy_tab:
+			pass
+
 
 		pause_menu.update_rects(surface, surface_width, surface_height)
 
@@ -1550,6 +1555,7 @@ class Buy_Button(Menu_Item):
 
 
 	def action(self):
+		survivor.money-=self.field_upgrade_cost
 		GameState['placing_turret']=True
 		GameState['turret_to_buy']=self.weapon
 		GameState['MouseButtonPressed']=False
@@ -1567,6 +1573,7 @@ class Upgrade_Button(Menu_Item):
 		self.surface=surface
 
 	def action(self):
+		survivor.money-=self.field_upgrade_cost
 		x = getattr(self.weapon, self.weapon_field)
 		setattr(self.weapon, self.weapon_field, x+self.field_upgrades[0])
 		del self.field_upgrades[0]
@@ -1582,11 +1589,6 @@ class Pause_Menu:
 		self.main_x_offset=300
 		self.main_y_offset=100
 		self.main_menu_surface_rect=self.main_menu_surface.get_rect(left=self.main_x_offset, top=self.main_y_offset)
-		self.money_background_surface_obj=pygame.Surface((100,40))
-		self.money_background_surface_obj_rect=self.money_background_surface_obj.get_rect()
-		self.money_text_obj=pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-		self.money_text_surface_obj=self.money_text_obj.render('$'+str(survivor.money), True, WHITE)
-		self.money_text_surface_obj_rect=self.money_text_surface_obj.get_rect(center=self.money_background_surface_obj_rect.center)
 		self.line_under_tabs_rect=pygame.Rect((50,100), (601,10))
 		self.big_blue_square_behind_items_surface=pygame.Surface((600,350))
 		self.big_blue_square_behind_items_surface.fill(INDIGOBLUE)
@@ -1613,25 +1615,21 @@ class Pause_Menu:
 				self.other_active_tab.color=INDIGOBLUE
 				self.active_tab.color=INDIGOBLUE
 				self.active_tab=self.player_tab
-				self.other_active_tab=self.buy_tab
 				GameState['place_to_start']=0
 			elif self.weapons_tab.rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
 				self.active_tab.color=INDIGOBLUE
 				self.active_tab=self.weapons_tab
-				self.other_active_tab=self.buy_tab	
 				GameState['place_to_start']=0
 			elif self.explosives_tab.rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
 				self.active_tab.color=INDIGOBLUE
 				self.active_tab=self.explosives_tab
-				self.other_active_tab=self.buy_tab
 				GameState['place_to_start']=0
 			elif self.turrets_tab.rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
 				self.active_tab.color=INDIGOBLUE
 				self.active_tab=self.turrets_tab
-				self.other_active_tab=self.buy_tab
 				GameState['place_to_start']=0
 			elif self.upgrades_tab_rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
@@ -1671,6 +1669,11 @@ class Pause_Menu:
 
 	def draw(self):
 		#Draw Money
+		self.money_background_surface_obj=pygame.Surface((100,40))
+		self.money_background_surface_obj_rect=self.money_background_surface_obj.get_rect()
+		self.money_text_obj=pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+		self.money_text_surface_obj=self.money_text_obj.render('$'+str(survivor.money), True, WHITE)
+		self.money_text_surface_obj_rect=self.money_text_surface_obj.get_rect(center=self.money_background_surface_obj_rect.center)
 		self.money_background_surface_obj.blit(self.money_text_surface_obj, self.money_text_surface_obj_rect)
 		self.money_background_surface_obj_rect.topright=(self.main_menu_surface_rect.width,0)
 		self.main_menu_surface.blit(self.money_background_surface_obj, self.money_background_surface_obj_rect)
