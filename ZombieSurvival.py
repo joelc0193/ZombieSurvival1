@@ -183,17 +183,23 @@ def update_survivor_location():  # MOves the survivor
 		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
 		pygame.draw.rect(DISPLAYSURF, BLACK, survivor.walking_rect)
+		measuring_rect=survivor.walking_rect.copy()
+		measuring_rect.size=(survivor.walking_rect.size[0]+survivor.velocity[0], survivor.walking_rect.size[1])
+		if survivor.move_left:
+			measuring_rect.topright=survivor.walking_rect.topright
+		elif survivor.move_right:
+			measuring_rect.topleft=survivor.walking_rect.topleft
 		# Checks to see if the survivor's new x location does not cause it to crash a wall
 		for wall in current_map.walls:
 			# If it crashes a wall, finds x coords where survivor is against wall
-			if wall.rect.colliderect(survivor.walking_rect):
-				for x in range(int(survivor.speed)):
+			if wall.rect.colliderect(measuring_rect):
+				for x in range(int(1000)):
 					if survivor.move_left:
-						survivor.walking_rect=survivor.walking_rect.move(1,0)
+						measuring_rect=measuring_rect.move(1,0)
 					elif survivor.move_right:
-						survivor.walking_rect=survivor.walking_rect.move(-1,0)
-					if not wall.rect.colliderect(survivor.walking_rect):
-						survivor.vector=Vector2(survivor.walking_rect.center)
+						measuring_rect=measuring_rect.move(-1,0)
+					if not wall.rect.colliderect(measuring_rect):
+						survivor.vector=Vector2(survivor.walking_rect.centerx+WALKINGRECTWIDTH/2, survivor.walking_rect.centery)
 						WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 						break
 				break
@@ -208,7 +214,7 @@ def update_survivor_location():  # MOves the survivor
 		for wall in current_map.walls:
 			# If it crashes a wall, finds y coords where survivor is against wall
 			if wall.rect.colliderect(survivor.walking_rect):
-				for y in range(int(survivor.speed)):
+				for y in range(1000):
 					if survivor.move_up:
 						survivor.walking_rect=survivor.walking_rect.move(0,1)
 					elif survivor.move_down:
