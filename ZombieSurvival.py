@@ -179,16 +179,18 @@ def update_survivor_location():  # MOves the survivor
 	if not (survivor.velocity==Vector2(0,0)):
 		# finds new x location
 		survivor.angle_walk=Vector2().angle_to(survivor.velocity)
+		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+		survivor_old_vector=Vector2(survivor.vector)
+		old_walk_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
 		survivor.vector[0]+=survivor.velocity[0]
 		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
-		pygame.draw.rect(DISPLAYSURF, BLACK, survivor.walking_rect)
 		measuring_rect=survivor.walking_rect.copy()
-		measuring_rect.size=(survivor.walking_rect.size[0]+survivor.velocity[0], survivor.walking_rect.size[1])
+		measuring_rect.size=(survivor.walking_rect.size[0]+abs(survivor.velocity[0]), survivor.walking_rect.size[1])
 		if survivor.move_left:
-			measuring_rect.topright=survivor.walking_rect.topright
+			measuring_rect.topright=old_walk_rect.topright
 		elif survivor.move_right:
-			measuring_rect.topleft=survivor.walking_rect.topleft
+			measuring_rect.topleft=old_walk_rect.topleft
 		# Checks to see if the survivor's new x location does not cause it to crash a wall
 		for wall in current_map.walls:
 			# If it crashes a wall, finds x coords where survivor is against wall
@@ -199,32 +201,55 @@ def update_survivor_location():  # MOves the survivor
 					elif survivor.move_right:
 						measuring_rect=measuring_rect.move(-1,0)
 					if not wall.rect.colliderect(measuring_rect):
-						survivor.vector=Vector2(survivor.walking_rect.centerx+WALKINGRECTWIDTH/2, survivor.walking_rect.centery)
-						WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+						if survivor.move_right:
+							survivor.vector=Vector2(measuring_rect.right-(survivor.walking_rect.size[0]/2), survivor.walking_rect.centery)
+							pygame.draw.circle(DISPLAYSURF, BLACK, (int(survivor.vector[0]), int(survivor.vector[1])), 20)
+							pygame.display.update()
+							WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+						if survivor.move_left:
+							survivor.vector=Vector2(measuring_rect.left+(survivor.walking_rect.size[0]/2), survivor.walking_rect.centery)
+							WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 						break
 				break
 
+	
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
+		pygame.draw.rect(DISPLAYSURF, BLACK, measuring_rect)
+		pygame.draw.rect(DISPLAYSURF, GREEN, survivor.walking_rect)
+		pygame.display.update()
+							
 
 		# finds new y location
 		survivor.vector[1]+=survivor.velocity[1]
 		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
+		measuring_rect=survivor.walking_rect.copy()
+		measuring_rect.size=(survivor.walking_rect.size[0], survivor.walking_rect.size[1]+abs(survivor.velocity[1]))
+		if survivor.move_up:
+			measuring_rect.bottomleft=survivor.walking_rect.bottomleft
+		elif survivor.move_down:
+			measuring_rect.topleft=survivor.walking_rect.topleft
 		# Checks to see if the survivor's new y location does not cause it to crash a wall
 		for wall in current_map.walls:
 			# If it crashes a wall, finds y coords where survivor is against wall
-			if wall.rect.colliderect(survivor.walking_rect):
+			if wall.rect.colliderect(measuring_rect):
 				for y in range(1000):
 					if survivor.move_up:
-						survivor.walking_rect=survivor.walking_rect.move(0,1)
+						measuring_rect=measuring_rect.move(0,1)
 					elif survivor.move_down:
-						survivor.walking_rect=survivor.walking_rect.move(0,-1)
-					if not wall.rect.colliderect(survivor.walking_rect):
-						survivor.vector=Vector2(survivor.walking_rect.center)
-						WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+						measuring_rect=measuring_rect.move(0,-1)
+					if not wall.rect.colliderect(measuring_rect):
+						if survivor.move_up:
+							survivor.vector=Vector2(measuring_rect.centerx, measuring_rect.centery+(measuring_rect.size[1]-survivor.walking_rect.size[1]))
+							WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+						if survivor.move_down:
+							survivor.vector=Vector2(measuring_rect.centerx, measuring_rect.centery-(measuring_rect.size[1]-survivor.walking_rect.size[1]))
+							WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 						break
 				break
 
+
+	
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
 
 	# checks to see if survivor switched rooms
@@ -1836,7 +1861,7 @@ class Survivor(pygame.sprite.Sprite):
 		self.max_armor_upgrades=[999,10,5]
 		self.upgrade_max_armor_cost=[9999,25,12]
 		self.money=9999
-		self.walk_speed=4.5
+		self.walk_speed=speed
 		self.walk_speed_upgrades=[20,10,5]
 		self.upgrade_walk_speed_cost=[50,25,12]
 		self.speed=self.walk_speed
@@ -1883,7 +1908,7 @@ class Survivor(pygame.sprite.Sprite):
 		survivor.angle_to_rotate_body=(GameState['cursor_vector']-survivor.vector).angle_to(GameState['cursor_vector']-survivor.weapon.new_projectile_coords)+survivor.angle_from_center_to_cursor
 		rotated_body_sprite = pygame.transform.rotate(self.body_image, -(self.angle_from_center_to_cursor))
 		self.body_rect=rotated_body_sprite.get_rect()
-		self.body_rect.center = self.walking_rect.center
+		self.body_rect.center = self.vector
 		self.rect=self.body_rect
 
 		#Rotate Feet and find feet update delay
@@ -1928,7 +1953,7 @@ class Survivor(pygame.sprite.Sprite):
 
 		rotated_feet_sprite = pygame.transform.rotate(self.feet_image, -angle_to_rotate_survivor_feet)
 		self.feet_rect=rotated_feet_sprite.get_rect()
-		self.feet_rect.center=self.walking_rect.center
+		self.feet_rect.center=self.vector
 		return rotated_body_sprite, rotated_feet_sprite
 
 	def update_state(self): # updates the self state image and rotates it
@@ -2911,7 +2936,7 @@ current_round=GameState['rounds'][0]
 for zombie_spawn in current_map.zombie_spawns:
 	zombie_spawn.find_area()
 
-survivor = Survivor(250, 350, 3)
+survivor = Survivor(200, 110, 100)
 survivor.current_room=find_current_location(survivor.vector, current_map.rooms)
 survivor.current_area=find_current_location(survivor.vector, current_map.areas)
 
