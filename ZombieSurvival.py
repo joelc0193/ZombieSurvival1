@@ -321,6 +321,7 @@ def cursor_actions_tracker():
 			GameState['MouseButtonPressed']=True
 		elif event.type==MOUSEBUTTONUP: # If mouse button was released, sets flag so that no more active_projectiles are produced
 			GameState['MouseButtonDown']=False
+
 def update_projectile_locations(): # updates the bullets
 	for bullet in GameState['active_projectiles']: # For each projectile
 		bullet.prepare()
@@ -754,7 +755,7 @@ class Pause_Menu:
 		
 	def handler(self):
 		# Changing colors of tabs if it's pressed
-		if GameState['MouseButtonPressed']:
+		if GameState['MouseButtonPressed'] and not GameState['placing_turret']:
 			point=GameState['cursor_vector']
 			if self.player_tab.rect1.collidepoint(point):
 				self.other_active_tab.color=INDIGOBLUE
@@ -787,8 +788,34 @@ class Pause_Menu:
 			self.active_tab.color=OXFORDBLUE
 			self.other_active_tab.color=OXFORDBLUE
 
-		self.draw()
-	
+		if not GameState['placing_turret']:
+			self.draw()
+
+		else:
+			turrets_handler()
+			# Handles placing new turret
+			if GameState['placing_turret']:
+				if GameState['MouseButtonPressed']:
+					damage=100
+					shooting_delay=1
+					coords=GameState['cursor_vector']
+					bullet_speed=50
+					scale=(120,120)
+					weapon_size=(70,0)
+					bullet_scale=(7,7)
+					turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, len(GameState['active_turrets'])+1)
+					turret0.current_area=find_current_location(turret0.vector, current_map.areas)
+					turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
+					GameState['active_turrets'].add(turret0)
+					GameState['turret_to_buy']=None
+					GameState['placing_turret']=False
+					GameState['MouseButtonPressed']=False
+
+				if GameState['turret_to_buy']!=None:
+					GameState['turret_to_buy'].vector=GameState['cursor_vector']
+					GameState['turret_to_buy'].prepare()
+					GameState['turret_to_buy'].draw()
+
 	def update_rects(self, surface, surface_width, surface_height):
 
 		for event in GameState['events']:
@@ -2013,7 +2040,7 @@ class Zombie(pygame.sprite.Sprite):
 		self.current_state_number=0
 		self.speed=speed
 		self.damage=1
-		self.radius=5
+		self.radius=15
 		self.vector=Vector2(xcoord,ycoord)
 		self.image = Images['Characters/Zombies/Zombie'+str(zombie_number)+'/walk'+str(self.current_state_number)]
 		self.rect=self.image.get_rect()
@@ -2786,7 +2813,7 @@ GameState['turrets_collection'].add(turret0)
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
-		self.zombie_quantities=[1000,1000,0,0]
+		self.zombie_quantities=[1,0,0,0]
 		self.zombie_delays=[.01,.01,0,0]
 		self.zombie_last_times=[0,0,0,0]
 		self.delays_doubled=False
@@ -2833,28 +2860,10 @@ class Round:
 		return generated_zombie
 
 def turrets_handler():
+	# Draws active turrets into screen
 	for turret in GameState['active_turrets']:
 		turret.prepare()
 		turret.draw()
-	if GameState['MouseButtonPressed']:
-		damage=100
-		shooting_delay=1
-		coords=GameState['cursor_vector']
-		bullet_speed=50
-		scale=(120,120)
-		weapon_size=(70,0)
-		bullet_scale=(7,7)
-		turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, len(GameState['active_turrets'])+1)
-		turret0.current_area=find_current_location(turret0.vector, current_map.areas)
-		turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
-		GameState['active_turrets'].add(turret0)
-		GameState['turret_to_buy']=None
-		GameState['placing_turret']=False
-		print 'placing_turret'
-	if GameState['placing_turret']:
-		GameState['turret_to_buy'].vector=GameState['cursor_vector']
-		GameState['turret_to_buy'].prepare()
-		GameState['turret_to_buy'].draw()
 
 GameState['maps']=[]
 rooms=[[(184,98),(620,314)], [(184,314),(620,410)], [(184,410),(430,590)], [(430,410),(557,590)], [(557,410),(814,590)], [(814,410),(975,590)], [(975,345),(1157,590)], [(620,218),(1157,345)], [(620,98),(1157,218)], [(620,345),(975,410)]]
@@ -3105,10 +3114,6 @@ def main():
 		# If pause, open pause menu
 		if GameState['paused']:
 			pause_menu.handler()
-			if GameState['placing_turret']:
-				draw_game([0,0,0,0])
-				if GameState['turret_to_buy']!=None:
-					turrets_handler()
 		# If not pause, continue game
 		if not GameState['paused']:
 			# Gets all the events
