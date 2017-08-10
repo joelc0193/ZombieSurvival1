@@ -177,6 +177,7 @@ def update_survivor_location():  # MOves the survivor
 
 	# If the survivor is not told to stay in place
 	if not (survivor.velocity==Vector2(0,0)):
+		_, survivor.angle_walk=Vector2().as_polar()
 		# Keeps track of survivor's old walking rect
 		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		old_walk_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
@@ -711,7 +712,7 @@ GameState={
 'Left':False,
 'Right':False,
 # Keep track of direction of bullet
-'cursor_vector':Vector2(),
+'cursor_vector':Vector2(0,0),
 'MouseButtonDown':False,
 'MouseButtonPressed':False,
 # Projectiles to keep track of
@@ -743,15 +744,10 @@ class Menu_Item(pygame.sprite.Sprite):
 	def draw(self):
 		pygame.draw.rect(self.surface, self.color, self.rect)
 		pygame.draw.rect(self.surface, self.color2, self.rect, 2)
-		
-	def action(self):
-		survivor.money-=self.field_upgrade_cost
-		x = getattr(self.weapon, self.weapon_field)
-		setattr(self.weapon, self.weapon_field, x+self.field_upgrades[0])
 
 class Buy_Button(Menu_Item):
-	def __init__(self, surface, left, top, width, height, name, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj):
-		Menu_Item.__init__(self, surface, left, top, width, height, name, color, color2)
+	def __init__(self, surface, left, top, width, height, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj):
+		Menu_Item.__init__(self, surface, left, top, width, height, 'name', color, color2)
 		self.text_surface_obj=text_surface_obj
 		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)
 		self.weapon=weapon
@@ -773,8 +769,8 @@ class Buy_Button(Menu_Item):
 		GameState['MouseButtonPressed']=False
 
 class Upgrade_Button(Menu_Item):
-	def __init__(self, surface, left, top, width, height, name, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj):
-		Menu_Item.__init__(self, surface, left, top, width, height, name, color, color2)
+	def __init__(self, surface, left, top, width, height, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj):
+		Menu_Item.__init__(self, surface, left, top, width, height, 'name', color, color2)
 		pygame.sprite.Sprite.__init__(self, GameState['menu_items'])
 		self.text_surface_obj=text_surface_obj
 		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)
@@ -786,6 +782,7 @@ class Upgrade_Button(Menu_Item):
 
 	def action(self):
 		survivor.money-=self.field_upgrade_cost
+		self.field_upgrades
 		x = getattr(self.weapon, self.weapon_field)
 		setattr(self.weapon, self.weapon_field, x+self.field_upgrades[0])
 		del self.field_upgrades[0]
@@ -1062,9 +1059,92 @@ class Player_Tab:
 		pygame.sprite.Group.empty(GameState['menu_items'])
 
 
+class Tab(object):
+	def __init__(self, topleft, string):
+		self.rect=pygame.Rect(topleft, (150,50))
+		self.text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 40)
+		self.text_surface_obj = self.text_obj.render(string, True, BLACK)
+		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)	
+		self.color=INDIGOBLUE
+
+	def draw_tab(self):
+		# Draws the tab
+		pygame.draw.rect(pause_menu.main_menu_surface, self.color, self.rect)
+		pygame.draw.rect(pause_menu.main_menu_surface, BLACK, self.rect, 2)
+		pause_menu.main_menu_surface.blit(self.text_surface_obj, self.text_surface_obj_rect)
+
+	def draw_contents(self):
+		## Displaying items
+		TOP=0
+		WIDTH=600
+		HEIGHT=100
+		surface_left=350
+		surface_top=210
+		surface_width=600
+
+		if pause_menu.other_active_tab==pause_menu.upgrades_tab:
+			surface_height=sum([item.tab_size for item in self.upgrades_tab_items])+2
+			if surface_height<350:
+				surface_height=350
+			surface=pygame.Surface((surface_width, surface_height))
+			surface.fill(INDIGOBLUE)
+		
+			for item in self.upgrades_tab_items:		
+				# Big Tab
+				menu_item = Menu_Item(surface, 0, TOP, WIDTH, HEIGHT, item.weapon_name, INDIGOBLUE, BLACK)
+				menu_item.draw()
+				# Picture
+				surface.blit(pygame.transform.scale(item.image1, (80,80)), (20, TOP+10))
+				for i, attribute in enumerate(self.list_of_attributes):
+					# First Attribute Container
+					menu_item = Menu_Item(surface, self.list_attributes_rects[i][0], TOP+self.list_attributes_rects[i][1], self.list_attributes_rects[i][2], self.list_attributes_rects[i][3], None, INDIGOBLUE, INDIGOBLUE)
+					menu_item.draw()
+					# Attribute Text
+					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+					text_surface_obj = text_obj.render(self.list_attributes_texts[i]+str(getattr(item, attribute)), True, BLACK)
+					text_surface_obj_rect=text_surface_obj.get_rect(left=self.list_attributes_rects[i][0]+10, top=TOP+self.list_attributes_rects[i][1])
+					surface.blit(text_surface_obj, text_surface_obj_rect)
+					# Next Upgrade
+					if not len(self.list_of_upgrades)==0:
+						text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+						text_surface_obj = text_obj.render('+'+ str(getattr(item, self.list_of_upgrades_costs[i])), True, GREEN)
+						text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
+						surface.blit(text_surface_obj, text_surface_obj_rect)
+						# Upgrade Cost
+						text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+						text_surface_obj = text_obj.render('$'+str(getattr(item, attribute)), True, BLACK)
+						# Upgrade Buton
+						self.list_of_upgrades[i]
+						button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, item, attribute, getattr(item, self.list_of_upgrades_costs[i]), getattr(item, self.list_of_upgrades[i]), text_surface_obj)
+				TOP+=HEIGHT-1
+	
+		pause_menu.update_rects(surface, surface_width, surface_height)
+
+	def tab_handler(self):
+		rects=[]
+		if GameState['MouseButtonPressed']:
+			point=GameState['cursor_vector']
+			for button in GameState['menu_items']:
+				if button.rect1.collidepoint(point):
+					if isinstance(button, Upgrade_Button) or isinstance(button, Buy_Button):
+						if not survivor.money-button.field_upgrade_cost<0:
+							button.action()
+		pygame.sprite.Group.empty(GameState['menu_items'])
+
+
+class Weapons_Tab2(Tab):
+	def __init__(self, topleft, string):
+		Tab.__init__(self, topleft, string)
+		self.rect1 = pygame.Rect(self.rect.left+300, self.rect.top+100,150,50)
+		self.upgrades_tab_items=None
+		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 190, 40)]
+		self.list_attributes_texts=['Damage: ', 'Penetration: ', 'Weapon Ammo: ', 'Mag Ammo: ']
+		self.list_of_upgrades=['damage_upgrades', 'penetration_upgrades', 'max_weapon_ammo_upgrades', 'max_mag_ammo_upgrades']
+		self.list_of_attributes=['damage', 'penetration' ,'max_weapon_ammo', 'max_mag_ammo']
+		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_penetration_cost', 'upgrade_max_weapon_ammo_cost', 'upgrade_max_mag_ammo_cost']
+
 class Weapons_Tab:
 	def __init__(self):
-		self.rect= pygame.Rect(200,50,150,50)
 		self.text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 40)
 		self.text_surface_obj = self.text_obj.render('Weapons', True, BLACK)
 		self.text_surface_obj_rect=self.text_surface_obj.get_rect(center=self.rect.center)	
@@ -1096,7 +1176,7 @@ class Weapons_Tab:
 				item = Menu_Item(surface, LEFT, TOP, WIDTH, HEIGHT, weapon.weapon_name, INDIGOBLUE, BLACK)
 				item.draw()
 				# Picture
-				surface.blit(pygame.transform.scale(survivor.weapon.weapon_image1, (80,80)), (LEFT+20, TOP+10))
+				surface.blit(pygame.transform.scale(survivor.weapon.image1, (80,80)), (LEFT+20, TOP+10))
 				# Damage Container
 				item = Menu_Item(surface, LEFT+110, TOP+10, 190, 40, 'damage', INDIGOBLUE, INDIGOBLUE)
 				item.draw()
@@ -1185,7 +1265,7 @@ class Weapons_Tab:
 				item = Menu_Item(surface, LEFT, TOP, WIDTH, HEIGHT, weapon.weapon_name, INDIGOBLUE, BLACK)
 				item.draw()
 				# Picture
-				surface.blit(pygame.transform.scale(survivor.weapon.weapon_image1, (80,80)), (LEFT+20, TOP+10))
+				surface.blit(pygame.transform.scale(survivor.weapon.image1, (80,80)), (LEFT+20, TOP+10))
 				# Damage Container
 				item = Menu_Item(surface, LEFT+110, TOP+10, 190, 40, 'damage', INDIGOBLUE, INDIGOBLUE)
 				item.draw()
@@ -1658,7 +1738,7 @@ class Turrets_Tab:
 				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
 				text_surface_obj = text_obj.render('$'+str(turret.buy_turret_cost), True, BLACK)
 				# Buy Turret Box
-				button = Buy_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top+8, 30, 20, 'buy_turret', RED, BLACK, turret, 'ammo_left', turret.buy_turret_cost, 0, text_surface_obj)
+				button = Buy_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top+8, 30, 20, RED, BLACK, turret, 'ammo_left', turret.buy_turret_cost, 0, text_surface_obj)
 				# # Timer Container
 				# item = Menu_Item(surface, LEFT+340, TOP+50, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
 				# item.draw()
@@ -1718,12 +1798,12 @@ pause_menu.upgrades_tab=Menu_Item(pause_menu.main_menu_surface, 200, 10, 150, 40
 pause_menu.buy_tab_rect1=pygame.Rect((50+pause_menu.main_x_offset, 10+pause_menu.main_y_offset), (150,40))
 pause_menu.upgrades_tab_rect1=pygame.Rect((200+pause_menu.main_x_offset, 10+pause_menu.main_y_offset), (150,40))
 pause_menu.player_tab=Player_Tab()
-pause_menu.weapons_tab=Weapons_Tab()
+pause_menu.weapons_tab=Weapons_Tab2((200,50), 'WEAPONS')
 pause_menu.explosives_tab=Explosives_Tab()
 pause_menu.turrets_tab=Turrets_Tab()
-pause_menu.active_tab=pause_menu.player_tab
+pause_menu.active_tab=pause_menu.weapons_tab
 pause_menu.active_tab.color=OXFORDBLUE
-pause_menu.other_active_tab=pause_menu.buy_tab
+pause_menu.other_active_tab=pause_menu.upgrades_tab
 pause_menu.other_active_tab.color=OXFORDBLUE
 
 
@@ -1886,7 +1966,7 @@ class Survivor(pygame.sprite.Sprite):
 		self.current_feet_state_number=0
 		self.max_body_state_number=19
 		self.max_feet_state_number=0
-		self.body_image=Images['Characters/Survivor/handgun/idle0']
+		self.body_image=Images['Characters/Survivor/rifle/idle0']
 		self.feet_image=Images['Characters/Survivor/feet/idle0']
 		self.current_room=None
 		self.rotated_body_image=None
@@ -2190,7 +2270,8 @@ class Weapon(pygame.sprite.Sprite):
 		self.upgrade_damage_cost=upgrade_damage_cost
 		self.upgrade_penetration_cost=upgrade_penetration_cost
 		self.upgrade_max_mag_ammo_cost=upgrade_max_mag_ammo_cost
-		self.upgrade_max_weapon_ammo_cost=upgrade_max_weapon_ammo_cost		
+		self.upgrade_max_weapon_ammo_cost=upgrade_max_weapon_ammo_cost
+		self.tab_size=100	
 		self.damage_upgrades=[15,14,13,12,11]
 		self.penetration_upgrades=[5,4,3,2,1]
 		self.max_mag_ammo_upgrades=[2,2,2,2]
@@ -2199,7 +2280,7 @@ class Weapon(pygame.sprite.Sprite):
 		self.penetration=penetration
 		self.shooting_type=shooting_type
 		self.bullet_scale=(5,5)
-		self.weapon_image1=pygame.image.load(weapon_image)
+		self.image1=pygame.image.load(weapon_image)
 		self.weapon_image=pygame.transform.scale(pygame.image.load(weapon_image),weapon_scale)
 		self.bullet_image=None
 		self.weapon_size=weapon_size
@@ -2221,7 +2302,7 @@ class Weapon(pygame.sprite.Sprite):
 			if survivor.body_motion=='shoot' and survivor.current_body_state_number==0:
 				survivor.body_motion=None
 			self.new_projectile_coords=Vector2()
-			self.new_projectile_coords.from_polar((self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle_fron_center_cursor))
+			self.new_projectile_coords.from_polar((self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle_from_center_to_cursor))
 			self.new_projectile_coords+=survivor.vector
 			now=time.time()
 			if (now-self.last_time_bullet_shot>=self.bullet_delay):
@@ -2303,6 +2384,26 @@ upgrade_penetration_cost=5
 upgrade_max_mag_ammo_cost=5
 upgrade_max_weapon_ammo_cost=3
 Weapon(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
+
+name='rifle'
+shooting='automatic'
+filename='Guns/CartoonRifle.png'
+price=10
+price_per_mag=2
+fire_rate=5
+bullet_image='bullet.png'
+weapon_size=Vector2(25,10)
+damage=100
+max_mag_ammo=25
+max_weapon_ammo=150
+weapon_scale=(100,100)
+penetration=10
+upgrade_damage_cost=10
+upgrade_penetration_cost=5
+upgrade_max_mag_ammo_cost=5
+upgrade_max_weapon_ammo_cost=3
+Weapon(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
+
 
 GameState['explosives_collection']=pygame.sprite.Group()
 
@@ -2754,7 +2855,7 @@ class Turret(pygame.sprite.Sprite):
 		self.current_area=None
 		self.last_time_bullet_shot=0
 		self.ammo_left=1000
-		self.penetration=5
+		self.penetration=30
 		self.bullet_speed=bullet_speed
 		self.bullet_scale=bullet_scale
 		self.bullets_fired=0
@@ -2867,8 +2968,8 @@ GameState['turrets_collection'].add(turret0)
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
-		self.zombie_quantities=[1,0,0,0]
-		self.zombie_delays=[.01,.01,0,0]
+		self.zombie_quantities=[100,100,0,0]
+		self.zombie_delays=[1,1.5,0,0]
 		self.zombie_last_times=[0,0,0,0]
 		self.delays_doubled=False
 
@@ -2925,7 +3026,7 @@ walls=[[(164, 98),(184, 590)], [(164, 590), (568,609)], [(164,78),(1175,98)], [(
 nodes=[(231,325),(231,302), (568,325), (568,301),(375,396), (375,420), (441,397), (420,396), (542, 389), (543, 555), (573, 556), (831, 392), (611, 324), (632, 326), (673, 230), (672, 206), (1115, 206), (1114, 228), (959, 327), (796, 557), (827, 560),(959, 551),(1120, 330),(1120, 362), (989,553)]
 areas=[[(806, 546), (814, 571)], [(549, 546), (559, 590)], [(559, 546), (568, 570)], [(813, 546), (822, 590)], [(164, 98), (278, 152)], [(278, 98), (392, 152)], [(164, 152), (278, 206)], [(278, 152), (392, 206)], [(392, 98), (506, 152)], [(506, 98), (620, 152)], [(392, 152), (506, 206)], [(506, 152), (620, 206)], [(164, 206), (278, 260)], [(278, 206), (392, 260)], [(164, 260), (278, 314)], [(278, 260), (392, 314)], [(392, 206), (506, 260)], [(506, 206), (620, 260)], [(392, 260), (506, 314)], [(506, 260), (620, 314)], [(184, 314), (238, 337)], [(238, 314), (293, 337)], [(184, 337), (238, 360)], [(238, 337), (293, 360)], [(293, 314), (347, 337)], [(347, 314), (402, 337)], [(293, 337), (347, 360)], [(347, 337), (402, 360)], [(184, 360), (238, 383)], [(238, 360), (293, 383)], [(184, 383), (238, 407)], [(238, 383), (293, 407)], [(293, 360), (347, 383)], [(347, 360), (402, 383)], [(293, 383), (347, 407)], [(347, 383), (402, 407)], [(402, 314), (439, 337)], [(439, 314), (476, 337)], [(402, 337), (439, 360)], [(439, 337), (476, 360)], [(476, 314), (513, 337)], [(513, 314), (551, 337)], [(476, 337), (513, 360)], [(513, 337), (551, 360)], [(402, 360), (439, 383)], [(439, 360), (476, 383)], [(402, 383), (439, 407)], [(439, 383), (476, 407)], [(476, 360), (513, 383)], [(513, 360), (551, 383)], [(476, 383), (513, 407)], [(513, 383), (551, 407)], [(551, 314), (568, 335)], [(568, 314), (585, 335)], [(551, 335), (568, 356)], [(568, 335), (585, 356)], [(585, 314), (602, 335)], [(602, 314), (620, 335)], [(585, 335), (602, 356)], [(602, 335), (620, 356)], [(551, 356), (568, 377)], [(568, 356), (585, 377)], [(551, 377), (568, 399)], [(568, 377), (585, 399)], [(585, 356), (602, 377)], [(602, 356), (620, 377)], [(585, 377), (602, 399)], [(602, 377), (620, 399)], [(184, 411), (245, 455)], [(245, 411), (307, 455)], [(184, 455), (245, 500)], [(245, 455), (307, 500)], [(307, 411), (368, 455)], [(368, 411), (430, 455)], [(307, 455), (368, 500)], [(368, 455), (430, 500)], [(184, 500), (245, 545)], [(245, 500), (307, 545)], [(184, 545), (245, 590)], [(245, 545), (307, 590)], [(307, 500), (368, 545)], [(368, 500), (430, 545)], [(307, 545), (368, 590)], [(368, 545), (430, 590)], [(430, 407), (446, 430)], [(446, 407), (462, 430)], [(430, 430), (446, 453)], [(446, 430), (462, 453)], [(462, 407), (478, 430)], [(478, 407), (494, 430)], [(462, 430), (478, 453)], [(478, 430), (494, 453)], [(430, 453), (446, 476)], [(446, 453), (462, 476)], [(430, 476), (446, 500)], [(446, 476), (462, 500)], [(462, 453), (478, 476)], [(478, 453), (494, 476)], [(462, 476), (478, 500)], [(478, 476), (494, 500)], [(430, 500), (446, 522)], [(446, 500), (462, 522)], [(430, 522), (446, 545)], [(446, 522), (462, 545)], [(462, 500), (478, 522)], [(478, 500), (494, 522)], [(462, 522), (478, 545)], [(478, 522), (494, 545)], [(430, 545), (446, 567)], [(446, 545), (462, 567)], [(430, 567), (446, 590)], [(446, 567), (462, 590)], [(462, 545), (478, 567)], [(478, 545), (494, 567)], [(462, 567), (478, 590)], [(478, 567), (494, 590)], [(494, 407), (508, 430)], [(508, 407), (522, 430)], [(494, 430), (508, 453)], [(508, 430), (522, 453)], [(522, 407), (536, 430)], [(536, 407), (550, 430)], [(522, 430), (536, 453)], [(536, 430), (550, 453)], [(494, 453), (508, 476)], [(508, 453), (522, 476)], [(494, 476), (508, 500)], [(508, 476), (522, 500)], [(522, 453), (536, 476)], [(536, 453), (550, 476)], [(522, 476), (536, 500)], [(536, 476), (550, 500)], [(494, 500), (508, 522)], [(508, 500), (522, 522)], [(494, 522), (508, 545)], [(508, 522), (522, 545)], [(522, 500), (536, 522)], [(536, 500), (550, 522)], [(522, 522), (536, 545)], [(536, 522), (550, 545)], [(494, 545), (508, 567)], [(508, 545), (522, 567)], [(494, 567), (508, 590)], [(508, 567), (522, 590)], [(522, 545), (536, 567)], [(536, 545), (550, 567)], [(522, 567), (536, 590)], [(536, 567), (550, 590)], [(568, 417), (597, 437)], [(597, 417), (627, 437)], [(568, 437), (597, 458)], [(597, 437), (627, 458)], [(627, 417), (656, 437)], [(656, 417), (686, 437)], [(627, 437), (656, 458)], [(656, 437), (686, 458)], [(568, 458), (597, 479)], [(597, 458), (627, 479)], [(568, 479), (597, 500)], [(597, 479), (627, 500)], [(627, 458), (656, 479)], [(656, 458), (686, 479)], [(627, 479), (656, 500)], [(656, 479), (686, 500)], [(686, 417), (716, 437)], [(716, 417), (746, 437)], [(686, 437), (716, 458)], [(716, 437), (746, 458)], [(746, 417), (776, 437)], [(776, 417), (806, 437)], [(746, 437), (776, 458)], [(776, 437), (806, 458)], [(686, 458), (716, 479)], [(716, 458), (746, 479)], [(686, 479), (716, 500)], [(716, 479), (746, 500)], [(746, 458), (776, 479)], [(776, 458), (806, 479)], [(746, 479), (776, 500)], [(776, 479), (806, 500)], [(568, 500), (597, 517)], [(597, 500), (627, 517)], [(568, 517), (597, 535)], [(597, 517), (627, 535)], [(627, 500), (656, 517)], [(656, 500), (686, 517)], [(627, 517), (656, 535)], [(656, 517), (686, 535)], [(568, 535), (597, 553)], [(597, 535), (627, 553)], [(568, 553), (597, 571)], [(597, 553), (627, 571)], [(627, 535), (656, 553)], [(656, 535), (686, 553)], [(627, 553), (656, 571)], [(656, 553), (686, 571)], [(686, 500), (716, 517)], [(716, 500), (746, 517)], [(686, 517), (716, 535)], [(716, 517), (746, 535)], [(746, 500), (776, 517)], [(776, 500), (806, 517)], [(746, 517), (776, 535)], [(776, 517), (806, 535)], [(686, 535), (716, 553)], [(716, 535), (746, 553)], [(686, 553), (716, 571)], [(716, 553), (746, 571)], [(746, 535), (776, 553)], [(776, 535), (806, 553)], [(746, 553), (776, 571)], [(776, 553), (806, 571)], [(369, 407), (383, 408)], [(383, 407), (397, 408)], [(369, 408), (383, 410)], [(383, 408), (397, 410)], [(397, 407), (411, 408)], [(411, 407), (426, 408)], [(397, 408), (411, 410)], [(411, 408), (426, 410)], [(369, 410), (383, 412)], [(383, 410), (397, 412)], [(369, 412), (383, 414)], [(383, 412), (397, 414)], [(397, 410), (411, 412)], [(411, 410), (426, 412)], [(397, 412), (411, 414)], [(411, 412), (426, 414)], [(822, 400), (858, 447)], [(858, 400), (894, 447)], [(822, 447), (858, 495)], [(858, 447), (894, 495)], [(894, 400), (930, 447)], [(930, 400), (966, 447)], [(894, 447), (930, 495)], [(930, 447), (966, 495)], [(822, 495), (858, 542)], [(858, 495), (894, 542)], [(822, 542), (858, 590)], [(858, 542), (894, 590)], [(894, 495), (930, 542)], [(930, 495), (966, 542)], [(894, 542), (930, 590)], [(930, 542), (966, 590)], [(966, 544), (969, 555)], [(969, 544), (973, 555)], [(966, 555), (969, 567)], [(969, 555), (973, 567)], [(973, 544), (977, 555)], [(977, 544), (981, 555)], [(973, 555), (977, 567)], [(977, 555), (981, 567)], [(966, 567), (969, 578)], [(969, 567), (973, 578)], [(966, 578), (969, 590)], [(969, 578), (973, 590)], [(973, 567), (977, 578)], [(977, 567), (981, 578)], [(973, 578), (977, 590)], [(977, 578), (981, 590)], [(981, 353), (1002, 381)], [(1002, 353), (1023, 381)], [(981, 381), (1002, 410)], [(1002, 381), (1023, 410)], [(1023, 353), (1044, 381)], [(1044, 353), (1066, 381)], [(1023, 381), (1044, 410)], [(1044, 381), (1066, 410)], [(981, 410), (1002, 439)], [(1002, 410), (1023, 439)], [(981, 439), (1002, 468)], [(1002, 439), (1023, 468)], [(1023, 410), (1044, 439)], [(1044, 410), (1066, 439)], [(1023, 439), (1044, 468)], [(1044, 439), (1066, 468)], [(1066, 353), (1088, 381)], [(1088, 353), (1111, 381)], [(1066, 381), (1088, 410)], [(1088, 381), (1111, 410)], [(1111, 353), (1134, 381)], [(1134, 353), (1157, 381)], [(1111, 381), (1134, 410)], [(1134, 381), (1157, 410)], [(1066, 410), (1088, 439)], [(1088, 410), (1111, 439)], [(1066, 439), (1088, 468)], [(1088, 439), (1111, 468)], [(1111, 410), (1134, 439)], [(1134, 410), (1157, 439)], [(1111, 439), (1134, 468)], [(1134, 439), (1157, 468)], [(981, 468), (1002, 498)], [(1002, 468), (1023, 498)], [(981, 498), (1002, 529)], [(1002, 498), (1023, 529)], [(1023, 468), (1044, 498)], [(1044, 468), (1066, 498)], [(1023, 498), (1044, 529)], [(1044, 498), (1066, 529)], [(981, 529), (1002, 559)], [(1002, 529), (1023, 559)], [(981, 559), (1002, 590)], [(1002, 559), (1023, 590)], [(1023, 529), (1044, 559)], [(1044, 529), (1066, 559)], [(1023, 559), (1044, 590)], [(1044, 559), (1066, 590)], [(1066, 468), (1088, 498)], [(1088, 468), (1111, 498)], [(1066, 498), (1088, 529)], [(1088, 498), (1111, 529)], [(1111, 468), (1134, 498)], [(1134, 468), (1157, 498)], [(1111, 498), (1134, 529)], [(1134, 498), (1157, 529)], [(1066, 529), (1088, 559)], [(1088, 529), (1111, 559)], [(1066, 559), (1088, 590)], [(1088, 559), (1111, 590)], [(1111, 529), (1134, 559)], [(1134, 529), (1157, 559)], [(1111, 559), (1134, 590)], [(1134, 559), (1157, 590)], [(620, 218), (664, 249)], [(664, 218), (709, 249)], [(620, 249), (664, 281)], [(664, 249), (709, 281)], [(709, 218), (754, 249)], [(754, 218), (799, 249)], [(709, 249), (754, 281)], [(754, 249), (799, 281)], [(620, 281), (664, 313)], [(664, 281), (709, 313)], [(620, 313), (664, 345)], [(664, 313), (709, 345)], [(709, 281), (754, 313)], [(754, 281), (799, 313)], [(709, 313), (754, 345)], [(754, 313), (799, 345)], [(799, 218), (843, 247)], [(843, 218), (888, 247)], [(799, 247), (843, 277)], [(843, 247), (888, 277)], [(888, 218), (933, 247)], [(933, 218), (978, 247)], [(888, 247), (933, 277)], [(933, 247), (978, 277)], [(799, 277), (843, 307)], [(843, 277), (888, 307)], [(799, 307), (843, 337)], [(843, 307), (888, 337)], [(888, 277), (933, 307)], [(933, 277), (978, 307)], [(888, 307), (933, 337)], [(933, 307), (978, 337)], [(799, 337), (840, 339)], [(840, 337), (882, 339)], [(799, 339), (840, 341)], [(840, 339), (882, 341)], [(882, 337), (924, 339)], [(924, 337), (966, 339)], [(882, 339), (924, 341)], [(924, 339), (966, 341)], [(799, 341), (840, 343)], [(840, 341), (882, 343)], [(799, 343), (840, 345)], [(840, 343), (882, 345)], [(882, 341), (924, 343)], [(924, 341), (966, 343)], [(882, 343), (924, 345)], [(924, 343), (966, 345)], [(978, 218), (1022, 247)], [(1022, 218), (1067, 247)], [(978, 247), (1022, 277)], [(1022, 247), (1067, 277)], [(1067, 218), (1112, 247)], [(1112, 218), (1157, 247)], [(1067, 247), (1112, 277)], [(1112, 247), (1157, 277)], [(978, 277), (1022, 307)], [(1022, 277), (1067, 307)], [(978, 307), (1022, 337)], [(1022, 307), (1067, 337)], [(1067, 277), (1112, 307)], [(1112, 277), (1157, 307)], [(1067, 307), (1112, 337)], [(1112, 307), (1157, 337)], [(1108, 337), (1120, 341)], [(1120, 337), (1132, 341)], [(1108, 341), (1120, 345)], [(1120, 341), (1132, 345)], [(1132, 337), (1144, 341)], [(1144, 337), (1157, 341)], [(1132, 341), (1144, 345)], [(1144, 341), (1157, 345)], [(1108, 345), (1120, 349)], [(1120, 345), (1132, 349)], [(1108, 349), (1120, 353)], [(1120, 349), (1132, 353)], [(1132, 345), (1144, 349)], [(1144, 345), (1157, 349)], [(1132, 349), (1144, 353)], [(1144, 349), (1157, 353)], [(620, 98), (664, 128)], [(664, 98), (709, 128)], [(620, 128), (664, 158)], [(664, 128), (709, 158)], [(709, 98), (754, 128)], [(754, 98), (799, 128)], [(709, 128), (754, 158)], [(754, 128), (799, 158)], [(620, 158), (664, 188)], [(664, 158), (709, 188)], [(620, 188), (664, 218)], [(664, 188), (709, 218)], [(709, 158), (754, 188)], [(754, 158), (799, 188)], [(709, 188), (754, 218)], [(754, 188), (799, 218)], [(799, 98), (843, 128)], [(843, 98), (888, 128)], [(799, 128), (843, 158)], [(843, 128), (888, 158)], [(888, 98), (933, 128)], [(933, 98), (978, 128)], [(888, 128), (933, 158)], [(933, 128), (978, 158)], [(799, 158), (843, 188)], [(843, 158), (888, 188)], [(799, 188), (843, 218)], [(843, 188), (888, 218)], [(888, 158), (933, 188)], [(933, 158), (978, 188)], [(888, 188), (933, 218)], [(933, 188), (978, 218)], [(978, 98), (1022, 128)], [(1022, 98), (1067, 128)], [(978, 128), (1022, 158)], [(1022, 128), (1067, 158)], [(1067, 98), (1112, 128)], [(1112, 98), (1157, 128)], [(1067, 128), (1112, 158)], [(1112, 128), (1157, 158)], [(978, 158), (1022, 188)], [(1022, 158), (1067, 188)], [(978, 188), (1022, 218)], [(1022, 188), (1067, 218)], [(1067, 158), (1112, 188)], [(1112, 158), (1157, 188)], [(1067, 188), (1112, 218)], [(1112, 188), (1157, 218)], [(620, 345), (664, 358)], [(664, 345), (709, 358)], [(620, 358), (664, 372)], [(664, 358), (709, 372)], [(709, 345), (753, 358)], [(753, 345), (798, 358)], [(709, 358), (753, 372)], [(753, 358), (798, 372)], [(620, 372), (664, 386)], [(664, 372), (709, 386)], [(620, 386), (664, 400)], [(664, 386), (709, 400)], [(709, 372), (753, 386)], [(753, 372), (798, 386)], [(709, 386), (753, 400)], [(753, 386), (798, 400)], [(798, 345), (840, 358)], [(840, 345), (882, 358)], [(798, 358), (840, 372)], [(840, 358), (882, 372)], [(882, 345), (924, 358)], [(924, 345), (966, 358)], [(882, 358), (924, 372)], [(924, 358), (966, 372)], [(798, 372), (840, 386)], [(840, 372), (882, 386)], [(798, 386), (840, 400)], [(840, 386), (882, 400)], [(882, 372), (924, 386)], [(924, 372), (966, 386)], [(882, 386), (924, 400)], [(924, 386), (966, 400)]]
 
-map_1=Map(pygame.image.load('Maps/map1.png'), [(200,200)], rooms, areas, (-370,-200), walls, nodes)
+map_1=Map(pygame.image.load('Maps/map1.png'), [(200,200), (1000,600)], rooms, areas, (-370,-200), walls, nodes)
 GameState['maps'].append(map_1)
 
 GameState['rounds']=[]
@@ -2937,13 +3038,15 @@ current_round=GameState['rounds'][0]
 for zombie_spawn in current_map.zombie_spawns:
 	zombie_spawn.find_area()
 
-survivor = Survivor(200, 110, 100)
+survivor = Survivor(200, 110, 5)
 survivor.current_room=find_current_location(survivor.vector, current_map.rooms)
 survivor.current_area=find_current_location(survivor.vector, current_map.areas)
 
 survivor.weapon.distance_from_survivor_to_tip_of_weapon, survivor.weapon.angle_from_survivor_to_tip_of_weapon=survivor.weapon.weapon_size.as_polar()
 
 survivor.explosives_boxes=[]
+
+pause_menu.weapons_tab.upgrades_tab_items=survivor.weapons
 
 damage=200
 scale=(10,20)
