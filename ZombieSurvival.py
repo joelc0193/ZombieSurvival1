@@ -182,23 +182,45 @@ def update_survivor_location():  # MOves the survivor
 		survivor.vector[0]+=survivor.velocity[0]
 		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
+		pygame.draw.rect(DISPLAYSURF, BLACK, survivor.walking_rect)
 		# Checks to see if the survivor's new x location does not cause it to crash a wall
 		for wall in current_map.walls:
-			# If it crashes a wall, moves back
+			# If it crashes a wall, finds x coords where survivor is against wall
 			if wall.rect.colliderect(survivor.walking_rect):
-				survivor.vector[0]-=survivor.velocity[0]
-				WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+				for x in range(int(survivor.speed)):
+					if survivor.move_left:
+						survivor.walking_rect=survivor.walking_rect.move(1,0)
+					elif survivor.move_right:
+						survivor.walking_rect=survivor.walking_rect.move(-1,0)
+					if not wall.rect.colliderect(survivor.walking_rect):
+						survivor.vector=Vector2(survivor.walking_rect.center)
+						WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+						break
+				break
+
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
-		# finds new y location based on speed of survivor and angle headed
+
+		# finds new y location
 		survivor.vector[1]+=survivor.velocity[1]
 		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
-		# checks to see if the survivor's new y location does not cause it to crash a wall
+		# Checks to see if the survivor's new y location does not cause it to crash a wall
 		for wall in current_map.walls:
+			# If it crashes a wall, finds y coords where survivor is against wall
 			if wall.rect.colliderect(survivor.walking_rect):
-				survivor.vector[1]-=survivor.velocity[1]
-				WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+				for y in range(int(survivor.speed)):
+					if survivor.move_up:
+						survivor.walking_rect=survivor.walking_rect.move(0,1)
+					elif survivor.move_down:
+						survivor.walking_rect=survivor.walking_rect.move(0,-1)
+					if not wall.rect.colliderect(survivor.walking_rect):
+						survivor.vector=Vector2(survivor.walking_rect.center)
+						WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+						break
+				break
+
 		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
+
 	# checks to see if survivor switched rooms
 	survivor.switched_rooms=switched_rooms(survivor)
 	# If survivor switched rooms, find new room
@@ -1855,7 +1877,7 @@ class Survivor(pygame.sprite.Sprite):
 		survivor.angle_to_rotate_body=(GameState['cursor_vector']-survivor.vector).angle_to(GameState['cursor_vector']-survivor.weapon.new_projectile_coords)+survivor.angle_from_center_to_cursor
 		rotated_body_sprite = pygame.transform.rotate(self.body_image, -(self.angle_from_center_to_cursor))
 		self.body_rect=rotated_body_sprite.get_rect()
-		self.body_rect.center = self.vector
+		self.body_rect.center = self.walking_rect.center
 		self.rect=self.body_rect
 
 		#Rotate Feet and find feet update delay
@@ -1900,7 +1922,7 @@ class Survivor(pygame.sprite.Sprite):
 
 		rotated_feet_sprite = pygame.transform.rotate(self.feet_image, -angle_to_rotate_survivor_feet)
 		self.feet_rect=rotated_feet_sprite.get_rect()
-		self.feet_rect.center=self.vector
+		self.feet_rect.center=self.walking_rect.center
 		return rotated_body_sprite, rotated_feet_sprite
 
 	def update_state(self): # updates the self state image and rotates it
@@ -2891,8 +2913,6 @@ survivor.weapon.distance_from_survivor_to_tip_of_weapon, survivor.weapon.angle_f
 
 survivor.explosives_boxes=[]
 
-
-
 damage=200
 scale=(10,20)
 explosion_scale=(100,100)
@@ -2963,6 +2983,7 @@ effects_image_number_zombie_breaks_free=18
 buy_explosive_amount=1
 grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free, buy_explosive_amount)
 survivor.explosives_boxes.append(grenade2_box)
+
 damage=0
 scale=(10,20)
 effects_scale=1
@@ -2982,6 +3003,7 @@ effects_image_number_zombie_breaks_free=18
 buy_explosive_amount=1
 grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free, buy_explosive_amount)
 survivor.explosives_boxes.append(grenade2_box)
+
 damage=0
 scale=(10,20)
 effects_scale=1
@@ -3001,6 +3023,7 @@ effects_image_number_zombie_breaks_free=18
 buy_explosive_amount=1
 grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free, buy_explosive_amount)
 survivor.explosives_boxes.append(grenade2_box)
+
 # g=deepcopy(current_map.original_graph)
 
 # for area in current_map.areas:
