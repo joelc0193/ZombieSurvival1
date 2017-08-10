@@ -177,7 +177,7 @@ def update_survivor_location():  # MOves the survivor
 
 	# If the survivor is not told to stay in place
 	if not (survivor.velocity==Vector2(0,0)):
-		_, survivor.angle_walk=Vector2().as_polar()
+		_, survivor.angle_walk=survivor.velocity.as_polar()
 		# Keeps track of survivor's old walking rect
 		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
 		old_walk_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
