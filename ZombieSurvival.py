@@ -1213,11 +1213,11 @@ class Turrets_Tab(Tab):
 		self.rect1 = pygame.Rect(self.rect.left+300, self.rect.top+100,150,50)
 		self.upgrades_tab_items=[turret for turret in GameState['active_turrets']]
 		self.upgrades_tab_items.sort(key=lambda x: x.number, reverse=False)
-		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 190, 40)]
-		self.list_attributes_texts=['Damage: ', 'Penetration: ']
-		self.list_of_upgrades=['damage_upgrades', 'penetration_upgrades']
-		self.list_of_attributes=['damage', 'penetration']
-		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_penetration_cost']
+		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 190, 40), (340, 10 , 190, 40)]
+		self.list_attributes_texts=['Damage: ', 'Penetration: ', 'Ammo: ']
+		self.list_of_upgrades=['damage_upgrades', 'penetration_upgrades',  'buy_ammo_quantity']
+		self.list_of_attributes=['damage', 'penetration', 'ammo_left']
+		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_penetration_cost', 'buy_ammo_cost']
 
 	def draw_buy_contents(self):
 		## Displaying items
