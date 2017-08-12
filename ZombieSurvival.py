@@ -843,7 +843,7 @@ class Pause_Menu:
 		else:
 			for turret in GameState['active_turrets']:
 				turret.target_finder()
-				turret.update_image()
+				turret.update_ammo_number()
 				turret.rotate_image()
 				turret.draw()
 			# Handles placing new turret
@@ -861,7 +861,8 @@ class Pause_Menu:
 					turret.distance_from_center_to_tip_of_weapon, turret.angle_from_center_to_tip_of_weapon=turret.weapon_size.as_polar()
 					GameState['active_turrets'].add(turret)
 					GameState['display_turret'].number+=1
-					GameState['display_turret'].update_image()
+					GameState['display_turret'].update_turret_number()
+					GameState['display_turret'].update_ammo_number()
 					GameState['turret_to_buy']=None
 					GameState['placing_turret']=False
 					GameState['MouseButtonPressed']=False
@@ -870,7 +871,7 @@ class Pause_Menu:
 
 				if GameState['turret_to_buy']!=None:
 					GameState['turret_to_buy'].vector=GameState['cursor_vector']
-					GameState['turret_to_buy'].update_image()
+					GameState['turret_to_buy'].update_ammo_number()
 					GameState['turret_to_buy'].rotate_image()
 					GameState['turret_to_buy'].draw()
 
@@ -2332,7 +2333,13 @@ class Turret(pygame.sprite.Sprite):
 		self.scale=scale
 		self.menu_scale_image=(100,100)
 		self.menu_image_blit_location=(15,0)
-		self.update_image()
+		self.update_turret_number()
+		
+		# # Draws the new turret number onto image
+		# self.number_text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+		# self.number_text_surface_obj = self.number_text_obj.render(str(self.number), True, BLACK)
+		# self.number_text_surface_obj_rect=self.number_text_surface_obj.get_rect(centerx=self.image_for_menu.get_rect().centerx, centery=self.image_for_menu.get_rect().centery+15)
+		# self.image_for_menu.blit(self.number_text_surface_obj, self.number_text_surface_obj_rect)
 		
 	def target_finder(self):
 		# Looking for a target
@@ -2386,7 +2393,7 @@ class Turret(pygame.sprite.Sprite):
 				else:
 					break
 
-	def update_image(self):
+	def update_turret_number(self):
 		# Draws the new turret number onto image
 		self.image_for_menu=pygame.transform.scale(pygame.image.load('Turrets/Turret0/turret.png'), self.scale)
 		self.number_text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
@@ -2394,6 +2401,7 @@ class Turret(pygame.sprite.Sprite):
 		self.number_text_surface_obj_rect=self.number_text_surface_obj.get_rect(centerx=self.image_for_menu.get_rect().centerx, centery=self.image_for_menu.get_rect().centery+15)
 		self.image_for_menu.blit(self.number_text_surface_obj, self.number_text_surface_obj_rect)
 		
+	def update_ammo_number(self):	
 		# Draws ammo left onto image
 		surface=pygame.Surface((21,12))
 		surface_rect=surface.get_rect(centerx=self.image_for_menu.get_rect().centerx, centery=self.image_for_menu.get_rect().centery+38)
@@ -2415,7 +2423,8 @@ scale=(120,120)
 weapon_size=(70,0)
 bullet_scale=(7,7)
 GameState['display_turret']=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, 1)
-GameState['display_turret'].update_image()
+GameState['display_turret'].update_turret_number()
+GameState['display_turret'].update_ammo_number()
 GameState['display_turret'].distance_from_center_to_tip_of_weapon, GameState['display_turret'].angle_from_center_to_tip_of_weapon=GameState['display_turret'].weapon_size.as_polar()
 GameState['turrets_collection'].add(GameState['display_turret'])
 
@@ -2474,7 +2483,7 @@ def turrets_handler():
 		turret.target_finder()
 		turret.rotate_image()
 		turret.bullet_handler()
-		turret.update_image()
+		turret.update_ammo_number()
 		turret.draw()
 
 GameState['maps']=[]
