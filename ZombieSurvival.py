@@ -319,7 +319,8 @@ def move_zombies():
 				survivor.was_hit(zombie)
 
 		zombie.velocity=zombie.path[0]-zombie.vector
-		zombie.velocity.scale_to_length(zombie.speed)
+		if not zombie.velocity.length()==0:
+			zombie.velocity.scale_to_length(zombie.speed)
 
 		# find future zombie location coordinates
 		if zombie.body_motion!='attack' and not zombie.frozen:
@@ -342,18 +343,6 @@ def move_zombies():
 				zombie.current_area.entities_on.remove(zombie)
 				zombie.current_area=find_current_location(zombie.vector, current_map.areas)
 				zombie.current_area.entities_on.add(zombie)
-
-		# If the len of the path is 1, that means that the zombie is on the survivor's area. else, the zombie goes to the second node because the first is the center of the zombie's current area
-		if not len(zombie.path)==1:
-			distance_to_add1=Vector2(zombie.vector).distance_to(Vector2(zombie.path[-0]))
-			distance_to_add2=Vector2(survivor.vector).distance_to(Vector2(zombie.path[-2]))
-			total_distance_to_add=distance_to_add1+distance_to_add2
-			zombie.length_of_path_to_survivor=zombie.base_length_of_path_to_survivor+total_distance_to_add
-		else:
-			zombie.path=[survivor.vector]
-			zombie.velocity=zombie.path[0]-zombie.vector
-			zombie.velocity.scale_to_length(zombie.speed)
-			zombie.length_of_path_to_survivor=zombie.vector.distance_to(survivor.vector)
 
 def cursor_actions_tracker():
 	GameState['MouseButtonPressed']=False
@@ -763,6 +752,16 @@ class Buy_Button(Menu_Item):
 
 	def action(self):
 		survivor.money-=self.field_upgrade_cost
+		self.field_upgrades
+		x = getattr(self.weapon, self.weapon_field)
+		setattr(self.weapon, self.weapon_field, x+self.field_upgrades[0])
+		
+class Buy_Turret_Button(Buy_Button):
+	def __init__(self, surface, left, top, width, height, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj):
+		Buy_Button.__init__(self, surface, left, top, width, height, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj)
+
+	def action(self):
+		survivor.money-=self.field_upgrade_cost
 		GameState['placing_turret']=True
 		GameState['turret_to_buy']=self.weapon
 		GameState['MouseButtonPressed']=False
@@ -842,7 +841,11 @@ class Pause_Menu:
 			self.draw()
 
 		else:
-			turrets_handler()
+			for turret in GameState['active_turrets']:
+				turret.target_finder()
+				turret.update_image()
+				turret.rotate_image()
+				turret.draw()
 			# Handles placing new turret
 			if GameState['placing_turret']:
 				if GameState['MouseButtonPressed']:
@@ -853,17 +856,22 @@ class Pause_Menu:
 					scale=(120,120)
 					weapon_size=(70,0)
 					bullet_scale=(7,7)
-					turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, len(GameState['active_turrets'])+1)
-					turret0.current_area=find_current_location(turret0.vector, current_map.areas)
-					turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
-					GameState['active_turrets'].add(turret0)
+					turret=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, len(GameState['active_turrets'])+1)
+					turret.current_area=find_current_location(turret.vector, current_map.areas)
+					turret.distance_from_center_to_tip_of_weapon, turret.angle_from_center_to_tip_of_weapon=turret.weapon_size.as_polar()
+					GameState['active_turrets'].add(turret)
+					GameState['display_turret'].number+=1
+					GameState['display_turret'].update_image()
 					GameState['turret_to_buy']=None
 					GameState['placing_turret']=False
 					GameState['MouseButtonPressed']=False
+					pause_menu.turrets_tab.upgrades_tab_items=[turret for turret in GameState['active_turrets']]
+					pause_menu.turrets_tab.upgrades_tab_items.sort(key=lambda x: x.number, reverse=False)
 
 				if GameState['turret_to_buy']!=None:
 					GameState['turret_to_buy'].vector=GameState['cursor_vector']
-					GameState['turret_to_buy'].prepare()
+					GameState['turret_to_buy'].update_image()
+					GameState['turret_to_buy'].rotate_image()
 					GameState['turret_to_buy'].draw()
 
 	def update_rects(self, surface, surface_width, surface_height):
@@ -1084,41 +1092,40 @@ class Tab(object):
 		surface_top=210
 		surface_width=600
 
-		if pause_menu.other_active_tab==pause_menu.upgrades_tab:
-			surface_height=sum([item.tab_size for item in self.upgrades_tab_items])-len(self.upgrades_tab_items)+2
-			if surface_height<350:
-				surface_height=350
-			surface=pygame.Surface((surface_width, surface_height))
-			surface.fill(INDIGOBLUE)
-		
-			for item in self.upgrades_tab_items:
-				# Big Tab
-				menu_item = Menu_Item(surface, 0, TOP, WIDTH, item.tab_size, None, INDIGOBLUE, BLACK)
+		surface_height=sum([item.tab_size for item in self.upgrades_tab_items])-len(self.upgrades_tab_items)+2
+		if surface_height<350:
+			surface_height=350
+		surface=pygame.Surface((surface_width, surface_height))
+		surface.fill(INDIGOBLUE)
+	
+		for item in self.upgrades_tab_items:
+			# Big Tab
+			menu_item = Menu_Item(surface, 0, TOP, WIDTH, item.tab_size, None, INDIGOBLUE, BLACK)
+			menu_item.draw()
+			# Picture
+			surface.blit(pygame.transform.scale(item.image_for_menu, item.menu_scale_image), (item.menu_image_blit_location[0], TOP+item.menu_image_blit_location[1]))
+			for i, attribute in enumerate(self.list_of_attributes):
+				# Attribute Container
+				menu_item = Menu_Item(surface, self.list_attributes_rects[i][0], TOP+self.list_attributes_rects[i][1], self.list_attributes_rects[i][2], self.list_attributes_rects[i][3], None, INDIGOBLUE, INDIGOBLUE)
 				menu_item.draw()
-				# Picture
-				surface.blit(pygame.transform.scale(item.image1, (80,80)), (20, TOP+10))
-				for i, attribute in enumerate(self.list_of_attributes):
-					# Attribute Container
-					menu_item = Menu_Item(surface, self.list_attributes_rects[i][0], TOP+self.list_attributes_rects[i][1], self.list_attributes_rects[i][2], self.list_attributes_rects[i][3], None, INDIGOBLUE, INDIGOBLUE)
-					menu_item.draw()
-					# Attribute Text
-					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-					text_surface_obj = text_obj.render(self.list_attributes_texts[i]+str(getattr(item, attribute)), True, BLACK)
-					text_surface_obj_rect=text_surface_obj.get_rect(left=self.list_attributes_rects[i][0]+10, top=TOP+self.list_attributes_rects[i][1])
+				# Attribute Text
+				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+				text_surface_obj = text_obj.render(self.list_attributes_texts[i]+str(getattr(item, attribute)), True, BLACK)
+				text_surface_obj_rect=text_surface_obj.get_rect(left=self.list_attributes_rects[i][0]+10, top=TOP+self.list_attributes_rects[i][1])
+				surface.blit(text_surface_obj, text_surface_obj_rect)
+				# Next Upgrade
+				if not len(getattr(item, self.list_of_upgrades[i]))==0:
+					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+					text_surface_obj = text_obj.render('+'+ str(getattr(item, self.list_of_upgrades[i])[0]), True, GREEN)
+					text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
 					surface.blit(text_surface_obj, text_surface_obj_rect)
-					# Next Upgrade
-					if not len(getattr(item, self.list_of_upgrades[i]))==0:
-						text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-						text_surface_obj = text_obj.render('+'+ str(getattr(item, self.list_of_upgrades[i])[0]), True, GREEN)
-						text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
-						surface.blit(text_surface_obj, text_surface_obj_rect)
-						# Upgrade Cost
-						text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-						text_surface_obj = text_obj.render('$'+str(getattr(item, self.list_of_upgrades_costs[i])), True, BLACK)
-						# Upgrade Buton
-						self.list_of_upgrades[i]
-						button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, item, attribute, getattr(item, self.list_of_upgrades_costs[i]), getattr(item, self.list_of_upgrades[i]), text_surface_obj)
-				TOP+=item.tab_size-1
+					# Upgrade Cost
+					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+					text_surface_obj = text_obj.render('$'+str(getattr(item, self.list_of_upgrades_costs[i])), True, BLACK)
+					# Upgrade Buton
+					self.list_of_upgrades[i]
+					button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, item, attribute, getattr(item, self.list_of_upgrades_costs[i]), getattr(item, self.list_of_upgrades[i]), text_surface_obj)
+			TOP+=item.tab_size-1
 	
 		pause_menu.update_rects(surface, surface_width, surface_height)
 
@@ -1155,6 +1162,48 @@ class Explosives_Tab(Tab):
 		self.list_of_attributes=['damage', 'area_covered', 'ammo_capacity' ,'timer']
 		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_area_covered_cost', 'upgrade_ammo_capacity_cost', 'upgrade_timer_cost']
 
+	def draw_buy_contents(self):
+		TOP=0
+		WIDTH=600
+		surface_left=350
+		surface_top=210
+		surface_width=600
+
+		surface_height=sum([item.tab_size for item in self.upgrades_tab_items])-len(self.upgrades_tab_items)+2
+		if surface_height<350:
+			surface_height=350
+		surface=pygame.Surface((surface_width, surface_height))
+		surface.fill(INDIGOBLUE)
+	
+		for item in self.upgrades_tab_items:
+			# Big Tab
+			menu_item = Menu_Item(surface, 0, TOP, WIDTH, item.tab_size, None, INDIGOBLUE, BLACK)
+			menu_item.draw()
+			# Picture
+			surface.blit(pygame.transform.scale(item.image, (70,90)), (20, TOP+5))
+			# Explosives Left Container
+			menu_item = Menu_Item(surface, 110, TOP+10, 190, 40, 'explosives_left', INDIGOBLUE, INDIGOBLUE)
+			menu_item.draw()
+			# Explosives Left Text
+			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+			text_surface_obj = text_obj.render('Explosives Left: '+str(item.explosives_left), True, BLACK)
+			text_surface_obj_rect=text_surface_obj.get_rect(topleft=(120, TOP+10))
+			surface.blit(text_surface_obj, text_surface_obj_rect)
+			# Next Upgrade
+			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+			text_surface_obj = text_obj.render('+'+str(item.buy_explosive_amount[0]), True, GREEN)
+			text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
+			surface.blit(text_surface_obj, text_surface_obj_rect)
+			# Buy Explosive Cost
+			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+			text_surface_obj = text_obj.render('$'+str(item.buy_explosives_cost), True, BLACK)
+			# Buy Explosive Box
+			button = Buy_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, item, 'explosives_left', item.buy_explosives_cost, item.buy_explosive_amount, text_surface_obj)
+			TOP+=item.tab_size-1
+
+		pause_menu.update_rects(surface, surface_width, surface_height)
+
+
 class Turrets_Tab(Tab):
 	def __init__(self, topleft, string):
 		Tab.__init__(self, topleft, string)
@@ -1175,36 +1224,36 @@ class Turrets_Tab(Tab):
 		surface_top=210
 		surface_width=600
 
-		surface_height=sum([turret.tab_size for turret in (GameState['turrets_collection'])])-len(GameState['turrets_collection'])+2
+		surface_height=sum([item.tab_size for item in self.upgrades_tab_items])-len(self.upgrades_tab_items)+2
 		if surface_height<350:
 			surface_height=350
 		surface=pygame.Surface((surface_width, surface_height))
 		surface.fill(INDIGOBLUE)
 		for turret in GameState['turrets_collection']:
 		# Big Tab
-			item = Menu_Item(surface, 0, TOP, WIDTH, HEIGHT, None, INDIGOBLUE, BLACK)
-			item.draw()
+			menu_item = Menu_Item(surface, 0, TOP, WIDTH, turret.tab_size, None, INDIGOBLUE, BLACK)
+			menu_item.draw()
 			# Picture
-			surface.blit(pygame.transform.scale(turret.image, (90,90)), (15, TOP+5))
+			surface.blit(pygame.transform.scale(turret.image_for_menu, turret.menu_scale_image), (turret.menu_image_blit_location[0], TOP+turret.menu_image_blit_location[1]))
 		# Damage Container
-			item = Menu_Item(surface, 110, TOP+10, 190, 40, 'damage', INDIGOBLUE, INDIGOBLUE)
-			item.draw()
+			menu_item = Menu_Item(surface, 110, TOP+10, 190, 40, 'damage', INDIGOBLUE, INDIGOBLUE)
+			menu_item.draw()
 			# Damage Text
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
 			text_surface_obj = text_obj.render('Damage: '+str(turret.damage), True, BLACK)
 			text_surface_obj_rect=text_surface_obj.get_rect(topleft=(120, TOP+10))
 			surface.blit(text_surface_obj, text_surface_obj_rect)
 		# Penetration Container
-			item = Menu_Item(surface, 110, TOP+50, 210, 40, 'penetration', INDIGOBLUE, INDIGOBLUE)
-			item.draw()
+			menu_item = Menu_Item(surface, 110, TOP+50, 210, 40, 'penetration', INDIGOBLUE, INDIGOBLUE)
+			menu_item.draw()
 			# Penetration Text
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
 			text_surface_obj = text_obj.render('Penetration: '+str(turret.penetration), True, BLACK)
 			text_surface_obj_rect=text_surface_obj.get_rect(topleft=(120, TOP+50))
 			surface.blit(text_surface_obj, text_surface_obj_rect)				
 		# Buy Turret Container
-			item = Menu_Item(surface, 340, TOP+10, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
-			item.draw()
+			menu_item = Menu_Item(surface, 340, TOP+10, 190, 40, 'timer', INDIGOBLUE, INDIGOBLUE)
+			menu_item.draw()
 			# Buy Turret Text
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
 			text_surface_obj = text_obj.render('Buy Turret: '+str(turret.buy_turret_cost), True, BLACK)
@@ -1214,8 +1263,8 @@ class Turrets_Tab(Tab):
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
 			text_surface_obj = text_obj.render('$'+str(turret.buy_turret_cost), True, BLACK)
 			# Buy Turret Box
-			button = Buy_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top+8, 30, 20, RED, BLACK, turret, 'ammo_left', turret.buy_turret_cost, 0, text_surface_obj)
-			TOP+=HEIGHT-1
+			button = Buy_Turret_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top+8, 30, 20, RED, BLACK, turret, 'ammo_left', turret.buy_turret_cost, 0, text_surface_obj)
+			TOP+=turret.tab_size-1
 
 		pause_menu.update_rects(surface, surface_width, surface_height)
 
@@ -1965,7 +2014,8 @@ class Zombie(pygame.sprite.Sprite):
 		if len(self.path)==1:
 			self.path=[survivor.vector]
 			self.velocity=self.path[0]-self.vector
-			self.velocity.scale_to_length(self.speed)
+			if not self.velocity.length()==0:
+				self.velocity.scale_to_length(self.speed)
 
 class Wall_Check:
 	def __init__(self, node1, node2, width):
@@ -2008,7 +2058,7 @@ class Weapon(pygame.sprite.Sprite):
 		self.penetration=penetration
 		self.shooting_type=shooting_type
 		self.bullet_scale=(5,5)
-		self.image1=pygame.image.load(weapon_image)
+		self.image_for_menu=pygame.image.load(weapon_image)
 		self.weapon_image=pygame.transform.scale(pygame.image.load(weapon_image),weapon_scale)
 		self.bullet_image=None
 		self.weapon_size=weapon_size
@@ -2025,6 +2075,9 @@ class Weapon(pygame.sprite.Sprite):
 		self.max_mag_ammo=max_mag_ammo
 		self.current_weapon_ammo=80
 		self.max_weapon_ammo=max_weapon_ammo
+		self.menu_scale_image=(90,90)
+		self.menu_image_blit_location=(15,5)
+
 	def bullet_handler(self):
 		if self.shooting_type=='automatic':
 			if survivor.body_motion=='shoot' and survivor.current_body_state_number==0:
@@ -2164,12 +2217,14 @@ class Explosives_Box:
 		self.effect_duration=effect_duration
 		self.slow_down=slow_down
 		self.update_state_image_delay=.03
+		self.menu_scale_image=(70,90)
+		self.menu_image_blit_location=(20,5)
 
 class Grenade1_Box(Explosives_Box):
 	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount):
 		Explosives_Box.__init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount)
 		self.image=pygame.image.load('Grenades/Grenade1/grenade.png')
-		self.image1=pygame.image.load('Grenades/Grenade1/grenade.png')
+		self.image_for_menu=pygame.image.load('Grenades/Grenade1/grenade.png')
 		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade1/Explosion1.png')
 		i=0
 		for y in range(0, 768, 192):
@@ -2191,7 +2246,7 @@ class Grenade2_Box(Explosives_Box):
 		self.maximum_effects_image_number=maximum_effects_image_number 
 		self.pause_effects_image_number=pause_effects_image_number
 		self.image=pygame.image.load('Grenades/Grenade2/grenade.png')
-		self.image1=pygame.image.load('Grenades/Grenade2/grenade.png')
+		self.image_for_menu=pygame.image.load('Grenades/Grenade2/grenade.png')
 		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade2/Explosion.png')
 		self.update_effects_state_image_delay=update_effects_state_image_delay
 		self.number_of_starting_effects_image=number_of_starting_effects_image
@@ -2227,7 +2282,7 @@ class Grenade3_Box(Explosives_Box):
 		self.maximum_effects_image_number=maximum_effects_image_number 
 		self.pause_effects_image_number=pause_effects_image_number
 		self.image=pygame.image.load('Grenades/Grenade3/grenade.png')
-		self.image1=pygame.image.load('Grenades/Grenade3/grenade.png')
+		self.image_for_menu=pygame.image.load('Grenades/Grenade3/grenade.png')
 		self.image_containing_explosion_images=pygame.image.load('Grenades/Grenade3/Explosion.png')
 		self.update_effects_state_image_delay=update_effects_state_image_delay
 		self.number_of_starting_effects_image=number_of_starting_effects_image
@@ -2260,7 +2315,6 @@ class Grenade(pygame.sprite.Sprite):
 	def __init__(self, explosive_box, velocity, coords):
 		pygame.sprite.Sprite.__init__(self, GameState['active_explosives'])
 		self.explosive_box=explosive_box
-		self.image1=self.explosive_box.image
 		self.image=pygame.transform.scale(self.explosive_box.image, self.explosive_box.scale)
 		self.rect=self.image.get_rect()
 		self.center_xcoord=None
@@ -2284,9 +2338,12 @@ class Grenade(pygame.sprite.Sprite):
 		self.time_of_last_generated_explosion_state=time.time()
 		self.mask=None
 		self.zombies_hit=pygame.sprite.Group()
+		self.start_effects=False
+
 	def update(self):
 		self.rect=self.image.get_rect()
 		self.rect.center=self.vector
+
 		# Updates effects
 		if self.state=='moving':
 			self.update_velocity()
@@ -2294,6 +2351,10 @@ class Grenade(pygame.sprite.Sprite):
 		# Initiates Explosion
 		if self.state=='exploding' and time.time()-self.time_generated>self.explosive_box.timer:
 			self.explosion_handler()
+
+		# Handles Effects
+		if self.start_effects:
+			self.effects_handler()
 
 		if not self.state==None:
 			self.draw()
@@ -2335,41 +2396,21 @@ class Grenade1(Grenade):
 	def __init__(self, explosive_box, velocity, coords):
 		Grenade.__init__(self, explosive_box, velocity, coords)
 
-	def effect(self, zombie):
-		zombie.was_hit(self, self.explosive_box.damage/len(self.zombies_hit))
+	def effects_handler(self):
+		if self.zombies_hit:
+			damage=float(self.explosive_box.damage)/len(self.zombies_hit)
+			for zombie in self.zombies_hit:
+				zombie.was_hit(self, damage)
 
 class Grenade2(Grenade):
 	def __init__(self, explosive_box, velocity, coords):
 		Grenade.__init__(self, explosive_box, velocity, coords)
-		self.start_effects=False
 		self.current_effects_image_number=explosive_box.number_of_starting_effects_image
 		self.time_of_last_generated_state=0
 		self.time_of_last_generated_effect_state=0
 		self.effects_image_number_going_up=True
 		self.effects_oscillating=False
 		self.update_effects_state_image_delay=self.explosive_box.update_effects_state_image_delay
-
-	def effect(self, zombie):
-		zombie.was_hit(self, self.explosive_box.damage)
-
-	def update(self):
-		self.rect=self.image.get_rect()
-		self.rect.center=self.vector
-
-		# Updates effects
-		if self.state=='moving':
-			self.update_velocity()
-
-		# Initiates Explosion
-		if self.state=='exploding' and time.time()-self.time_generated>self.explosive_box.timer:
-			self.explosion_handler()
-
-		# Handles Effects
-		if self.start_effects:
-			self.effects_handler()
-
-		if not self.state==None:
-			self.draw()
 
 	def update_velocity(self):
 		self.vector+=self.velocity
@@ -2447,7 +2488,6 @@ class Grenade2(Grenade):
 class Grenade3(Grenade):
 	def __init__(self, explosive_box, velocity, coords):
 		Grenade.__init__(self, explosive_box, velocity, coords)
-		self.start_effects=False
 		self.current_effects_image_number=explosive_box.number_of_starting_effects_image
 		self.time_of_last_generated_state=0
 		self.time_of_last_generated_effect_state=0
@@ -2560,15 +2600,11 @@ class Grenade3(Grenade):
 class Turret(pygame.sprite.Sprite):
 	def __init__(self, damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, number):
 		pygame.sprite.Sprite.__init__(self)
-		self.image=pygame.transform.scale(pygame.image.load('Turrets/Turret0/turret.png'), scale)
+		self.image_for_menu=pygame.transform.scale(pygame.image.load('Turrets/Turret0/turret.png'), scale)
 		self.number=number
 		self.tab_size=100
-		self.number_text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-		self.number_text_surface_obj = self.number_text_obj.render(str(self.number), True, BLACK)
-		self.number_text_surface_obj_rect=self.number_text_surface_obj.get_rect(centerx=self.image.get_rect().centerx, centery=self.image.get_rect().centery+15)
-		self.image.blit(self.number_text_surface_obj, self.number_text_surface_obj_rect)
 		self.weapon_size=Vector2(weapon_size)
-		self.rect=self.image.get_rect(center=coords)
+		self.rect=self.image_for_menu.get_rect(center=coords)
 		self.buy_turret_cost=20
 		self.damage=damage
 		self.damage_upgrades=[5,4,3,2]
@@ -2587,47 +2623,41 @@ class Turret(pygame.sprite.Sprite):
 		self.angle_from_center_to_target=0
 		self.current_area=None
 		self.last_time_bullet_shot=0
-		self.ammo_left=1000
+		self.ammo_left=999
 		self.penetration=30
 		self.bullet_speed=bullet_speed
 		self.bullet_scale=bullet_scale
 		self.bullets_fired=0
 		self.scale=scale
-		self.surface=pygame.Surface((self.scale[0], self.scale[1]*2), pygame.SRCALPHA, 32)
-		self.surface.blit(self.image, (0, 40))
-	def prepare(self):
-		surface=pygame.Surface((21,12))
-		surface_rect=surface.get_rect(centerx=self.image.get_rect().centerx, centery=self.image.get_rect().centery+77)
-		display=list(str(self.ammo_left))
-		for x in range(0,3-len(display)):
-			display.insert(x, '0')
-		display="".join(display)
-		self.ammo_text_obj = pygame.font.Font('Fonts/digital-7.ttf', 15)
-		self.ammo_text_surface_obj = self.ammo_text_obj.render(display, True, RED)
-		self.ammo_text_surface_obj_rect=self.ammo_text_surface_obj.get_rect()
-		surface.blit(self.ammo_text_surface_obj, self.ammo_text_surface_obj_rect)
-		self.surface.blit(surface, surface_rect)
-
-		self.rotated_image=self.surface
-
+		self.menu_scale_image=(100,100)
+		self.menu_image_blit_location=(15,0)
+		self.update_image()
+		
+	def target_finder(self):
+		# Looking for a target
 		self.target=None
 		self.distance_to_target=99999
-		if not GameState['turret_to_buy']==self:
-			if self.ammo_left>0:
-				for zombie in GameState['active_zombies']:
-					current_look=current_map.paths[(self.current_area.center_xcoord,self.current_area.center_ycoord),(zombie.current_area.center_xcoord, zombie.current_area.center_ycoord)]
-					if len(current_look[0])<=2:
-						distance=self.vector.distance_to(zombie.vector)
-						if distance>=self.distance_from_center_to_tip_of_weapon and distance<self.distance_to_target:
-							# wall_check=Wall_Check(self.vector, zombie.vector, 7)
-							# walls_hit = pygame.sprite.spritecollide(wall_check, current_map.walls, False, pygame.sprite.collide_mask)
-							# if not walls_hit:
-							self.distance_to_target=distance
-							self.target=zombie
+		if self.ammo_left>0:
+			for zombie in GameState['active_zombies']:
+				current_look=current_map.paths[(self.current_area.center_xcoord,self.current_area.center_ycoord),(zombie.current_area.center_xcoord, zombie.current_area.center_ycoord)]
+				if len(current_look[0])<=2:
+					distance=self.vector.distance_to(zombie.vector)
+					if distance>=self.distance_from_center_to_tip_of_weapon and distance<self.distance_to_target:
+						# wall_check=Wall_Check(self.vector, zombie.vector, 7)
+						# walls_hit = pygame.sprite.spritecollide(wall_check, current_map.walls, False, pygame.sprite.collide_mask)
+						# if not walls_hit:
+						self.distance_to_target=distance
+						self.target=zombie
 
+	def rotate_image(self):		
+		# Blits image onto surface so that turret spins at its center
+		self.surface=pygame.Surface((self.scale[0], self.scale[1]*2), pygame.SRCALPHA, 32)
+		self.surface.blit(self.image_for_menu, (0, 40))
+
+		self.rotated_image=self.surface
+		# If a target is found
 		if not self.target==None:
 			self.distance_to_target, self.angle_from_center_to_target=(self.target.vector-self.vector).as_polar()
-			self.bullet_handler()
 		self.rotated_image=pygame.transform.rotate(self.rotated_image, -self.angle_from_center_to_target-90)
 		self.rect=self.rotated_image.get_rect()
 		self.rect.center=self.vector
@@ -2636,11 +2666,11 @@ class Turret(pygame.sprite.Sprite):
 		DISPLAYSURF.blit(self.rotated_image, self.rect)
 
 	def bullet_handler(self):
-		self.new_projectile_coords=Vector2()
-		self.new_projectile_coords.from_polar((self.distance_from_center_to_tip_of_weapon, self.angle_from_center_to_tip_of_weapon+self.angle_from_center_to_target))
-		self.new_projectile_coords+=self.vector
 		now=time.time()
-		if (now-self.last_time_bullet_shot>=self.shooting_delay):
+		if not self.target==None and (now-self.last_time_bullet_shot>=self.shooting_delay):
+			self.new_projectile_coords=Vector2()
+			self.new_projectile_coords.from_polar((self.distance_from_center_to_tip_of_weapon, self.angle_from_center_to_tip_of_weapon+self.angle_from_center_to_target))
+			self.new_projectile_coords+=self.vector
 			self.last_time_bullet_shot=now-self.shooting_delay
 			total_number=int(round((now-self.last_time_bullet_shot)/self.shooting_delay))
 			bullets_fired=0
@@ -2655,16 +2685,26 @@ class Turret(pygame.sprite.Sprite):
 				else:
 					break
 
-damage=100
-shooting_delay=1
-coords=[0,0]
-bullet_speed=50
-scale=(120,120)
-weapon_size=(70,0)
-bullet_scale=(7,7)
-turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, 0)
-turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
-GameState['turrets_collection'].add(turret0)
+	def update_image(self):
+		# Draws the new turret number onto image
+		self.image_for_menu=pygame.transform.scale(pygame.image.load('Turrets/Turret0/turret.png'), self.scale)
+		self.number_text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+		self.number_text_surface_obj = self.number_text_obj.render(str(self.number), True, BLACK)
+		self.number_text_surface_obj_rect=self.number_text_surface_obj.get_rect(centerx=self.image_for_menu.get_rect().centerx, centery=self.image_for_menu.get_rect().centery+15)
+		self.image_for_menu.blit(self.number_text_surface_obj, self.number_text_surface_obj_rect)
+		
+		# Draws ammo left onto image
+		surface=pygame.Surface((21,12))
+		surface_rect=surface.get_rect(centerx=self.image_for_menu.get_rect().centerx, centery=self.image_for_menu.get_rect().centery+38)
+		display=list(str(self.ammo_left))
+		for x in range(0,3-len(display)):
+			display.insert(x, '0')
+		display="".join(display)
+		self.ammo_text_obj = pygame.font.Font('Fonts/digital-7.ttf', 15)
+		self.ammo_text_surface_obj = self.ammo_text_obj.render(display, True, RED)
+		self.ammo_text_surface_obj_rect=self.ammo_text_surface_obj.get_rect()
+		surface.blit(self.ammo_text_surface_obj, self.ammo_text_surface_obj_rect)
+		self.image_for_menu.blit(surface, surface_rect)
 
 damage=100
 shooting_delay=1
@@ -2673,31 +2713,11 @@ bullet_speed=50
 scale=(120,120)
 weapon_size=(70,0)
 bullet_scale=(7,7)
-turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, 0)
-turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
-GameState['turrets_collection'].add(turret0)
+GameState['display_turret']=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, 1)
+GameState['display_turret'].update_image()
+GameState['display_turret'].distance_from_center_to_tip_of_weapon, GameState['display_turret'].angle_from_center_to_tip_of_weapon=GameState['display_turret'].weapon_size.as_polar()
+GameState['turrets_collection'].add(GameState['display_turret'])
 
-damage=100
-shooting_delay=1
-coords=[0,0]
-bullet_speed=50
-scale=(120,120)
-weapon_size=(70,0)
-bullet_scale=(7,7)
-turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, 0)
-turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
-GameState['turrets_collection'].add(turret0)
-
-damage=100
-shooting_delay=1
-coords=[0,0]
-bullet_speed=50
-scale=(120,120)
-weapon_size=(70,0)
-bullet_scale=(7,7)
-turret0=Turret(damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, 0)
-turret0.distance_from_center_to_tip_of_weapon, turret0.angle_from_center_to_tip_of_weapon=turret0.weapon_size.as_polar()
-GameState['turrets_collection'].add(turret0)
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
@@ -2750,7 +2770,10 @@ class Round:
 def turrets_handler():
 	# Draws active turrets into screen
 	for turret in GameState['active_turrets']:
-		turret.prepare()
+		turret.target_finder()
+		turret.rotate_image()
+		turret.bullet_handler()
+		turret.update_image()
 		turret.draw()
 
 GameState['maps']=[]
@@ -2833,71 +2856,6 @@ buy_explosive_amount=1
 grenade3_box=Grenade3_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number)
 survivor.explosives_boxes.append(grenade3_box)
 
-damage=0
-scale=(10,20)
-effects_scale=1
-explosion_scale=(200,200)
-speed=4.5
-image_explosion_number_that_damages=5
-maximum_explosion_image_number=14
-maximum_effects_image_number=25
-pause_effects_image_number=17
-effect_duration=5
-slow_down=.2
-update_effects_state_image_delay=0.03
-number_of_starting_effects_image=5
-starting_effects_image_oscillation_number=8
-ending_effects_image_oscillation_number=14
-effects_image_number_zombie_breaks_free=18
-buy_explosive_amount=1
-grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free, buy_explosive_amount)
-survivor.explosives_boxes.append(grenade2_box)
-
-damage=0
-scale=(10,20)
-effects_scale=1
-explosion_scale=(200,200)
-speed=4.5
-image_explosion_number_that_damages=5
-maximum_explosion_image_number=14
-maximum_effects_image_number=25
-pause_effects_image_number=17
-effect_duration=5
-slow_down=.2
-update_effects_state_image_delay=0.03
-number_of_starting_effects_image=5
-starting_effects_image_oscillation_number=8
-ending_effects_image_oscillation_number=14
-effects_image_number_zombie_breaks_free=18
-buy_explosive_amount=1
-grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free, buy_explosive_amount)
-survivor.explosives_boxes.append(grenade2_box)
-
-damage=0
-scale=(10,20)
-effects_scale=1
-explosion_scale=(200,200)
-speed=4.5
-image_explosion_number_that_damages=5
-maximum_explosion_image_number=14
-maximum_effects_image_number=25
-pause_effects_image_number=17
-effect_duration=5
-slow_down=.2
-update_effects_state_image_delay=0.03
-number_of_starting_effects_image=5
-starting_effects_image_oscillation_number=8
-ending_effects_image_oscillation_number=14
-effects_image_number_zombie_breaks_free=18
-buy_explosive_amount=1
-grenade2_box=Grenade2_Box(damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, maximum_effects_image_number, pause_effects_image_number, update_effects_state_image_delay, effects_scale, number_of_starting_effects_image, starting_effects_image_oscillation_number, ending_effects_image_oscillation_number, effects_image_number_zombie_breaks_free, buy_explosive_amount)
-survivor.explosives_boxes.append(grenade2_box)
-
-# g=deepcopy(current_map.original_graph)
-
-# for area in current_map.areas:
-# 	node=(area.center_xcoord,area.center_ycoord)
-# 	g.add_vertex((area.center_xcoord,area.center_ycoord))
 
 # a=0
 # b=g.num_vertices**2
