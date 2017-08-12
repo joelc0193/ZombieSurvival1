@@ -1204,11 +1204,11 @@ class Explosives_Tab(Tab):
 		Tab.__init__(self, topleft, string)
 		self.rect1 = pygame.Rect(self.rect.left+300, self.rect.top+100,150,50)
 		self.upgrades_tab_items=None
-		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 240, 40)]
-		self.list_attributes_texts=['Damage: ', 'Area Covered: ', 'Timer: ', 'Capacity: ', 'Effects: ']
-		self.list_of_upgrades=['damage_upgrades', 'area_covered_upgrades', 'timer_upgrades', 'ammo_capacity_upgrades', 'effects_duration_upgrades']
-		self.list_of_attributes=['damage', 'area_covered', 'timer', 'ammo_capacity', 'effects_duration']
-		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_area_covered_cost', 'upgrade_timer_cost', 'upgrade_ammo_capacity_cost', 'upgrade_effects_duration_cost']
+		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 240, 40), (110,90, 190, 40)]
+		self.list_attributes_texts=['Damage: ', 'Area Covered: ', 'Timer: ', 'Capacity: ', 'Effect Duration: ']
+		self.list_of_upgrades=['damage_upgrades', 'area_covered_upgrades', 'timer_upgrades', 'ammo_capacity_upgrades', 'effect_duration_upgrades']
+		self.list_of_attributes=['damage', 'area_covered', 'timer', 'ammo_capacity', 'effect_duration']
+		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_area_covered_cost', 'upgrade_timer_cost', 'upgrade_ammo_capacity_cost', 'upgrade_effect_duration_cost']
 		self.buy_tab_items=None
 		self.list_of_buy_fields=['buy_explosives_cost']
 		self.list_of_buy_rects=[(340, 90, 190, 40)]
@@ -1904,7 +1904,7 @@ class Explosives_Box:
 	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount):
 		self.scale=scale
 		self.explosion_scale=explosion_scale
-		self.upgrades_tab_size=100
+		self.upgrades_tab_size=150
 		self.buy_tab_size=150
 		self.speed=speed
 		self.damage=damage
@@ -1932,6 +1932,8 @@ class Explosives_Box:
 		self.update_state_image_delay=.03
 		self.menu_scale_image=(70,90)
 		self.menu_image_blit_location=(20,5)
+		self.effect_duration_upgrades=[1,2,3,4]
+		self.upgrade_effect_duration_cost=10
 
 class Grenade1_Box(Explosives_Box):
 	def __init__(self, damage, scale, explosion_scale, speed, image_explosion_number_that_damages, maximum_explosion_image_number, effect_duration, slow_down, buy_explosive_amount):
