@@ -127,6 +127,17 @@ def switched_areas(thing): # find if thing switched areas or not
 	else:
 		return False
 
+def switch_weapons_handler():
+	GameState['e_pressed']=False
+	for event in GameState['events']:
+		if event.type==KEYDOWN:
+			if event.key==101:
+				GameState['e_pressed']=True
+	if GameState['e_pressed']:
+		survivor.current_weapon_index+=1
+		survivor.current_weapon_index=survivor.current_weapon_index%len(survivor.weapons)
+		survivor.weapon=survivor.weapons[survivor.current_weapon_index]
+
 def update_survivor_location():  # MOves the survivor
 	for event in GameState['events']:
 		# Check to see if a key was pressed or released and updates the state of that keypress
@@ -1534,6 +1545,7 @@ class Survivor(pygame.sprite.Sprite):
 		self.switched_areas=True
 		self.walking_rect=pygame.Rect(self.vector[0]-7.5, self.vector[1]-7.5, 15, 15)
 		self.weapon=[weapon for weapon in GameState['weapons_collection'] if weapon.weapon_name=='handgun'][0]
+		self.current_weapon_index=0
 		self.weapons=[self.weapon]
 		self.images=Images
 		self.current_survivor_body_state_number=0
@@ -1706,7 +1718,6 @@ class Projectile(pygame.sprite.Sprite):
 		self.penetration-=zombie.penetration
 		if self.penetration<=0:
 			self.kill()
-			print self.penetration
 
 class Zombie_Spawn:
 	def __init__(self, xcoord, ycoord):
@@ -2546,8 +2557,8 @@ GameState['turrets_collection'].add(GameState['display_turret'])
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
-		self.zombie_quantities=[100,100,0,0]
-		self.zombie_delays=[1,1.5,0,0]
+		self.zombie_quantities=[1000,1000,0,0]
+		self.zombie_delays=[.1,.1,0,0]
 		self.zombie_last_times=[0,0,0,0]
 		self.delays_doubled=False
 
@@ -2623,7 +2634,8 @@ survivor = Survivor(200, 110, 5)
 survivor.current_room=find_current_location(survivor.vector, current_map.rooms)
 survivor.current_area=find_current_location(survivor.vector, current_map.areas)
 
-survivor.weapon.distance_from_survivor_to_tip_of_weapon, survivor.weapon.angle_from_survivor_to_tip_of_weapon=survivor.weapon.weapon_size.as_polar()
+for weapon in GameState['weapons_collection']:
+	weapon.distance_from_survivor_to_tip_of_weapon, weapon.angle_from_survivor_to_tip_of_weapon=weapon.weapon_size.as_polar()
 
 survivor.explosives_boxes=[]
 
@@ -2793,8 +2805,8 @@ def main():
 			pause_menu.handler()
 		# If not pause, continue game
 		if not GameState['paused']:
-			# Gets all the events
-			# Moves and draws survivor
+			switch_weapons_handler()
+			# Moves survivor
 			update_survivor_location()
 			# Makes bullets based on time of click and time elapsed between last time click was checked and now
 			survivor.weapon.bullet_handler()
