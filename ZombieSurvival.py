@@ -772,6 +772,7 @@ class Buy_Weapon_Button(Buy_Button):
 
 	def action(self):
 		survivor.money-=self.field_upgrade_cost
+		survivor.weapons.append(self.weapon)
 
 class Upgrade_Button(Menu_Item):
 	def __init__(self, surface, left, top, width, height, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj):
@@ -1061,15 +1062,20 @@ class Tab(object):
 						# Upgrade Buton
 						class_ = getattr(sys.modules[__name__], self.list_of_buy_buttons[i])
 						button = class_(surface, text_surface_obj_rect.right+5, text_surface_obj_rect.top, 30, 20, RED, BLACK, item, self.list_of_buy_fields_to_display[i], getattr(item, self.list_of_buy_fields[i]), getattr(item, self.amounts_to_buy[i]), text_surface_obj)
-				else:
+				elif button=='Buy_Weapon_Button' and not item in survivor.weapons:
+					# Attribute Text
+					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+					text_surface_obj = text_obj.render(self.list_of_buy_texts[i], True, BLACK)
+					text_surface_obj_rect=text_surface_obj.get_rect(left=self.list_of_buy_rects[i][0]+10, top=TOP+self.list_of_buy_rects[i][1])
+					surface.blit(text_surface_obj, text_surface_obj_rect)
 					# Buy Cost
 					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
 					text_surface_obj = text_obj.render('$'+str(getattr(item, self.list_of_buy_fields[i])), True, BLACK)
 					# Upgrade Buton
 					class_ = getattr(sys.modules[__name__], self.list_of_buy_buttons[i])
-					button = class_(surface, text_surface_obj_rect.right+5, text_surface_obj_rect.top, 30, 20, RED, BLACK, item, self.list_of_buy_fields_to_display[i], text_surface_obj)
+					button = class_(surface, text_surface_obj_rect.right+5, text_surface_obj_rect.top+10, 30, 20, RED, BLACK, item, getattr(item, self.list_of_buy_fields[i]), text_surface_obj)
 			TOP+=item.buy_tab_size-1
-	
+
 		pause_menu.update_rects(surface, surface_width, surface_height)
 
 	def tab_handler(self):
@@ -1087,6 +1093,40 @@ class Player_Tab(Tab):
 	def __init__(self, topleft, string):
 		Tab.__init__(self, topleft, string)
 		self.rect1 = pygame.Rect(self.rect.left+300, self.rect.top+100,150,50)
+
+	def draw_buy_contents(self):
+		## Displaying upgrades
+		LEFT=0
+		TOP=50
+		WIDTH=600
+		HEIGHT=100
+		surface_left=350
+		surface_top=210
+		surface_width=600
+		surface_height=350
+		surface=pygame.Surface((surface_width, surface_height))
+		surface.fill(INDIGOBLUE)
+		# Max Health Container
+		item = Menu_Item(surface, 50, 10, 200, 40, 'max_health', INDIGOBLUE, BLACK)
+		item.draw()
+		# Max Health Text
+		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+		text_surface_obj = text_obj.render('Armor: '+str(survivor.current_armor), True, BLACK)
+		text_surface_obj_rect=text_surface_obj.get_rect(topleft=((70, 10)))
+		surface.blit(text_surface_obj, text_surface_obj_rect)
+		# Next Upgrade
+		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+		if not survivor.current_armor>=survivor.max_armor:
+			text_surface_obj = text_obj.render('+'+str(survivor.buy_armor_amount[0]), True, GREEN)
+			text_surface_obj_rect=text_surface_obj.get_rect(topleft=(text_surface_obj_rect.right,text_surface_obj_rect.top+10))
+			surface.blit(text_surface_obj, text_surface_obj_rect)
+			# Upgrade Damage Cost
+			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+			text_surface_obj = text_obj.render('$'+str(survivor.buy_armor_cost), True, BLACK)
+			# Upgrade Damage Box
+			button = Buy_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, survivor, 'current_armor', survivor.buy_armor_cost, survivor.buy_armor_amount, text_surface_obj)
+
+		pause_menu.update_rects(surface, surface_width, surface_height)
 
 	def draw_upgrades_contents(self):
 		## Displaying upgrades
@@ -1118,7 +1158,7 @@ class Player_Tab(Tab):
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
 			text_surface_obj = text_obj.render('$'+str(survivor.upgrade_max_health_cost[0]), True, BLACK)
 			# Upgrade Damage Box
-			button = Upgrade_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, survivor, 'max_health', survivor.upgrade_max_health_cost[0], survivor.max_health_upgrades, text_surface_obj)
+			button = Buy_Button(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, survivor, 'max_health', survivor.upgrade_max_health_cost[0], survivor.max_health_upgrades, text_surface_obj)
 
 		# Max Armor Container
 		item = Menu_Item(surface, 320, 10, 235, 40, 'max_armor', INDIGOBLUE, BLACK)
@@ -1138,7 +1178,7 @@ class Player_Tab(Tab):
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
 			text_surface_obj = text_obj.render('$'+str(survivor.upgrade_max_armor_cost[0]), True, BLACK)
 			# Upgrade Armor Box
-			button = Upgrade_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, survivor, 'max_armor', survivor.upgrade_max_armor_cost[0], survivor.max_armor_upgrades, text_surface_obj)
+			button = Buy_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, survivor, 'max_armor', survivor.upgrade_max_armor_cost[0], survivor.max_armor_upgrades, text_surface_obj)
 
 		# Max Speed Container
 		item = Menu_Item(surface, 50, 60, 190, 40, 'walk_speed', INDIGOBLUE, BLACK)
@@ -1158,7 +1198,7 @@ class Player_Tab(Tab):
 			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
 			text_surface_obj = text_obj.render('$'+str(survivor.upgrade_walk_speed_cost[0]), True, BLACK)
 			# Upgrade Max Speed Box
-			button = Upgrade_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, survivor, 'walk_speed', survivor.upgrade_walk_speed_cost[0], survivor.walk_speed_upgrades, text_surface_obj)
+			button = Buy_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, survivor, 'walk_speed', survivor.upgrade_walk_speed_cost[0], survivor.walk_speed_upgrades, text_surface_obj)
 
 		# Max Bullet Speed Container
 		item = Menu_Item(surface, 275, 60, 280, 40, 'bullet_speed', INDIGOBLUE, BLACK)
@@ -1201,17 +1241,17 @@ class Weapons_Tab(Tab):
 		Tab.__init__(self, topleft, string)
 		self.rect1 = pygame.Rect(self.rect.left+300, self.rect.top+100,150,50)
 		self.upgrades_tab_items=None
-		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 190, 40)]
-		self.list_attributes_texts=['Damage: ', 'Penetration: ', 'Weapon Ammo: ', 'Mag Ammo: ']
-		self.list_of_upgrades=['damage_upgrades', 'penetration_upgrades', 'max_weapon_ammo_upgrades', 'max_mag_ammo_upgrades']
-		self.list_of_attributes=['damage', 'penetration' ,'max_weapon_ammo', 'max_mag_ammo']
-		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_penetration_cost', 'upgrade_max_weapon_ammo_cost', 'upgrade_max_mag_ammo_cost']
+		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 190, 40), (110, 90, 190, 40)]
+		self.list_attributes_texts=['Damage: ', 'Penetration: ', 'Weapon Ammo: ', 'Mag Ammo: ', 'Fire Rate: ']
+		self.list_of_upgrades=['damage_upgrades', 'penetration_upgrades', 'max_weapon_ammo_upgrades', 'max_mag_ammo_upgrades', 'fire_rate_upgrades']
+		self.list_of_attributes=['damage', 'penetration' ,'max_weapon_ammo', 'max_mag_ammo', 'fire_rate']
+		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_penetration_cost', 'upgrade_max_weapon_ammo_cost', 'upgrade_max_mag_ammo_cost', 'upgrade_fire_rate_cost']
 		self.buy_tab_items=None
 		self.list_of_buy_fields=['buy_ammo_cost', 'price']
-		self.list_of_buy_rects=[(290, 80, 190, 40), (340, 80, 190, 40)]
+		self.list_of_buy_rects=[(290, 90, 190, 40), (110, 130, 190, 40)]
 		self.list_of_buy_texts=['Ammo: ', 'Buy Weapon: ']
-		self.amounts_to_buy=['buy_ammo_amount', None]
-		self.list_of_buy_fields_to_display=['current_weapon_ammo', None]
+		self.amounts_to_buy=['buy_ammo_amount']
+		self.list_of_buy_fields_to_display=['current_weapon_ammo']
 		self.list_of_limitations=['max_weapon_ammo']
 		self.list_of_buy_buttons=['Buy_Button', 'Buy_Weapon_Button']
 
@@ -1241,14 +1281,14 @@ class Turrets_Tab(Tab):
 		self.rect1 = pygame.Rect(self.rect.left+300, self.rect.top+100,150,50)
 		self.upgrades_tab_items=[turret for turret in GameState['active_turrets']]
 		self.upgrades_tab_items.sort(key=lambda x: x.number, reverse=False)
-		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 190, 40)]
-		self.list_attributes_texts=['Damage: ', 'Penetration: ', 'Ammo: ']
-		self.list_of_upgrades=['damage_upgrades', 'penetration_upgrades',  'buy_ammo_quantity']
-		self.list_of_attributes=['damage', 'penetration', 'ammo_left']
-		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_penetration_cost', 'buy_ammo_cost']
+		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 190, 40),]
+		self.list_attributes_texts=['Damage: ', 'Penetration: ', 'Ammo: ', 'Fire Rate: ']
+		self.list_of_upgrades=['damage_upgrades', 'penetration_upgrades',  'buy_ammo_quantity', 'fire_rate_upgrades']
+		self.list_of_attributes=['damage', 'penetration', 'ammo_left', 'fire_rate']
+		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_penetration_cost', 'buy_ammo_cost', 'upgrade_fire_rate_cost']
 		self.buy_tab_items=GameState['turrets_collection']
 		self.list_of_buy_fields=['buy_cost']
-		self.list_of_buy_rects=[(340, 50 , 190, 40)]
+		self.list_of_buy_rects=[(120, 90 , 190, 30)]
 		self.list_of_buy_texts=['Buy Turret: ']
 
 	def draw_buy_contents(self):
@@ -1438,6 +1478,8 @@ class Survivor(pygame.sprite.Sprite):
 		pygame.sprite.Sprite.__init__(self)
 		self.current_health=30
 		self.max_health=30
+		self.buy_armor_amount=[10]
+		self.buy_armor_cost=10
 		self.max_health_upgrades=[20,10,5]
 		self.upgrade_max_health_cost=[50,25,12]
 		self.current_armor=30
@@ -1482,7 +1524,7 @@ class Survivor(pygame.sprite.Sprite):
 		self.switched_areas=True
 		self.walking_rect=pygame.Rect(self.vector[0]-7.5, self.vector[1]-7.5, 15, 15)
 		self.weapon=[weapon for weapon in GameState['weapons_collection'] if weapon.weapon_name=='handgun'][0]
-		self.weapons=[weapon for weapon in GameState['weapons_collection']]
+		self.weapons=[self.weapon]
 		self.images=Images
 		self.current_survivor_body_state_number=0
 		self.current_survivor_feet_state_number=0
@@ -1775,8 +1817,8 @@ class Weapon(pygame.sprite.Sprite):
 		self.upgrade_penetration_cost=upgrade_penetration_cost
 		self.upgrade_max_mag_ammo_cost=upgrade_max_mag_ammo_cost
 		self.upgrade_max_weapon_ammo_cost=upgrade_max_weapon_ammo_cost
-		self.upgrades_tab_size=100
-		self.buy_tab_size=150
+		self.upgrades_tab_size=150
+		self.buy_tab_size=200
 		self.damage_upgrades=[15,14,13,12,11]
 		self.penetration_upgrades=[5,4,3,2,1]
 		self.max_mag_ammo_upgrades=[2,2,2,2]
@@ -1795,7 +1837,9 @@ class Weapon(pygame.sprite.Sprite):
 		self.price=price
 		self.price_per_mag=price_per_mag
 		self.fire_rate=fire_rate
-		self.bullet_delay=1./self.fire_rate
+		self.fire_rate_upgrades=[5,4,3,2]
+		self.upgrade_fire_rate_cost=25
+		self.shooting_delay=1./self.fire_rate
 		self.DPS=self.damage*self.fire_rate
 		self.bullets=pygame.sprite.Group()
 		self.last_time_bullet_shot=0
@@ -1808,6 +1852,7 @@ class Weapon(pygame.sprite.Sprite):
 		self.menu_image_blit_location=(15,5)
 
 	def bullet_handler(self):
+		self.shooting_delay=1./self.fire_rate
 		if self.shooting_type=='automatic':
 			if survivor.body_motion=='shoot' and survivor.current_body_state_number==0:
 				survivor.body_motion=None
@@ -1815,10 +1860,10 @@ class Weapon(pygame.sprite.Sprite):
 			self.new_projectile_coords.from_polar((self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle_from_center_to_cursor))
 			self.new_projectile_coords+=survivor.vector
 			now=time.time()
-			if (now-self.last_time_bullet_shot>=self.bullet_delay):
+			if (now-self.last_time_bullet_shot>=self.shooting_delay):
 				if GameState['MouseButtonDown']:
-					self.last_time_bullet_shot=now-self.bullet_delay
-					total_number=int(round((now-self.last_time_bullet_shot)/self.bullet_delay))
+					self.last_time_bullet_shot=now-self.shooting_delay
+					total_number=int(round((now-self.last_time_bullet_shot)/self.shooting_delay))
 					bullets_fired=0
 					for bullet_number in range(1,total_number+1):
 						if self.current_mag_ammo!=0 and survivor.body_motion!='reload':
@@ -2330,12 +2375,12 @@ class Grenade3(Grenade):
 		DISPLAYSURF.blit(self.image, self.rect)
 
 class Turret(pygame.sprite.Sprite):
-	def __init__(self, damage, shooting_delay, coords, bullet_speed, scale, weapon_size, bullet_scale, number):
+	def __init__(self, damage, fire_rate, coords, bullet_speed, scale, weapon_size, bullet_scale, number):
 		pygame.sprite.Sprite.__init__(self)
 		self.image_for_menu=pygame.transform.scale(pygame.image.load('Turrets/Turret0/turret.png'), scale)
 		self.number=number
 		self.upgrades_tab_size=100
-		self.buy_tab_size=100
+		self.buy_tab_size=130
 		self.weapon_size=Vector2(weapon_size)
 		self.rect=self.image_for_menu.get_rect(center=coords)
 		self.buy_cost=20
@@ -2347,7 +2392,10 @@ class Turret(pygame.sprite.Sprite):
 		self.penetration=penetration
 		self.penetration_upgrades=[5,4,3,2]
 		self.upgrade_penetration_cost=20
-		self.shooting_delay=shooting_delay
+		self.fire_rate=fire_rate
+		self.shooting_delay=1/self.fire_rate
+		self.fire_rate_upgrades=[1,2,3,4]
+		self.upgrade_fire_rate_cost=10
 		self.vector=Vector2(coords)
 		self.closest_target=None
 		self.bullet_speed=bullet_speed
@@ -2405,6 +2453,7 @@ class Turret(pygame.sprite.Sprite):
 		DISPLAYSURF.blit(self.rotated_image, self.rect)
 
 	def bullet_handler(self):
+		self.shooting_delay=1./self.fire_rate
 		now=time.time()
 		if not self.target==None and (now-self.last_time_bullet_shot>=self.shooting_delay):
 			self.new_projectile_coords=Vector2()
@@ -2544,7 +2593,7 @@ survivor.weapon.distance_from_survivor_to_tip_of_weapon, survivor.weapon.angle_f
 survivor.explosives_boxes=[]
 
 pause_menu.weapons_tab.upgrades_tab_items=survivor.weapons
-pause_menu.weapons_tab.buy_tab_items=survivor.weapons
+pause_menu.weapons_tab.buy_tab_items=GameState['weapons_collection']
 pause_menu.explosives_tab.upgrades_tab_items=survivor.explosives_boxes
 pause_menu.explosives_tab.buy_tab_items=survivor.explosives_boxes
 
