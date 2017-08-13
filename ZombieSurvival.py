@@ -337,7 +337,7 @@ def update_projectile_locations(): # updates the bullets
 		for x in range(bullet.speed):
 			current_pos+=direction
 			for zombie in GameState['active_zombies']:
-				if current_pos.distance_to(zombie.vector)<zombie.radius:
+				if current_pos.distance_to(zombie.vector)<zombie.radius and not zombie in zombies_hit:
 					zombies_hit.append(zombie)
 
 		# Order zombies based on distance and bullet takes effect
