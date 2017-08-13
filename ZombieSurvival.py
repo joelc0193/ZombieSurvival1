@@ -343,8 +343,9 @@ def update_projectile_locations(): # updates the bullets
 		# Order zombies based on distance and bullet takes effect
 		zombies_hit.sort(key=lambda x: x.distance, reverse=False)
 		for zombie in zombies_hit:
-			zombie.was_hit(bullet, bullet.weapon_originated.damage)
-			bullet.hit(zombie)
+			if not bullet.penetration<=0:
+				zombie.was_hit(bullet, bullet.weapon_originated.damage)
+				bullet.hit(zombie)
 
 		# check to see if it crashed into a wall and finds the speed at which the bullet should go so that it ends up at the first point of collision in the next frame
 		origin=bullet.vector
@@ -1703,8 +1704,9 @@ class Projectile(pygame.sprite.Sprite):
 		DISPLAYSURF.blit(self.image, self.rect)
 	def hit(self, zombie):
 		self.penetration-=zombie.penetration
-		if self.penetration<-0:
+		if self.penetration<=0:
 			self.kill()
+			print self.penetration
 
 class Zombie_Spawn:
 	def __init__(self, xcoord, ycoord):
