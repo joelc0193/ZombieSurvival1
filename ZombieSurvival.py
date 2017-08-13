@@ -175,87 +175,43 @@ def update_survivor_location():  # MOves the survivor
 	WALKINGRECTWIDTH=15
 	WALKINGRECTHEIGHT=15
 
-
-	# If the survivor is not told to stay in place
+	# If the survivor is not told to stay in same x place
 	if not survivor.velocity[0]==0:
 		_, survivor.angle_walk=survivor.velocity.as_polar()
-		# Keeps track of survivor's old walking rect
-		survivor.walking_rect=pygame.Rect(1,1,1,1)
-		survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
-		# Updates survivor's location and wlaking rect
-		survivor.vector[0]+=survivor.velocity[0]
-		old_walk_rect=pygame.Rect(1,1,1,1)
-		old_walk_rect.size, old_walk_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
-		# Makes a new rect that covers distance_between old walking rect and new walking rect
-		measuring_rect=survivor.walking_rect.copy()
-		measuring_rect.size=(survivor.walking_rect.size[0]+abs(survivor.velocity[0]), survivor.walking_rect.size[1])
-		# Places the measuring rect based on where the player is going
-		if survivor.move_left:
-			measuring_rect.topright=(old_walk_rect.topright), 
-		elif survivor.move_right:
-			measuring_rect.topleft=old_walk_rect.topleft
-		# Checks to see if the survivor's new x location does not cause it to crash a wall
-		for wall in current_map.walls:
-			# If it crashes a wall, finds x coords where survivor is against wall
-			if wall.rect.colliderect(measuring_rect):
-				for x in range(999):
-					if survivor.move_left:
-						measuring_rect=measuring_rect.move(1,0)
-					elif survivor.move_right:
-						measuring_rect=measuring_rect.move(-1,0)
-					if not wall.rect.colliderect(measuring_rect):
-						if survivor.move_right:
-							survivor.vector=Vector2((measuring_rect.right-1)-(survivor.walking_rect.size[0]/2), survivor.walking_rect.centery)
-							survivor.walking_rect=pygame.Rect(1,1,1,1)
-							survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
-						if survivor.move_left:
-							survivor.vector=Vector2(measuring_rect.left+(survivor.walking_rect.size[0]/2), survivor.walking_rect.centery)
-							survivor.walking_rect=pygame.Rect(1,1,1,1)
-							survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
-						break
+		brake=False
+		for x in range(int(round(abs(survivor.velocity[0])))):
+			if survivor.move_right:
+				move=1
+			elif survivor.move_left:
+				move=-1
+			survivor.walking_rect=survivor.walking_rect.move(move,0)
+			survivor.vector=Vector2(survivor.walking_rect.center)
+			for wall in current_map.walls:
+				if wall.rect.colliderect(survivor.walking_rect):
+					survivor.walking_rect=survivor.walking_rect.move(-move,0)
+					survivor.vector=Vector2(survivor.walking_rect.center)
+					brake=True
+			if brake:
 				break
 	
+	# If the survivor is not told to stay in same y place
 	if not survivor.velocity[1]==0:
-		# Keeps track of survivor's old walking rect
-		survivor_old_vector=Vector2(survivor.vector)
-		survivor.walking_rect=pygame.Rect(1,1,1,1)
-		survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
-		# Updates survivor's location and wlaking rect
-		survivor.vector[1]+=survivor.velocity[1]
-		old_walk_rect=pygame.Rect(1,1,1,1)
-		old_walk_rect.size, old_walk_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
-		# Makes a new rect that covers distance_between old walking rect and new walking rect
-		measuring_rect=survivor.walking_rect.copy()
-		measuring_rect.size=(survivor.walking_rect.size[0], survivor.walking_rect.size[1]+abs(survivor.velocity[1]))
-		# Places the measuring rect based on where the player is going
-		if survivor.move_up:
-			measuring_rect.bottomright=(old_walk_rect.bottomright[0],old_walk_rect.bottomright[1]), 
-		elif survivor.move_down:
-			measuring_rect.topleft=old_walk_rect.topleft
-		# Checks to see if the survivor's new y location does not cause it to crash a wall
-		for wall in current_map.walls:
-			# If it crashes a wall, finds y coords where survivor is against wall
-			if wall.rect.colliderect(measuring_rect):
-				for y in range(999):
-					if survivor.move_up:
-						measuring_rect=measuring_rect.move(0,1)
-					elif survivor.move_down:
-						measuring_rect=measuring_rect.move(0,-1)
-					if not wall.rect.colliderect(measuring_rect):
-						if survivor.move_up:
-							survivor.vector=Vector2(measuring_rect.centerx, measuring_rect.top+1+(survivor.walking_rect.size[1]/2))
-							survivor.walking_rect=pygame.Rect(1,1,1,1)
-							survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
-						if survivor.move_down:
-							survivor.vector=Vector2(measuring_rect.centerx, (measuring_rect.bottom-1)-(survivor.walking_rect.size[1]/2))
-							survivor.walking_rect=pygame.Rect(1,1,1,1)
-							survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
-						print wall.rect, survivor.walking_rect
-
-						break
+		_, survivor.angle_walk=survivor.velocity.as_polar()
+		brake=False
+		for y in range(int(round(abs(survivor.velocity[1])))):
+			if survivor.move_up:
+				move=-1
+			else:
+				move=1
+			survivor.walking_rect=survivor.walking_rect.move(0,move)
+			survivor.vector=Vector2(survivor.walking_rect.center)
+			for wall in current_map.walls:
+				if wall.rect.colliderect(survivor.walking_rect):
+					survivor.walking_rect=survivor.walking_rect.move(0,-move)
+					survivor.vector=Vector2(survivor.walking_rect.center)
+					brake=True
+			if brake:
 				break
-
-		# Updates that survivor's final walking rect
 
 	# checks to see if survivor switched rooms
 	survivor.switched_rooms=switched_rooms(survivor)
@@ -1700,7 +1656,6 @@ class Survivor(pygame.sprite.Sprite):
 		self.update_state()
 		self.rotated_body_image, self.rotated_feet_image=self.rotate_survivor()
 		self.mask = pygame.mask.from_surface(self.rotated_body_image,0)
-		pygame.draw.rect(DISPLAYSURF, BLACK, self.walking_rect)
 	def draw(self):
 		DISPLAYSURF.blit(self.rotated_feet_image, self.feet_rect)
 		DISPLAYSURF.blit(self.rotated_body_image, self.body_rect)
