@@ -175,6 +175,7 @@ def update_survivor_location():  # MOves the survivor
 	WALKINGRECTWIDTH=15
 	WALKINGRECTHEIGHT=15
 
+
 	# If the survivor is not told to stay in place
 	if not (survivor.velocity==Vector2(0,0)):
 		_, survivor.angle_walk=survivor.velocity.as_polar()
@@ -183,8 +184,8 @@ def update_survivor_location():  # MOves the survivor
 		old_walk_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
 		# Updates survivor's location and wlaking rect
 		survivor.vector[0]+=survivor.velocity[0]
-		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
-		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
+		survivor.walking_rect=pygame.Rect(1,1,1,1)
+		survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
 		# Makes a new rect that covers distance_between old walking rect and new walking rect
 		measuring_rect=survivor.walking_rect.copy()
 		measuring_rect.size=(survivor.walking_rect.size[0]+abs(survivor.velocity[0]), survivor.walking_rect.size[1])
@@ -197,7 +198,7 @@ def update_survivor_location():  # MOves the survivor
 		for wall in current_map.walls:
 			# If it crashes a wall, finds x coords where survivor is against wall
 			if wall.rect.colliderect(measuring_rect):
-				for x in range(int(survivor.speed)):
+				for x in range(999):
 					if survivor.move_left:
 						measuring_rect=measuring_rect.move(1,0)
 					elif survivor.move_right:
@@ -205,16 +206,17 @@ def update_survivor_location():  # MOves the survivor
 					if not wall.rect.colliderect(measuring_rect):
 						if survivor.move_right:
 							survivor.vector=Vector2((measuring_rect.right-1)-(survivor.walking_rect.size[0]/2), survivor.walking_rect.centery)
-							WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+							survivor.walking_rect=pygame.Rect(1,1,1,1)
+							survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
 						if survivor.move_left:
 							survivor.vector=Vector2(measuring_rect.left+(survivor.walking_rect.size[0]/2), survivor.walking_rect.centery)
-							WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+							survivor.walking_rect=pygame.Rect(1,1,1,1)
+							survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
+						print wall.rect, survivor.walking_rect
+
 						break
 				break
-
-		# Updates that survivor's final walking rect
-		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
-
+	
 	if not (survivor.velocity==Vector2(0,0)):
 		# Keeps track of survivor's old walking rect
 		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
@@ -222,8 +224,8 @@ def update_survivor_location():  # MOves the survivor
 		old_walk_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
 		# Updates survivor's location and wlaking rect
 		survivor.vector[1]+=survivor.velocity[1]
-		WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
-		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
+		survivor.walking_rect=pygame.Rect(1,1,1,1)
+		survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
 		# Makes a new rect that covers distance_between old walking rect and new walking rect
 		measuring_rect=survivor.walking_rect.copy()
 		measuring_rect.size=(survivor.walking_rect.size[0], survivor.walking_rect.size[1]+abs(survivor.velocity[1]))
@@ -236,23 +238,25 @@ def update_survivor_location():  # MOves the survivor
 		for wall in current_map.walls:
 			# If it crashes a wall, finds y coords where survivor is against wall
 			if wall.rect.colliderect(measuring_rect):
-				for y in range(int(survivor.speed)):
+				print wall.rect, survivor.walking_rect
+				for y in range(999):
 					if survivor.move_up:
 						measuring_rect=measuring_rect.move(0,1)
 					elif survivor.move_down:
 						measuring_rect=measuring_rect.move(0,-1)
 					if not wall.rect.colliderect(measuring_rect):
 						if survivor.move_up:
-							survivor.vector=Vector2(measuring_rect.centerx, measuring_rect.top+(survivor.walking_rect.size[1]/2))
-							WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+							survivor.vector=Vector2(measuring_rect.centerx, measuring_rect.top+1+(survivor.walking_rect.size[1]/2))
+							survivor.walking_rect=pygame.Rect(1,1,1,1)
+							survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
 						if survivor.move_down:
 							survivor.vector=Vector2(measuring_rect.centerx, (measuring_rect.bottom-1)-(survivor.walking_rect.size[1]/2))
-							WALKINGRECTTOPLEFT=(survivor.vector[0]-WALKINGRECTWIDTH/2, survivor.vector[1]-WALKINGRECTHEIGHT/2)
+							survivor.walking_rect=pygame.Rect(1,1,1,1)
+							survivor.walking_rect.size, survivor.walking_rect.center=(WALKINGRECTWIDTH, WALKINGRECTHEIGHT), survivor.vector
 						break
 				break
 
 		# Updates that survivor's final walking rect
-		survivor.walking_rect=pygame.Rect(WALKINGRECTTOPLEFT[0], WALKINGRECTTOPLEFT[1], WALKINGRECTWIDTH, WALKINGRECTHEIGHT)
 
 	# checks to see if survivor switched rooms
 	survivor.switched_rooms=switched_rooms(survivor)
