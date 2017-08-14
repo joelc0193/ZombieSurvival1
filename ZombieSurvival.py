@@ -739,7 +739,7 @@ class Buy_Weapon_Button(Buy_Button):
 	def action(self):
 		survivor.money-=self.field_upgrade_cost
 		survivor.weapons.append(self.weapon)
-		self.weapon.buy_menu_fields[-1]=Menu_Field('Sell Weapon: ', None, None, 'sell_value', (110,90,140,40), 'Sell_Weapon_Button')
+		self.weapon.buy_menu_fields[-1]=Menu_Field('Sell Weapon: ', None, None, 'sell_value', (110,130,140,40), 'Sell_Weapon_Button')
 		self.weapon.sell_value=int(self.weapon.price*.6)
 
 class Sell_Weapon_Button(Buy_Button):
@@ -748,7 +748,7 @@ class Sell_Weapon_Button(Buy_Button):
 
 	def action(self):
 		survivor.money+=self.weapon.sell_value
-		self.weapon.buy_menu_fields[-1]=Menu_Field('Buy Weapon: ', None, None, 'price', (110,90,140,40), 'Buy_Weapon_Button')
+		self.weapon.buy_menu_fields[-1]=Menu_Field('Buy Weapon: ', None, None, 'price', (110,130,140,40), 'Buy_Weapon_Button')
 		for i, weapon in enumerate(survivor.weapons):
 			if weapon==self.weapon:
 				del survivor.weapons[i]
@@ -1315,19 +1315,8 @@ class Explosives_Tab(Tab):
 		Tab.__init__(self, topleft, string)
 		self.rect1 = pygame.Rect(self.rect.left+300, self.rect.top+100,150,50)
 		self.upgrades_tab_items=None
-		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 240, 40), (110,90, 190, 40)]
-		self.list_attributes_texts=['Damage: ', 'Area Covered: ', 'Timer: ', 'Capacity: ', 'Effect Duration: ']
-		self.list_of_upgrades=['damage_upgrades', 'area_covered_upgrades', 'timer_upgrades', 'ammo_capacity_upgrades', 'effect_duration_upgrades']
-		self.list_of_attributes=['damage', 'area_covered', 'timer', 'ammo_capacity', 'effect_duration']
-		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_area_covered_cost', 'upgrade_timer_cost', 'upgrade_ammo_capacity_cost', 'upgrade_effect_duration_cost']
 		self.buy_tab_items=None
-		self.list_of_buy_fields=['buy_explosives_cost']
-		self.list_of_buy_rects=[(340, 90, 190, 40)]
-		self.list_of_buy_texts=['Grenades: ']
-		self.amounts_to_buy=['buy_explosive_amount']
-		self.list_of_buy_fields_to_display=['explosives_left']
-		self.list_of_limitations=['ammo_capacity']
-		self.list_of_buy_buttons=['Buy_Button']
+
 
 class Turrets_Tab(Tab):
 	def __init__(self, topleft, string):
@@ -1335,15 +1324,7 @@ class Turrets_Tab(Tab):
 		self.rect1 = pygame.Rect(self.rect.left+300, self.rect.top+100,150,50)
 		self.upgrades_tab_items=[turret for turret in GameState['active_turrets']]
 		self.upgrades_tab_items.sort(key=lambda x: x.number, reverse=False)
-		self.list_attributes_rects=[(110, 10, 190, 40), (110, 50, 190, 40), (310, 10, 240, 40), (340, 50, 190, 40),]
-		self.list_attributes_texts=['Damage: ', 'Penetration: ', 'Ammo: ', 'Fire Rate: ']
-		self.list_of_upgrades=['damage_upgrades', 'penetration_upgrades',  'buy_ammo_quantity', 'fire_rate_upgrades']
-		self.list_of_attributes=['damage', 'penetration', 'ammo_left', 'fire_rate']
-		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_penetration_cost', 'buy_ammo_cost', 'upgrade_fire_rate_cost']
 		self.buy_tab_items=GameState['turrets_collection']
-		self.list_of_buy_fields=['price']
-		self.list_of_buy_rects=[(120, 90 , 190, 30)]
-		self.list_of_buy_texts=['Buy Turret: ']
 
 	# def draw_buy_contents(self):
 	# 	## Displaying items
@@ -1658,7 +1639,8 @@ class Survivor(pygame.sprite.Sprite):
 			self.current_body_state_number+=1
 			self.current_body_state_number=self.current_body_state_number%(self.max_body_state_number+1)
 			self.body_image=Images['Characters/Survivor/'+str(self.weapon.weapon_name)+'/'+str(self.body_motion)+str(self.current_body_state_number)] # Find the image stored under the key generated above
-
+			if self.body_motion=='shoot' and self.current_body_state_number==self.max_body_state_number:
+				self.find_body_motion()
 
 	def update_feet_state(self): # updates the self state image and rotates it
 		now=GameState['game_time']
@@ -1873,7 +1855,7 @@ class Weapon(pygame.sprite.Sprite):
 		self.upgrade_max_mag_ammo_cost=upgrade_max_mag_ammo_cost
 		self.upgrade_max_weapon_ammo_cost=upgrade_max_weapon_ammo_cost
 		self.upgrades_tab_size=150
-		self.buy_tab_size=150
+		self.buy_tab_size=190
 		self.damage_upgrades=[15,14,13,12,11]
 		self.penetration_upgrades=[5,4,3,2,1]
 		self.max_mag_ammo_upgrades=[2,2,2,2]
@@ -1900,13 +1882,13 @@ class Weapon(pygame.sprite.Sprite):
 		self.last_time_bullet_shot=0
 		self.sell_value=int(self.price*.6)
 		self.bullet_shot=False
-		self.current_mag_ammo=1
+		self.current_mag_ammo=10
 		self.max_mag_ammo=max_mag_ammo
 		self.current_weapon_ammo=80
 		self.max_weapon_ammo=max_weapon_ammo
 		self.menu_scale_image=(90,90)
 		self.menu_image_blit_location=(15,5)
-		self.reload_time=.2
+		self.reload_time=.01
 		self.upgrade_menu_fields=[]
 		self.upgrade_menu_fields.append(Menu_Field('Damage: ', 'damage', 'damage_upgrades', 'upgrade_damage_cost', (110, 10, 190, 40), 'Upgrade_Button'))
 		self.upgrade_menu_fields.append(Menu_Field('Penetration: ', 'penetration', 'penetration_upgrades', 'upgrade_penetration_cost', (110, 50, 190, 40), 'Upgrade_Button'))
@@ -1915,7 +1897,7 @@ class Weapon(pygame.sprite.Sprite):
 		self.upgrade_menu_fields.append(Menu_Field('Fire Rate: ', 'fire_rate', 'fire_rate_upgrades', 'upgrade_fire_rate_cost', (110, 90, 190, 40), 'Upgrade_Button'))
 		self.buy_menu_fields=[]
 		self.buy_menu_fields.append(Menu_Field('Ammo: ', 'current_weapon_ammo', 'buy_ammo_amount', 'buy_ammo_cost', (340, 90, 190, 40), 'Buy_Button'))
-		self.buy_menu_fields.append(Menu_Field('Buy Weapon: ', None, None, 'price', (110, 90, 190, 40), 'Buy_Weapon_Button'))
+		self.buy_menu_fields.append(Menu_Field('Buy Weapon: ', None, None, 'price', (110, 130, 190, 40), 'Buy_Weapon_Button'))
 
 	def reload(self):
 		now=GameState['game_time']
@@ -1963,7 +1945,7 @@ class Weapon(pygame.sprite.Sprite):
 
 			survivor.body_image=Images['Characters/Survivor/'+str(self.weapon_name)+'/'+str(survivor.body_motion)+str(survivor.current_body_state_number)] # Find the image stored under the key generated above
 			survivor.time_of_last_generated_body_state=now #update the time of last self update to now
-		if survivor.current_body_state_number==survivor.max_body_state_number+1:
+		if survivor.current_body_state_number==survivor.max_body_state_number:
 			survivor.find_body_motion()
 
 		# Reloading Bar Outline
@@ -2052,6 +2034,7 @@ class Weapon(pygame.sprite.Sprite):
 							bullet.current_area.entities_on.add(bullet)
 							self.current_mag_ammo-=1
 							bullets_fired+=1
+							self.last_time_bullet_shot=GameState['game_time']
 						else:
 							break
 				# If the player ran out of ammo midway of shooting
@@ -2083,6 +2066,7 @@ class Weapon(pygame.sprite.Sprite):
 						self.current_mag_ammo-=1
 						bullets_fired+=1
 						GameState['MouseButtonPressed']=False
+						self.last_time_bullet_shot=GameState['game_time']
 					else:
 						break
 			if survivor.weapon.current_weapon_ammo>0 and survivor.weapon.current_mag_ammo==0 and survivor.body_motion!='reload':
@@ -2099,22 +2083,23 @@ class Weapon(pygame.sprite.Sprite):
 			self.new_projectile_coords=Vector2()
 			self.new_projectile_coords.from_polar((self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle_from_center_to_cursor))
 			self.new_projectile_coords+=survivor.vector
-			if GameState['MouseButtonPressed'] and survivor.body_motion!='reload':
-				total_number=4
-				angles=[-30, -10, 10, 30, 50]
+			if GameState['MouseButtonPressed'] and survivor.body_motion!='reload' and GameState['game_time']-self.last_time_bullet_shot>self.shooting_delay:
+				total_number=5
+				angles=[-40, -20, 0, 20, 40]
 				bullets_fired=0
 				if self.current_mag_ammo!=0:
 					for bullet_number in range(1,total_number+1):
 						survivor.body_motion='shoot'
 						survivor.current_body_state_number=0
-						survivor.max_body_state_number=2
-						survivor.update_feet_state_image_delay=.1
+						survivor.max_body_state_number=5
+						survivor.update_body_state_image_delay=.05
 						bullet = Projectile(self.new_projectile_coords, survivor.bullet_speed, survivor.angle_to_rotate_body+angles[bullet_number-1], bullet_number, total_number, self)
 						bullet.current_area=find_current_location(bullet.vector, current_map.areas)
 						bullet.current_area.entities_on.add(bullet)
 					self.current_mag_ammo-=1
 					bullets_fired+=1
 					GameState['MouseButtonPressed']=False
+					self.last_time_bullet_shot=GameState['game_time']
 			if survivor.weapon.current_weapon_ammo>0 and survivor.weapon.current_mag_ammo==0 and survivor.body_motion!='reload':
 				survivor.body_motion='reload'
 				survivor.started_reload=GameState['game_time']
@@ -2187,14 +2172,14 @@ Rifle(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, we
 
 name='shotgun'
 shooting='pump'
-filename='Guns/CartoonShotgun.png'
+filename='Guns/Shotgun.png'
 price=10
 price_per_mag=2
 fire_rate=1
 bullet_image='bullet.png'
 weapon_size=Vector2(25,10)
-damage=25
-max_mag_ammo=1
+damage=100
+max_mag_ammo=10
 max_weapon_ammo=25
 weapon_scale=(100,100)
 penetration=20
