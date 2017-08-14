@@ -15,53 +15,53 @@ class Image_Store:
 
 
 # # Read all images from folder
-# list_of_all_image_store_objects=[]
+list_of_all_image_store_objects=[]
 
-# Images={}
-# SURFACEWIDTH=100
-# SURFACEHEIGHT=100
-# for dirpath, dirnames, filenames in os.walk('Characters/'):
-#     for filename in filenames:
-#     	if 'feet' in str(dirpath):
-#     		scale=(35,35)
-#     		location=(35,30)
-#     	elif 'Zombie1' in str(dirpath):
-#     		scale=(170,170)
-#     		location=(-43,-36)
-#     	else:
-#     		scale=(50,50)
-#     		location=(27,22)
-#         file_path = os.path.join(dirpath, filename)
-#         if imghdr.what(file_path):
-#         	if filename[-6]in['1','2','3','4','5','6','7','8','9','0,']:
-#         		surface =  pygame.Surface((SURFACEWIDTH, SURFACEHEIGHT), pygame.SRCALPHA, 32)
-#         		surface.blit(pygame.transform.scale(pygame.image.load(str(dirpath)+'/'+str(filename)), scale), location)
-#         		key=str(dirpath)+filename[-6]+filename[-5]
-#     		else:
-#     			surface =  pygame.Surface((SURFACEWIDTH, SURFACEHEIGHT), pygame.SRCALPHA, 32)
-#     			surface.blit(pygame.transform.scale(pygame.image.load(str(dirpath)+'/'+str(filename)), scale), location)
-#     			key=str(dirpath)+filename[-5]
-#     		list_of_all_image_store_objects.append(Image_Store(key, surface.get_rect().size, scale))
-#     		Images[key]=pygame.image.tostring(surface, 'RGBA')
+Images={}
+SURFACEWIDTH=100
+SURFACEHEIGHT=100
+for dirpath, dirnames, filenames in os.walk('Characters/'):
+    for filename in filenames:
+    	if 'feet' in str(dirpath):
+    		scale=(35,35)
+    		location=(35,30)
+    	elif 'Zombie1' in str(dirpath):
+    		scale=(170,170)
+    		location=(-43,-36)
+    	else:
+    		scale=(50,50)
+    		location=(27,22)
+        file_path = os.path.join(dirpath, filename)
+        if imghdr.what(file_path):
+        	if filename[-6]in['1','2','3','4','5','6','7','8','9','0,']:
+        		surface =  pygame.Surface((SURFACEWIDTH, SURFACEHEIGHT), pygame.SRCALPHA, 32)
+        		surface.blit(pygame.transform.scale(pygame.image.load(str(dirpath)+'/'+str(filename)), scale), location)
+        		key=str(dirpath)+filename[-6]+filename[-5]
+    		else:
+    			surface =  pygame.Surface((SURFACEWIDTH, SURFACEHEIGHT), pygame.SRCALPHA, 32)
+    			surface.blit(pygame.transform.scale(pygame.image.load(str(dirpath)+'/'+str(filename)), scale), location)
+    			key=str(dirpath)+filename[-5]
+    		list_of_all_image_store_objects.append(Image_Store(key, surface.get_rect().size, scale))
+    		Images[key]=pygame.image.tostring(surface, 'RGBA')
 
-# for dirpath, dirnames, filenames in os.walk('Grenades/'):
-#     for filename in filenames:
-# 		file_path = os.path.join(dirpath, filename)
-# 		if imghdr.what(file_path):
-# 			if filename[-6]in['1','2','3','4','5','6','7','8','9','0,']:
-# 				key=str(dirpath)+filename[-6]+filename[-5]
-# 			else:
-# 				key=str(dirpath)+filename[-5]
-# 			image=pygame.image.load(str(dirpath)+'/'+str(filename))
-# 			list_of_all_image_store_objects.append(Image_Store(key, image.get_rect().size, None))
-# 			Images[key]=pygame.image.tostring(image, 'RGBA')
+for dirpath, dirnames, filenames in os.walk('Grenades/'):
+    for filename in filenames:
+		file_path = os.path.join(dirpath, filename)
+		if imghdr.what(file_path):
+			if filename[-6]in['1','2','3','4','5','6','7','8','9','0,']:
+				key=str(dirpath)+filename[-6]+filename[-5]
+			else:
+				key=str(dirpath)+filename[-5]
+			image=pygame.image.load(str(dirpath)+'/'+str(filename))
+			list_of_all_image_store_objects.append(Image_Store(key, image.get_rect().size, None))
+			Images[key]=pygame.image.tostring(image, 'RGBA')
 
-# with open('Image_Store_Info.pkl', 'wb') as output:
-#     pickle.dump(list_of_all_image_store_objects, output, pickle.HIGHEST_PROTOCOL)
+with open('Image_Store_Info.pkl', 'wb') as output:
+    pickle.dump(list_of_all_image_store_objects, output, pickle.HIGHEST_PROTOCOL)
 
 
-# with open('Images.pkl', 'wb') as output:
-#     pickle.dump(Images, output, pickle.HIGHEST_PROTOCOL)
+with open('Images.pkl', 'wb') as output:
+    pickle.dump(Images, output, pickle.HIGHEST_PROTOCOL)
 
 with open('Image_Store_Info.pkl', 'rb') as input:
     list_of_all_image_store_objects = pickle.load(input)
@@ -166,7 +166,8 @@ def update_survivor_location():  # MOves the survivor
 				if event.type==KEYDOWN:
 					if survivor.body_motion!='reload':
 						survivor.body_motion='reload'
-						survivor.max_body_state_number=26
+						survivor.started_reload=GameState['game_time']
+						survivor.max_body_state_number=14
 						survivor.current_body_state_number=0
 						survivor.update_body_state_image_delay=.05
 	# Updates survivor location based on state of corresponding keys
@@ -244,7 +245,7 @@ def update_survivor_location():  # MOves the survivor
 
 # updates the zombies's image as it walks
 def update_zombie_state_image(zombie):
-	now=time.time()
+	now=GameState['game_time']
 	if (zombie.time_of_last_generated_state==0) or (now-zombie.time_of_last_generated_state>=zombie.update_state_image_delay):
 		zombie.time_of_last_generated_state = now # update the time of last zombie update to now
 		zombie.current_state_number+=1
@@ -625,25 +626,8 @@ def menu_displayer():
 	surface.blit(mag_text_surface_obj, (SPACEAWAYFROMLEFT, SPACEAWAYFROMTOP))
 
 	if survivor.body_motion=='reload':
-		# Reloading Bar Outline
-		BARWIDTH=140
-		BARHEIGHT=13
-		SPACEAWAYFROMLEFT=30
-		SPACEAWAYFROMTOP=100
-		armor_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP,BARWIDTH, BARHEIGHT)
-		pygame.draw.rect(surface, BLACK, armor_bar,2)
-
-		# Reloading Bar
-		BARMAXWIDTH=137
-		BARHEIGHT=10
-		SPACEAWAYFROMLEFT=32
-		SPACEAWAYFROMTOP=102
-		if not survivor.current_body_state_number==0:
-			BARWIDTH=(float(survivor.current_body_state_number)/survivor.max_body_state_number)*BARMAXWIDTH
-		if not BARWIDTH==0:
-			reload_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP, BARWIDTH, BARHEIGHT)
-			pygame.draw.rect(surface, FILIGREEYELLOW, reload_bar)
-
+		pygame.draw.rect(surface, BLACK, survivor.weapon.reloading_bar_outline,2)
+		pygame.draw.rect(surface, FILIGREEYELLOW, survivor.weapon.reloading_bar)
 		# Word: 'Reloading'
 		SPACEAWAYFROMLEFT=77
 		SPACEAWAYFROMTOP=99
@@ -657,6 +641,7 @@ def menu_displayer():
 	DISPLAYSURF.blit(survivor.weapon.weapon_image, (850,610))	
 
 GameState={
+'game_time':time.time(),
 'zombies_killed':0,
 'active_zombies':pygame.sprite.Group(),
 'weapons_collection':pygame.sprite.Group(),
@@ -1499,8 +1484,11 @@ class Survivor(pygame.sprite.Sprite):
 		pygame.sprite.Sprite.__init__(self)
 		self.current_health=30
 		self.max_health=30
+		self.started_reload=0
 		self.buy_armor_amount=[10]
 		self.buy_armor_cost=10
+		self.reload_number_to_pause=5
+		self.reload_speed=1
 		self.max_health_upgrades=[20,10,5]
 		self.upgrade_max_health_cost=[50,25,12]
 		self.current_armor=30
@@ -1550,123 +1538,137 @@ class Survivor(pygame.sprite.Sprite):
 		self.images=Images
 		self.current_survivor_body_state_number=0
 		self.current_survivor_feet_state_number=0
+	
 	def rotate_survivor(self):
 		# Rotate Body
 		location = self.vector
-		survivor.angle_to_rotate_body=(GameState['cursor_vector']-survivor.vector).angle_to(GameState['cursor_vector']-survivor.weapon.new_projectile_coords)+survivor.angle_from_center_to_cursor
+		self.angle_to_rotate_body=(GameState['cursor_vector']-self.vector).angle_to(GameState['cursor_vector']-self.weapon.new_projectile_coords)+self.angle_from_center_to_cursor
 		rotated_body_sprite = pygame.transform.rotate(self.body_image, -(self.angle_from_center_to_cursor))
 		self.body_rect=rotated_body_sprite.get_rect()
 		self.body_rect.center = self.vector
 		self.rect=self.body_rect
 
 		#Rotate Feet and find feet update delay
-		angle=(survivor.angle_from_center_to_cursor-survivor.angle_walk)%360
-		angle_to_rotate_survivor_feet=survivor.angle_walk
+		angle=(self.angle_from_center_to_cursor-self.angle_walk)%360
+		angle_to_rotate_survivor_feet=self.angle_walk
 		if self.move_up == False and self.move_down == False and self.move_left == False and self.move_right == False:
-			survivor.feet_motion='idle'
-			survivor.max_feet_state_number=0
-			angle_to_rotate_survivor_feet=survivor.angle_from_center_to_cursor
-			survivor.update_feet_state_image_delay=.02
+			self.feet_motion='idle'
+			self.max_feet_state_number=0
+			angle_to_rotate_survivor_feet=self.angle_from_center_to_cursor
+			self.update_feet_state_image_delay=.02
 			update_body_state_image_delay=.02
 		elif angle>=7*180/4 or angle<=180/4:
-			survivor.feet_motion='walk'
-			survivor.max_feet_state_number=19
-			survivor.speed=self.walk_speed
-			survivor.update_feet_state_image_delay=.05
+			self.feet_motion='walk'
+			self.max_feet_state_number=19
+			self.speed=self.walk_speed
+			self.update_feet_state_image_delay=.05
 			update_body_state_image_delay=.05
 		elif angle>=180/4 and angle<=3*180/4:
-			survivor.feet_motion='strafe_left'
-			survivor.max_feet_state_number=19
-			angle_to_rotate_survivor_feet=survivor.angle_walk+90
-			survivor.speed=self.walk_speed*self.strafe_percent
-			survivor.update_feet_state_image_delay=.03
+			self.feet_motion='strafe_left'
+			self.max_feet_state_number=19
+			angle_to_rotate_survivor_feet=self.angle_walk+90
+			self.speed=self.walk_speed*self.strafe_percent
+			self.update_feet_state_image_delay=.03
 			update_body_state_image_delay=.03
 		elif angle>=5*180/4 and angle<=7*180/4:
-			angle_to_rotate_survivor_feet=survivor.angle_walk-90
-			survivor.feet_motion='strafe_right'
-			survivor.max_feet_state_number=19
-			survivor.speed=self.walk_speed*self.strafe_percent
-			survivor.update_feet_state_image_delay=.03
+			angle_to_rotate_survivor_feet=self.angle_walk-90
+			self.feet_motion='strafe_right'
+			self.max_feet_state_number=19
+			self.speed=self.walk_speed*self.strafe_percent
+			self.update_feet_state_image_delay=.03
 			update_body_state_image_delay=.03
 		elif angle>=3*180/4 and angle<5*180/4:
-			survivor.feet_motion='walk'
+			self.feet_motion='walk'
 			angle_to_rotate_survivor_feet=angle_to_rotate_survivor_feet-180
-			survivor.max_feet_state_number=19
-			survivor.speed=self.walk_speed*self.backwards_percent
-			survivor.update_feet_state_image_delay=.03
+			self.max_feet_state_number=19
+			self.speed=self.walk_speed*self.backwards_percent
+			self.update_feet_state_image_delay=.03
 			update_body_state_image_delay=.03
 		# Reloading has a different update delay time
-		if survivor.body_motion!='reload':
-			survivor.update_body_state_image_delay=update_body_state_image_delay
+		if self.body_motion!='reload':
+			self.update_body_state_image_delay=update_body_state_image_delay
 
 		rotated_feet_sprite = pygame.transform.rotate(self.feet_image, -angle_to_rotate_survivor_feet)
 		self.feet_rect=rotated_feet_sprite.get_rect()
 		self.feet_rect.center=self.vector
 		return rotated_body_sprite, rotated_feet_sprite
 
-	def update_state(self): # updates the self state image and rotates it
-		now=time.time()
-		self.find_body_motion()
+	def state_central_handler(self):
+		if self.body_motion=='reload':
+			self.weapon.reload()
+			self.reloading_handler()
+		else:
+			self.update_body_state()
+			self.update_feet_state()
+
+	def update_body_state(self):
+		now=GameState['game_time']
 		if (self.time_of_last_generated_body_state==0) or (now-self.time_of_last_generated_body_state>=self.update_body_state_image_delay):
 			self.time_of_last_generated_body_state = now # update the time of last self update to now
 			self.current_body_state_number+=1
-			self.current_body_state_number=self.current_body_state_number%(survivor.max_body_state_number+1)
-			self.body_image=Images['Characters/Survivor/handgun/'+str(survivor.body_motion)+str(survivor.current_body_state_number)] # Find the image stored under the key generated above
+			self.current_body_state_number=self.current_body_state_number%(self.max_body_state_number+1)
+			self.body_image=Images['Characters/Survivor/'+str(self.weapon.weapon_name)+'/'+str(self.body_motion)+str(self.current_body_state_number)] # Find the image stored under the key generated above
 
+
+	def update_feet_state(self): # updates the self state image and rotates it
+		now=GameState['game_time']
 		if (self.time_of_last_generated_feet_state==0) or (now-self.time_of_last_generated_feet_state>=self.update_feet_state_image_delay):
 			self.time_of_last_generated_feet_state = now # update the time of last self update to now
 			self.current_feet_state_number+=1
-			self.current_feet_state_number=self.current_feet_state_number%(survivor.max_feet_state_number+1)
-			self.feet_image=Images['Characters/Survivor/feet/'+str(survivor.feet_motion)+str(survivor.current_feet_state_number)]
+			self.current_feet_state_number=self.current_feet_state_number%(self.max_feet_state_number+1)
+			self.feet_image=Images['Characters/Survivor/feet/'+str(self.feet_motion)+str(self.current_feet_state_number)]
+
+	def reloading_handler(self):
+		# If reloading
+		if self.body_motion=='reload':
+			# If we have reached the final reloading image
+			if self.current_body_state_number==self.max_body_state_number:
+				# We add transfer bullets from the weapon stock to the mag ammo
+				if self.weapon.current_mag_ammo!=self.weapon.max_mag_ammo:
+					bullets_to_add=self.weapon.max_mag_ammo-self.weapon.current_mag_ammo
+					# If there are not enough bullets from the weapons to fill mag
+					if bullets_to_add>self.weapon.current_weapon_ammo:
+						bullets_to_add=self.weapon.current_weapon_ammo
+					self.weapon.current_mag_ammo+=bullets_to_add
+					self.weapon.current_weapon_ammo-=bullets_to_add
+
+				# If the gun's mag ammo is full or if the weapon has no more ammo, we switch to another state
+				if (self.weapon.current_mag_ammo==self.weapon.max_mag_ammo or self.weapon.current_weapon_ammo==0):
+					self.find_body_motion()
 
 	def find_body_motion(self):
-		if survivor.body_motion=='reload':
-			if survivor.current_body_state_number==survivor.max_body_state_number and (survivor.weapon.current_mag_ammo==survivor.weapon.max_mag_ammo or survivor.weapon.current_weapon_ammo==0):
-				survivor.body_motion=None
-			elif survivor.current_body_state_number==survivor.max_body_state_number and survivor.weapon.current_mag_ammo!=survivor.weapon.max_mag_ammo:
-				bullets_to_add=survivor.weapon.max_mag_ammo-survivor.weapon.current_mag_ammo
-				if bullets_to_add>survivor.weapon.current_weapon_ammo:
-					bullets_to_add=survivor.weapon.current_weapon_ammo
-				survivor.weapon.current_mag_ammo+=bullets_to_add
-				survivor.weapon.current_weapon_ammo-=bullets_to_add
-
-		if survivor.body_motion==None:
-			if not (self.move_up == False and self.move_down == False and self.move_left == False and self.move_right == False):
-				survivor.body_motion='move'
-				survivor.max_body_state_number=19
-				survivor.current_body_state_number=0
-			else:
-				if GameState['MouseButtonPressed']:
-						survivor.body_motion='shoot'
-						survivor.current_body_state_number=0
-						survivor.max_body_state_number=2
-						survivor.update_feet_state_image_delay=.1
-				else:				
-					survivor.body_motion='idle'
-					survivor.update_body_state_image_delay=0.02
-					survivor.max_body_state_number=0
-					survivor.current_body_state_number=0
+		# If the survivor is moving, we switch the state to 'move'
+		if self.velocity!=Vector2(0,0):
+			self.body_motion='move'
+			self.max_body_state_number=19
+			self.current_body_state_number=0
+		# Else if the survivor is not moving, we switch the state to 'idle'
+		else:
+			self.body_motion='idle'
+			self.update_body_state_image_delay=0.02
+			self.max_body_state_number=0
+			self.current_body_state_number=0
 
 	def explosives_handler(self):
 		for event in GameState['events']:
 			if event.type==KEYDOWN:
 				if event.unicode=='7':
-					if survivor.explosives_boxes[0].explosives_left>0:
-						survivor.explosives_boxes[0].explosives_left-=1
-						survivor.explosives_boxes[0].generate_explosive()
+					if self.explosives_boxes[0].explosives_left>0:
+						self.explosives_boxes[0].explosives_left-=1
+						self.explosives_boxes[0].generate_explosive()
 				elif event.unicode=='8':
-					if survivor.explosives_boxes[1].explosives_left>0:
-						survivor.explosives_boxes[1].explosives_left-=1
-						survivor.explosives_boxes[1].generate_explosive()
+					if self.explosives_boxes[1].explosives_left>0:
+						self.explosives_boxes[1].explosives_left-=1
+						self.explosives_boxes[1].generate_explosive()
 				elif event.unicode=='9':
-					if survivor.explosives_boxes[2].explosives_left>0:
-						survivor.explosives_boxes[2].explosives_left-=1
-						survivor.explosives_boxes[2].generate_explosive()
+					if self.explosives_boxes[2].explosives_left>0:
+						self.explosives_boxes[2].explosives_left-=1
+						self.explosives_boxes[2].generate_explosive()
 
 		GameState['active_explosives'].update()
 
 	def prepare(self):
-		self.update_state()
+		self.state_central_handler()
 		self.rotated_body_image, self.rotated_feet_image=self.rotate_survivor()
 		self.mask = pygame.mask.from_surface(self.rotated_body_image,0)
 	def draw(self):
@@ -1871,6 +1873,7 @@ class Weapon(pygame.sprite.Sprite):
 		self.max_weapon_ammo=max_weapon_ammo
 		self.menu_scale_image=(90,90)
 		self.menu_image_blit_location=(15,5)
+		self.reload_time=3
 		self.upgrade_menu_fields=[]
 		self.upgrade_menu_fields.append(Menu_Field('Damage: ', 'damage', 'damage_upgrades', 'upgrade_damage_cost', (110, 10, 190, 40), 'Upgrade_Button'))
 		self.upgrade_menu_fields.append(Menu_Field('Penetration: ', 'penetration', 'penetration_upgrades', 'upgrade_penetration_cost', (110, 50, 190, 40), 'Upgrade_Button'))
@@ -1881,22 +1884,89 @@ class Weapon(pygame.sprite.Sprite):
 		self.buy_menu_fields.append(Menu_Field('Ammo: ', 'current_weapon_ammo', 'buy_ammo_amount', 'buy_ammo_cost', (340, 90, 190, 40), 'Buy_Button'))
 		self.buy_menu_fields.append(Menu_Field('Buy Weapon: ', None, None, 'price', (110, 90, 190, 40), 'Buy_Weapon_Button'))
 
+	def reload(self):
+		now=GameState['game_time']
+		if (survivor.time_of_last_generated_body_state==0) or (now-survivor.time_of_last_generated_body_state>=survivor.update_body_state_image_delay):
+			survivor.time_of_last_generated_body_state = now # update the time of last self update to now
+			survivor.current_body_state_number+=1
+			survivor.current_body_state_number=survivor.current_body_state_number%(survivor.max_body_state_number+1)
+			survivor.body_image=Images['Characters/Survivor/'+str(self.weapon_name)+'/'+str(survivor.body_motion)+str(survivor.current_body_state_number)] # Find the image stored under the key generated above
+	
+		# Reloading Bar Outline
+		BARWIDTH=140
+		BARHEIGHT=13
+		SPACEAWAYFROMLEFT=30
+		SPACEAWAYFROMTOP=100
+		reloading_bar_outline=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP,BARWIDTH, BARHEIGHT)
+		self.reloading_bar_outline=reloading_bar_outline
+
+		# Reloading Bar
+		BARMAXWIDTH=136
+		BARHEIGHT=10
+		SPACEAWAYFROMLEFT=32
+		SPACEAWAYFROMTOP=102
+		if not survivor.current_body_state_number==0:
+			BARWIDTH=(float(survivor.current_body_state_number)/survivor.max_body_state_number)*BARMAXWIDTH
+		if not BARWIDTH==0:
+			reload_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP, BARWIDTH, BARHEIGHT)
+		self.reloading_bar=reload_bar	
+
+	def reload1(self):
+		now=GameState['game_time']
+		# If it's tome to update the image
+		if now-survivor.time_of_last_generated_body_state>=survivor.update_body_state_image_delay:
+			# If the image is lower than pause number
+			if survivor.current_body_state_number<survivor.reload_number_to_pause:
+				survivor.current_body_state_number+=1
+			# If the image is equal to pause number and time of reload speed is up
+			elif survivor.current_body_state_number==survivor.reload_number_to_pause and (now-survivor.started_reload)>=(self.reload_time*survivor.reload_speed-(survivor.max_body_state_number-survivor.current_body_state_number)*(survivor.update_body_state_image_delay)):
+				survivor.current_body_state_number+=1
+				survivor.current_body_state_number=survivor.current_body_state_number%(survivor.max_body_state_number+2)
+			elif survivor.current_body_state_number>survivor.reload_number_to_pause:
+				survivor.current_body_state_number+=1
+
+			survivor.body_image=Images['Characters/Survivor/'+str(self.weapon_name)+'/'+str(survivor.body_motion)+str(survivor.current_body_state_number)] # Find the image stored under the key generated above
+			survivor.time_of_last_generated_body_state=now #update the time of last self update to now
+		if survivor.current_body_state_number==survivor.max_body_state_number+1:
+			survivor.find_body_motion()
+
+		# Reloading Bar Outline
+		BARWIDTH=140
+		BARHEIGHT=13
+		SPACEAWAYFROMLEFT=30
+		SPACEAWAYFROMTOP=100
+		reloading_bar_outline=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP,BARWIDTH, BARHEIGHT)
+		self.reloading_bar_outline=reloading_bar_outline
+
+		# Reloading Bar
+		BARMAXWIDTH=136
+		BARHEIGHT=10
+		SPACEAWAYFROMLEFT=32
+		SPACEAWAYFROMTOP=102
+		if not survivor.current_body_state_number==0:
+			BARWIDTH=(float(GameState['game_time']-survivor.started_reload)/(survivor.weapon.reload_time*survivor.reload_speed))*BARMAXWIDTH
+			if BARWIDTH>BARMAXWIDTH:
+				BARWIDTH=BARMAXWIDTH
+		if not BARWIDTH==0:
+			reload_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP, BARWIDTH, BARHEIGHT)
+			self.reloading_bar=reload_bar
+
 	def bullet_handler(self):
 		self.shooting_delay=1./self.fire_rate
 		if self.shooting_type=='automatic':
-			if survivor.body_motion=='shoot' and survivor.current_body_state_number==0:
-				survivor.body_motion=None
 			self.new_projectile_coords=Vector2()
 			self.new_projectile_coords.from_polar((self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle_from_center_to_cursor))
 			self.new_projectile_coords+=survivor.vector
-			now=time.time()
+			now=GameState['game_time']
+			# If it's time to shoot a bullet
 			if (now-self.last_time_bullet_shot>=self.shooting_delay):
-				if GameState['MouseButtonDown']:
+				# If the mouse button is pressed and the player is not reloading
+				if GameState['MouseButtonDown'] and survivor.body_motion!='reload':
 					self.last_time_bullet_shot=now-self.shooting_delay
 					total_number=int(round((now-self.last_time_bullet_shot)/self.shooting_delay))
 					bullets_fired=0
 					for bullet_number in range(1,total_number+1):
-						if self.current_mag_ammo!=0 and survivor.body_motion!='reload':
+						if self.current_mag_ammo!=0:
 							survivor.body_motion='shoot'
 							survivor.current_body_state_number=0
 							survivor.max_body_state_number=2
@@ -1908,28 +1978,25 @@ class Weapon(pygame.sprite.Sprite):
 							bullets_fired+=1
 						else:
 							break
+				# If the player ran out of ammo midway of shooting
 				if survivor.weapon.current_weapon_ammo>0 and survivor.weapon.current_mag_ammo==0 and survivor.body_motion!='reload':
 					survivor.body_motion='reload'
-					survivor.max_body_state_number=26
+					survivor.started_reload=GameState['game_time']
+					survivor.max_body_state_number=14
 					survivor.current_body_state_number=0
 					survivor.update_body_state_image_delay=.05
+
 				self.last_time_bullet_shot=now
-				self.bullet_shot=True
-			if GameState['MouseButtonDown']==False and self.bullet_shot:
-				self.last_time_bullet_shot=now
-				self.bullet_shot=False
 
 		elif self.shooting_type=='semi automatic':
-			if survivor.body_motion=='shoot' and survivor.current_body_state_number==0:
-				survivor.body_motion=None
 			self.new_projectile_coords=Vector2()
 			self.new_projectile_coords.from_polar((self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle_from_center_to_cursor))
 			self.new_projectile_coords+=survivor.vector
-			if GameState['MouseButtonPressed']:
+			if GameState['MouseButtonPressed'] and survivor.body_motion!='reload':
 				total_number=1
 				bullets_fired=0
 				for bullet_number in range(1,total_number+1):
-					if self.current_mag_ammo!=0 and survivor.body_motion!='reload':
+					if self.current_mag_ammo!=0:
 						survivor.body_motion='shoot'
 						survivor.current_body_state_number=0
 						survivor.max_body_state_number=2
@@ -1944,12 +2011,24 @@ class Weapon(pygame.sprite.Sprite):
 						break
 			if survivor.weapon.current_weapon_ammo>0 and survivor.weapon.current_mag_ammo==0 and survivor.body_motion!='reload':
 				survivor.body_motion='reload'
-				survivor.max_body_state_number=26
+				survivor.started_reload=GameState['game_time']
+				survivor.max_body_state_number=14
 				survivor.current_body_state_number=0
 				survivor.update_body_state_image_delay=.05
 			self.bullet_shot=True
 			if GameState['MouseButtonPressed']==False and self.bullet_shot:
 				self.bullet_shot=False	
+
+class Pistol(Weapon):
+	def __init__(self, weapon_name, shooting_type, weapon_image, price, price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost):
+		Weapon.__init__(self, weapon_name, shooting_type, weapon_image, price, price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
+
+	def reload(self):		
+		super(Pistol, self).reload1()
+
+class Rifle(Weapon):
+	def __init__(self, weapon_name, shooting_type, weapon_image, price, price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost):
+		Weapon.__init__(self, weapon_name, shooting_type, weapon_image, price, price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
 
 name='handgun'
 shooting='semi automatic'
@@ -1968,7 +2047,7 @@ upgrade_damage_cost=10
 upgrade_penetration_cost=5
 upgrade_max_mag_ammo_cost=5
 upgrade_max_weapon_ammo_cost=3
-Weapon(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
+Pistol(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
 
 name='rifle'
 shooting='automatic'
@@ -1987,7 +2066,7 @@ upgrade_damage_cost=10
 upgrade_penetration_cost=5
 upgrade_max_mag_ammo_cost=5
 upgrade_max_weapon_ammo_cost=3
-Weapon(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
+Rifle(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
 
 
 GameState['explosives_collection']=pygame.sprite.Group()
@@ -2143,7 +2222,7 @@ class Grenade(pygame.sprite.Sprite):
 		self.velocity=Vector2()
 		self.velocity.from_polar((self.explosive_box.speed, survivor.angle_from_center_to_cursor))
 		self.state='moving'
-		self.time_generated=time.time()
+		self.time_generated=GameState['game_time']
 		# Reading in Explosion picture and cropping it
 		self.current_explosion_image_number=0
 		self.maximum_explosion_image_number=self.explosive_box.maximum_explosion_image_number
@@ -2154,7 +2233,7 @@ class Grenade(pygame.sprite.Sprite):
 		self.affecting_zombies=None
 		self.speed=self.explosive_box.speed
 		self.state='moving'
-		self.time_of_last_generated_explosion_state=time.time()
+		self.time_of_last_generated_explosion_state=GameState['game_time']
 		self.mask=None
 		self.zombies_hit=pygame.sprite.Group()
 		self.start_effects=False
@@ -2168,7 +2247,7 @@ class Grenade(pygame.sprite.Sprite):
 			self.update_velocity()
 
 		# Initiates Explosion
-		if self.state=='exploding' and time.time()-self.time_generated>self.explosive_box.timer:
+		if self.state=='exploding' and GameState['game_time']-self.time_generated>self.explosive_box.timer:
 			self.explosion_handler()
 
 		# Handles Effects
@@ -2185,7 +2264,7 @@ class Grenade(pygame.sprite.Sprite):
 		if not self.velocity.length()==0:
 			if self.speed<0:
 				self.speed=0
-				if time.time()-self.time_generated>self.explosive_box.timer:
+				if GameState['game_time']-self.time_generated>self.explosive_box.timer:
 					self.state='exploding'
 		self.vector+=self.velocity
 
@@ -2201,9 +2280,9 @@ class Grenade(pygame.sprite.Sprite):
 				if not zombie.frozen:
 					self.zombies_hit.add(zombie)
 			self.start_effects=True
-			self.time_of_effect=time.time()
-		if time.time()-self.time_of_last_generated_explosion_state>self.explosive_box.update_state_image_delay:
-			self.time_of_last_generated_explosion_state=time.time()
+			self.time_of_effect=GameState['game_time']
+		if GameState['game_time']-self.time_of_last_generated_explosion_state>self.explosive_box.update_state_image_delay:
+			self.time_of_last_generated_explosion_state=GameState['game_time']
 			self.current_explosion_image_number+=1
 			if self.current_explosion_image_number==self.maximum_explosion_image_number:
 				self.kill()
@@ -2238,7 +2317,7 @@ class Grenade2(Grenade):
 		if not self.velocity.length()==0:
 			if self.speed<0:
 				self.speed=0
-				if time.time()-self.time_generated>self.explosive_box.timer:
+				if GameState['game_time']-self.time_generated>self.explosive_box.timer:
 					self.state='exploding'
 		self.vector+=self.velocity
 
@@ -2253,9 +2332,9 @@ class Grenade2(Grenade):
 			for zombie in self.zombies_hit:
 				zombie.frozen=True
 			self.start_effects=True
-			self.time_of_effect=time.time()
-		if time.time()-self.time_of_last_generated_explosion_state>self.explosive_box.update_state_image_delay:
-			self.time_of_last_generated_explosion_state=time.time()
+			self.time_of_effect=GameState['game_time']
+		if GameState['game_time']-self.time_of_last_generated_explosion_state>self.explosive_box.update_state_image_delay:
+			self.time_of_last_generated_explosion_state=GameState['game_time']
 			self.current_explosion_image_number+=1
 			if self.current_explosion_image_number==self.maximum_explosion_image_number:
 				self.state=None
@@ -2263,7 +2342,7 @@ class Grenade2(Grenade):
 	def effects_handler(self):
 		self.effects_image=self.explosive_box.effects_images[str(self.current_effects_image_number)]
 		self.increase_image_number=False
-		now=time.time()
+		now=GameState['game_time']
 		self.update_effects_state_image_delay=(self.explosive_box.effect_duration-(now-self.time_of_effect))*self.explosive_box.update_effects_state_image_delay
 		self.effects_active=now-self.time_of_effect<self.explosive_box.effect_duration
 		self.update_effects_image=now-self.time_of_last_generated_effect_state>self.update_effects_state_image_delay
@@ -2279,7 +2358,7 @@ class Grenade2(Grenade):
 				zombie.frozen=False
 
 		if self.update_effects_image:
-			self.time_of_last_generated_effect_state=time.time()
+			self.time_of_last_generated_effect_state=GameState['game_time']
 			if not self.effects_oscillating:
 				self.current_effects_image_number+=1
 				if self.current_effects_image_number==self.explosive_box.starting_effects_image_oscillation_number:
@@ -2328,7 +2407,7 @@ class Grenade3(Grenade):
 			self.update_velocity()
 
 		# Initiates Explosion
-		if self.state=='exploding' and time.time()-self.time_generated>self.explosive_box.timer:
+		if self.state=='exploding' and GameState['game_time']-self.time_generated>self.explosive_box.timer:
 			self.explosion_handler()
 
 		# Handles Effects
@@ -2345,7 +2424,7 @@ class Grenade3(Grenade):
 		if not self.velocity.length()==0:
 			if self.speed<0:
 				self.speed=0
-				if time.time()-self.time_generated>self.explosive_box.timer:
+				if GameState['game_time']-self.time_generated>self.explosive_box.timer:
 					self.state='exploding'
 		self.vector+=self.velocity
 
@@ -2361,9 +2440,9 @@ class Grenade3(Grenade):
 				if not zombie.frozen:
 					self.zombies_hit.add(zombie)
 			self.start_effects=True
-			self.time_of_effect=time.time()
-		if time.time()-self.time_of_last_generated_explosion_state>self.explosive_box.update_state_image_delay:
-			self.time_of_last_generated_explosion_state=time.time()
+			self.time_of_effect=GameState['game_time']
+		if GameState['game_time']-self.time_of_last_generated_explosion_state>self.explosive_box.update_state_image_delay:
+			self.time_of_last_generated_explosion_state=GameState['game_time']
 			self.current_explosion_image_number+=1
 			if self.current_explosion_image_number==self.maximum_explosion_image_number:
 				self.state=None
@@ -2371,7 +2450,7 @@ class Grenade3(Grenade):
 	def effects_handler(self):
 		self.effects_image=self.explosive_box.effects_images[str(self.current_effects_image_number)]
 		self.increase_image_number=False
-		now=time.time()
+		now=GameState['game_time']
 		self.update_effects_state_image_delay=self.explosive_box.update_effects_state_image_delay
 		self.effects_active=now-self.time_of_effect<self.explosive_box.effect_duration
 		self.update_effects_image=now-self.time_of_last_generated_effect_state>self.update_effects_state_image_delay
@@ -2500,7 +2579,7 @@ class Turret(pygame.sprite.Sprite):
 
 	def bullet_handler(self):
 		self.shooting_delay=1./self.fire_rate
-		now=time.time()
+		now=GameState['game_time']
 		if not self.target==None and (now-self.last_time_bullet_shot>=self.shooting_delay):
 			self.new_projectile_coords=Vector2()
 			self.new_projectile_coords.from_polar((self.distance_from_center_to_tip_of_weapon, self.angle_from_center_to_tip_of_weapon+self.angle_from_center_to_target))
@@ -2564,7 +2643,7 @@ class Round:
 
 	def zombie_handler(self):
 		# Generates zombies
-		now=time.time()
+		now=GameState['game_time']
 		for i, zombie_quantity in enumerate(self.zombie_quantities):
 			if zombie_quantity>0 and ((self.zombie_last_times[i]==0) or ((now-self.zombie_last_times[i]>self.zombie_delays[i]))):
 				generated_zombie=self.zombie_generater(i) 
@@ -2618,7 +2697,7 @@ walls=[[(164, 98),(184, 590)], [(164, 590), (568,609)], [(164,78),(1175,98)], [(
 nodes=[(231,325),(231,302), (568,325), (568,301),(375,396), (375,420), (441,397), (420,396), (542, 389), (543, 555), (573, 556), (831, 392), (611, 324), (632, 326), (673, 230), (672, 206), (1115, 206), (1114, 228), (959, 327), (796, 557), (827, 560),(959, 551),(1120, 330),(1120, 362), (989,553)]
 areas=[[(806, 546), (814, 571)], [(549, 546), (559, 590)], [(559, 546), (568, 570)], [(813, 546), (822, 590)], [(164, 98), (278, 152)], [(278, 98), (392, 152)], [(164, 152), (278, 206)], [(278, 152), (392, 206)], [(392, 98), (506, 152)], [(506, 98), (620, 152)], [(392, 152), (506, 206)], [(506, 152), (620, 206)], [(164, 206), (278, 260)], [(278, 206), (392, 260)], [(164, 260), (278, 314)], [(278, 260), (392, 314)], [(392, 206), (506, 260)], [(506, 206), (620, 260)], [(392, 260), (506, 314)], [(506, 260), (620, 314)], [(184, 314), (238, 337)], [(238, 314), (293, 337)], [(184, 337), (238, 360)], [(238, 337), (293, 360)], [(293, 314), (347, 337)], [(347, 314), (402, 337)], [(293, 337), (347, 360)], [(347, 337), (402, 360)], [(184, 360), (238, 383)], [(238, 360), (293, 383)], [(184, 383), (238, 407)], [(238, 383), (293, 407)], [(293, 360), (347, 383)], [(347, 360), (402, 383)], [(293, 383), (347, 407)], [(347, 383), (402, 407)], [(402, 314), (439, 337)], [(439, 314), (476, 337)], [(402, 337), (439, 360)], [(439, 337), (476, 360)], [(476, 314), (513, 337)], [(513, 314), (551, 337)], [(476, 337), (513, 360)], [(513, 337), (551, 360)], [(402, 360), (439, 383)], [(439, 360), (476, 383)], [(402, 383), (439, 407)], [(439, 383), (476, 407)], [(476, 360), (513, 383)], [(513, 360), (551, 383)], [(476, 383), (513, 407)], [(513, 383), (551, 407)], [(551, 314), (568, 335)], [(568, 314), (585, 335)], [(551, 335), (568, 356)], [(568, 335), (585, 356)], [(585, 314), (602, 335)], [(602, 314), (620, 335)], [(585, 335), (602, 356)], [(602, 335), (620, 356)], [(551, 356), (568, 377)], [(568, 356), (585, 377)], [(551, 377), (568, 399)], [(568, 377), (585, 399)], [(585, 356), (602, 377)], [(602, 356), (620, 377)], [(585, 377), (602, 399)], [(602, 377), (620, 399)], [(184, 411), (245, 455)], [(245, 411), (307, 455)], [(184, 455), (245, 500)], [(245, 455), (307, 500)], [(307, 411), (368, 455)], [(368, 411), (430, 455)], [(307, 455), (368, 500)], [(368, 455), (430, 500)], [(184, 500), (245, 545)], [(245, 500), (307, 545)], [(184, 545), (245, 590)], [(245, 545), (307, 590)], [(307, 500), (368, 545)], [(368, 500), (430, 545)], [(307, 545), (368, 590)], [(368, 545), (430, 590)], [(430, 407), (446, 430)], [(446, 407), (462, 430)], [(430, 430), (446, 453)], [(446, 430), (462, 453)], [(462, 407), (478, 430)], [(478, 407), (494, 430)], [(462, 430), (478, 453)], [(478, 430), (494, 453)], [(430, 453), (446, 476)], [(446, 453), (462, 476)], [(430, 476), (446, 500)], [(446, 476), (462, 500)], [(462, 453), (478, 476)], [(478, 453), (494, 476)], [(462, 476), (478, 500)], [(478, 476), (494, 500)], [(430, 500), (446, 522)], [(446, 500), (462, 522)], [(430, 522), (446, 545)], [(446, 522), (462, 545)], [(462, 500), (478, 522)], [(478, 500), (494, 522)], [(462, 522), (478, 545)], [(478, 522), (494, 545)], [(430, 545), (446, 567)], [(446, 545), (462, 567)], [(430, 567), (446, 590)], [(446, 567), (462, 590)], [(462, 545), (478, 567)], [(478, 545), (494, 567)], [(462, 567), (478, 590)], [(478, 567), (494, 590)], [(494, 407), (508, 430)], [(508, 407), (522, 430)], [(494, 430), (508, 453)], [(508, 430), (522, 453)], [(522, 407), (536, 430)], [(536, 407), (550, 430)], [(522, 430), (536, 453)], [(536, 430), (550, 453)], [(494, 453), (508, 476)], [(508, 453), (522, 476)], [(494, 476), (508, 500)], [(508, 476), (522, 500)], [(522, 453), (536, 476)], [(536, 453), (550, 476)], [(522, 476), (536, 500)], [(536, 476), (550, 500)], [(494, 500), (508, 522)], [(508, 500), (522, 522)], [(494, 522), (508, 545)], [(508, 522), (522, 545)], [(522, 500), (536, 522)], [(536, 500), (550, 522)], [(522, 522), (536, 545)], [(536, 522), (550, 545)], [(494, 545), (508, 567)], [(508, 545), (522, 567)], [(494, 567), (508, 590)], [(508, 567), (522, 590)], [(522, 545), (536, 567)], [(536, 545), (550, 567)], [(522, 567), (536, 590)], [(536, 567), (550, 590)], [(568, 417), (597, 437)], [(597, 417), (627, 437)], [(568, 437), (597, 458)], [(597, 437), (627, 458)], [(627, 417), (656, 437)], [(656, 417), (686, 437)], [(627, 437), (656, 458)], [(656, 437), (686, 458)], [(568, 458), (597, 479)], [(597, 458), (627, 479)], [(568, 479), (597, 500)], [(597, 479), (627, 500)], [(627, 458), (656, 479)], [(656, 458), (686, 479)], [(627, 479), (656, 500)], [(656, 479), (686, 500)], [(686, 417), (716, 437)], [(716, 417), (746, 437)], [(686, 437), (716, 458)], [(716, 437), (746, 458)], [(746, 417), (776, 437)], [(776, 417), (806, 437)], [(746, 437), (776, 458)], [(776, 437), (806, 458)], [(686, 458), (716, 479)], [(716, 458), (746, 479)], [(686, 479), (716, 500)], [(716, 479), (746, 500)], [(746, 458), (776, 479)], [(776, 458), (806, 479)], [(746, 479), (776, 500)], [(776, 479), (806, 500)], [(568, 500), (597, 517)], [(597, 500), (627, 517)], [(568, 517), (597, 535)], [(597, 517), (627, 535)], [(627, 500), (656, 517)], [(656, 500), (686, 517)], [(627, 517), (656, 535)], [(656, 517), (686, 535)], [(568, 535), (597, 553)], [(597, 535), (627, 553)], [(568, 553), (597, 571)], [(597, 553), (627, 571)], [(627, 535), (656, 553)], [(656, 535), (686, 553)], [(627, 553), (656, 571)], [(656, 553), (686, 571)], [(686, 500), (716, 517)], [(716, 500), (746, 517)], [(686, 517), (716, 535)], [(716, 517), (746, 535)], [(746, 500), (776, 517)], [(776, 500), (806, 517)], [(746, 517), (776, 535)], [(776, 517), (806, 535)], [(686, 535), (716, 553)], [(716, 535), (746, 553)], [(686, 553), (716, 571)], [(716, 553), (746, 571)], [(746, 535), (776, 553)], [(776, 535), (806, 553)], [(746, 553), (776, 571)], [(776, 553), (806, 571)], [(369, 407), (383, 408)], [(383, 407), (397, 408)], [(369, 408), (383, 410)], [(383, 408), (397, 410)], [(397, 407), (411, 408)], [(411, 407), (426, 408)], [(397, 408), (411, 410)], [(411, 408), (426, 410)], [(369, 410), (383, 412)], [(383, 410), (397, 412)], [(369, 412), (383, 414)], [(383, 412), (397, 414)], [(397, 410), (411, 412)], [(411, 410), (426, 412)], [(397, 412), (411, 414)], [(411, 412), (426, 414)], [(822, 400), (858, 447)], [(858, 400), (894, 447)], [(822, 447), (858, 495)], [(858, 447), (894, 495)], [(894, 400), (930, 447)], [(930, 400), (966, 447)], [(894, 447), (930, 495)], [(930, 447), (966, 495)], [(822, 495), (858, 542)], [(858, 495), (894, 542)], [(822, 542), (858, 590)], [(858, 542), (894, 590)], [(894, 495), (930, 542)], [(930, 495), (966, 542)], [(894, 542), (930, 590)], [(930, 542), (966, 590)], [(966, 544), (969, 555)], [(969, 544), (973, 555)], [(966, 555), (969, 567)], [(969, 555), (973, 567)], [(973, 544), (977, 555)], [(977, 544), (981, 555)], [(973, 555), (977, 567)], [(977, 555), (981, 567)], [(966, 567), (969, 578)], [(969, 567), (973, 578)], [(966, 578), (969, 590)], [(969, 578), (973, 590)], [(973, 567), (977, 578)], [(977, 567), (981, 578)], [(973, 578), (977, 590)], [(977, 578), (981, 590)], [(981, 353), (1002, 381)], [(1002, 353), (1023, 381)], [(981, 381), (1002, 410)], [(1002, 381), (1023, 410)], [(1023, 353), (1044, 381)], [(1044, 353), (1066, 381)], [(1023, 381), (1044, 410)], [(1044, 381), (1066, 410)], [(981, 410), (1002, 439)], [(1002, 410), (1023, 439)], [(981, 439), (1002, 468)], [(1002, 439), (1023, 468)], [(1023, 410), (1044, 439)], [(1044, 410), (1066, 439)], [(1023, 439), (1044, 468)], [(1044, 439), (1066, 468)], [(1066, 353), (1088, 381)], [(1088, 353), (1111, 381)], [(1066, 381), (1088, 410)], [(1088, 381), (1111, 410)], [(1111, 353), (1134, 381)], [(1134, 353), (1157, 381)], [(1111, 381), (1134, 410)], [(1134, 381), (1157, 410)], [(1066, 410), (1088, 439)], [(1088, 410), (1111, 439)], [(1066, 439), (1088, 468)], [(1088, 439), (1111, 468)], [(1111, 410), (1134, 439)], [(1134, 410), (1157, 439)], [(1111, 439), (1134, 468)], [(1134, 439), (1157, 468)], [(981, 468), (1002, 498)], [(1002, 468), (1023, 498)], [(981, 498), (1002, 529)], [(1002, 498), (1023, 529)], [(1023, 468), (1044, 498)], [(1044, 468), (1066, 498)], [(1023, 498), (1044, 529)], [(1044, 498), (1066, 529)], [(981, 529), (1002, 559)], [(1002, 529), (1023, 559)], [(981, 559), (1002, 590)], [(1002, 559), (1023, 590)], [(1023, 529), (1044, 559)], [(1044, 529), (1066, 559)], [(1023, 559), (1044, 590)], [(1044, 559), (1066, 590)], [(1066, 468), (1088, 498)], [(1088, 468), (1111, 498)], [(1066, 498), (1088, 529)], [(1088, 498), (1111, 529)], [(1111, 468), (1134, 498)], [(1134, 468), (1157, 498)], [(1111, 498), (1134, 529)], [(1134, 498), (1157, 529)], [(1066, 529), (1088, 559)], [(1088, 529), (1111, 559)], [(1066, 559), (1088, 590)], [(1088, 559), (1111, 590)], [(1111, 529), (1134, 559)], [(1134, 529), (1157, 559)], [(1111, 559), (1134, 590)], [(1134, 559), (1157, 590)], [(620, 218), (664, 249)], [(664, 218), (709, 249)], [(620, 249), (664, 281)], [(664, 249), (709, 281)], [(709, 218), (754, 249)], [(754, 218), (799, 249)], [(709, 249), (754, 281)], [(754, 249), (799, 281)], [(620, 281), (664, 313)], [(664, 281), (709, 313)], [(620, 313), (664, 345)], [(664, 313), (709, 345)], [(709, 281), (754, 313)], [(754, 281), (799, 313)], [(709, 313), (754, 345)], [(754, 313), (799, 345)], [(799, 218), (843, 247)], [(843, 218), (888, 247)], [(799, 247), (843, 277)], [(843, 247), (888, 277)], [(888, 218), (933, 247)], [(933, 218), (978, 247)], [(888, 247), (933, 277)], [(933, 247), (978, 277)], [(799, 277), (843, 307)], [(843, 277), (888, 307)], [(799, 307), (843, 337)], [(843, 307), (888, 337)], [(888, 277), (933, 307)], [(933, 277), (978, 307)], [(888, 307), (933, 337)], [(933, 307), (978, 337)], [(799, 337), (840, 339)], [(840, 337), (882, 339)], [(799, 339), (840, 341)], [(840, 339), (882, 341)], [(882, 337), (924, 339)], [(924, 337), (966, 339)], [(882, 339), (924, 341)], [(924, 339), (966, 341)], [(799, 341), (840, 343)], [(840, 341), (882, 343)], [(799, 343), (840, 345)], [(840, 343), (882, 345)], [(882, 341), (924, 343)], [(924, 341), (966, 343)], [(882, 343), (924, 345)], [(924, 343), (966, 345)], [(978, 218), (1022, 247)], [(1022, 218), (1067, 247)], [(978, 247), (1022, 277)], [(1022, 247), (1067, 277)], [(1067, 218), (1112, 247)], [(1112, 218), (1157, 247)], [(1067, 247), (1112, 277)], [(1112, 247), (1157, 277)], [(978, 277), (1022, 307)], [(1022, 277), (1067, 307)], [(978, 307), (1022, 337)], [(1022, 307), (1067, 337)], [(1067, 277), (1112, 307)], [(1112, 277), (1157, 307)], [(1067, 307), (1112, 337)], [(1112, 307), (1157, 337)], [(1108, 337), (1120, 341)], [(1120, 337), (1132, 341)], [(1108, 341), (1120, 345)], [(1120, 341), (1132, 345)], [(1132, 337), (1144, 341)], [(1144, 337), (1157, 341)], [(1132, 341), (1144, 345)], [(1144, 341), (1157, 345)], [(1108, 345), (1120, 349)], [(1120, 345), (1132, 349)], [(1108, 349), (1120, 353)], [(1120, 349), (1132, 353)], [(1132, 345), (1144, 349)], [(1144, 345), (1157, 349)], [(1132, 349), (1144, 353)], [(1144, 349), (1157, 353)], [(620, 98), (664, 128)], [(664, 98), (709, 128)], [(620, 128), (664, 158)], [(664, 128), (709, 158)], [(709, 98), (754, 128)], [(754, 98), (799, 128)], [(709, 128), (754, 158)], [(754, 128), (799, 158)], [(620, 158), (664, 188)], [(664, 158), (709, 188)], [(620, 188), (664, 218)], [(664, 188), (709, 218)], [(709, 158), (754, 188)], [(754, 158), (799, 188)], [(709, 188), (754, 218)], [(754, 188), (799, 218)], [(799, 98), (843, 128)], [(843, 98), (888, 128)], [(799, 128), (843, 158)], [(843, 128), (888, 158)], [(888, 98), (933, 128)], [(933, 98), (978, 128)], [(888, 128), (933, 158)], [(933, 128), (978, 158)], [(799, 158), (843, 188)], [(843, 158), (888, 188)], [(799, 188), (843, 218)], [(843, 188), (888, 218)], [(888, 158), (933, 188)], [(933, 158), (978, 188)], [(888, 188), (933, 218)], [(933, 188), (978, 218)], [(978, 98), (1022, 128)], [(1022, 98), (1067, 128)], [(978, 128), (1022, 158)], [(1022, 128), (1067, 158)], [(1067, 98), (1112, 128)], [(1112, 98), (1157, 128)], [(1067, 128), (1112, 158)], [(1112, 128), (1157, 158)], [(978, 158), (1022, 188)], [(1022, 158), (1067, 188)], [(978, 188), (1022, 218)], [(1022, 188), (1067, 218)], [(1067, 158), (1112, 188)], [(1112, 158), (1157, 188)], [(1067, 188), (1112, 218)], [(1112, 188), (1157, 218)], [(620, 345), (664, 358)], [(664, 345), (709, 358)], [(620, 358), (664, 372)], [(664, 358), (709, 372)], [(709, 345), (753, 358)], [(753, 345), (798, 358)], [(709, 358), (753, 372)], [(753, 358), (798, 372)], [(620, 372), (664, 386)], [(664, 372), (709, 386)], [(620, 386), (664, 400)], [(664, 386), (709, 400)], [(709, 372), (753, 386)], [(753, 372), (798, 386)], [(709, 386), (753, 400)], [(753, 386), (798, 400)], [(798, 345), (840, 358)], [(840, 345), (882, 358)], [(798, 358), (840, 372)], [(840, 358), (882, 372)], [(882, 345), (924, 358)], [(924, 345), (966, 358)], [(882, 358), (924, 372)], [(924, 358), (966, 372)], [(798, 372), (840, 386)], [(840, 372), (882, 386)], [(798, 386), (840, 400)], [(840, 386), (882, 400)], [(882, 372), (924, 386)], [(924, 372), (966, 386)], [(882, 386), (924, 400)], [(924, 386), (966, 400)]]
 
-map_1=Map(pygame.image.load('Maps/map1.png'), [(200,200), (1000,600)], rooms, areas, (-370,-200), walls, nodes)
+map_1=Map(pygame.image.load('Maps/map1.png'), [(200,200), (1000,500)], rooms, areas, (-370,-200), walls, nodes)
 GameState['maps'].append(map_1)
 
 GameState['rounds']=[]
@@ -2793,18 +2872,31 @@ for index in range(0,len(current_map.areas)):
 def main():
 	global fpsClock, DISPLAYSURF, GameState, survivor, current_map, pause_menu
 	while True:
-		GameState['events']=pygame.event.get()
-		# Determines the location of cursor and if quit game
-		cursor_actions_tracker()
-		# Draws the game. (rooms, walls, areas, nodes)
-		draw_game([0, 0, 0,0])
-		# Updates and displays all game bars onto the screen
-		menu_displayer()
-		# If pause, open pause menu
 		if GameState['paused']:
+			GameState['events']=pygame.event.get()
+			# Determines the location of cursor and if quit game
+			cursor_actions_tracker()
+			# Draws the game. (rooms, walls, areas, nodes)
+			draw_game([0, 0, 0,0])
+			# Updates and displays all game bars onto the screen
+			menu_displayer()
+			# If pause, open pause menu
 			pause_menu.handler()
+			# updates game window with final DISPLAYSURF
+			pygame.display.update()
+			# Waits a certin amount of time before starting loop again
+			fpsClock.tick(FPS)
 		# If not pause, continue game
 		if not GameState['paused']:
+			now=time.time()
+			GameState['events']=pygame.event.get()
+			# Determines the location of cursor and if quit game
+			cursor_actions_tracker()
+			# Draws the game. (rooms, walls, areas, nodes)
+			draw_game([0, 0, 0,0])
+			# Updates and displays all game bars onto the screen
+			menu_displayer()
+			# If pause, open pause menu
 			switch_weapons_handler()
 			# Moves survivor
 			update_survivor_location()
@@ -2823,10 +2915,11 @@ def main():
 			# Draw survivor
 			survivor.prepare()
 			survivor.draw()
-		# updates game window with final DISPLAYSURF
-		pygame.display.update()
-		# Waits a certin amount of time before starting loop again
-		fpsClock.tick(FPS)
+			# updates game window with final DISPLAYSURF
+			pygame.display.update()
+			# Waits a certin amount of time before starting loop again
+			fpsClock.tick(FPS)
+			GameState['game_time']+=time.time()-now
 
 if __name__ =="__main__":
 	main()
