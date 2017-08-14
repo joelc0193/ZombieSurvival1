@@ -1646,7 +1646,7 @@ class Survivor(pygame.sprite.Sprite):
 	def state_central_handler(self):
 		if self.body_motion=='reload':
 			self.weapon.reload()
-			self.reloading_handler()
+			self.weapon.reloading_handler()
 		else:
 			self.update_body_state()
 			self.update_feet_state()
@@ -1667,31 +1667,6 @@ class Survivor(pygame.sprite.Sprite):
 			self.current_feet_state_number+=1
 			self.current_feet_state_number=self.current_feet_state_number%(self.max_feet_state_number+1)
 			self.feet_image=Images['Characters/Survivor/feet/'+str(self.feet_motion)+str(self.current_feet_state_number)]
-
-	def reloading_handler(self):
-		# If reloading
-		if self.body_motion=='reload':
-			# If we have reached the final reloading image
-			if self.current_body_state_number==self.max_body_state_number:
-				# We add transfer bullets from the weapon stock to the mag ammo
-				if self.weapon.current_mag_ammo!=self.weapon.max_mag_ammo:
-					bullets_to_add=self.weapon.max_mag_ammo-self.weapon.current_mag_ammo
-					# If there are not enough bullets from the weapons to fill mag
-					if bullets_to_add>self.weapon.current_weapon_ammo:
-						bullets_to_add=self.weapon.current_weapon_ammo
-					self.weapon.current_mag_ammo+=bullets_to_add
-					self.weapon.current_weapon_ammo-=bullets_to_add
-
-				# If the gun's mag ammo is full or if the weapon has no more ammo, we switch to another state
-				if (self.weapon.current_mag_ammo==self.weapon.max_mag_ammo or self.weapon.current_weapon_ammo==0):
-					self.find_body_motion()	
-				# Reloading Bar Outline
-				BARWIDTH=140
-				BARHEIGHT=13
-				SPACEAWAYFROMLEFT=30
-				SPACEAWAYFROMTOP=100
-				reloading_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP,1, BARHEIGHT)
-				self.weapon.reloading_bar=reloading_bar
 
 	def find_body_motion(self):
 		# If the survivor is moving, we switch the state to 'move'
@@ -1925,13 +1900,13 @@ class Weapon(pygame.sprite.Sprite):
 		self.last_time_bullet_shot=0
 		self.sell_value=int(self.price*.6)
 		self.bullet_shot=False
-		self.current_mag_ammo=12
+		self.current_mag_ammo=1
 		self.max_mag_ammo=max_mag_ammo
 		self.current_weapon_ammo=80
 		self.max_weapon_ammo=max_weapon_ammo
 		self.menu_scale_image=(90,90)
 		self.menu_image_blit_location=(15,5)
-		self.reload_time=3
+		self.reload_time=.2
 		self.upgrade_menu_fields=[]
 		self.upgrade_menu_fields.append(Menu_Field('Damage: ', 'damage', 'damage_upgrades', 'upgrade_damage_cost', (110, 10, 190, 40), 'Upgrade_Button'))
 		self.upgrade_menu_fields.append(Menu_Field('Penetration: ', 'penetration', 'penetration_upgrades', 'upgrade_penetration_cost', (110, 50, 190, 40), 'Upgrade_Button'))
@@ -1964,6 +1939,8 @@ class Weapon(pygame.sprite.Sprite):
 		SPACEAWAYFROMLEFT=32
 		SPACEAWAYFROMTOP=102
 		BARWIDTH=(float(survivor.current_body_state_number)/survivor.max_body_state_number)*BARMAXWIDTH
+		if BARWIDTH>BARMAXWIDTH:
+			BARWIDTH=BARMAXWIDTH
 		if not BARWIDTH==0:
 			reload_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP, BARWIDTH, BARHEIGHT)
 		else: 
@@ -2005,12 +1982,51 @@ class Weapon(pygame.sprite.Sprite):
 		BARWIDTH=(float(GameState['game_time']-survivor.started_reload)/(survivor.weapon.reload_time*survivor.reload_speed))*BARMAXWIDTH
 		if BARWIDTH>BARMAXWIDTH:
 			BARWIDTH=BARMAXWIDTH
-		if BARWIDTH==0:
+		if not BARWIDTH==0:
 			reload_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP, BARWIDTH, BARHEIGHT)
 		else:
 			reload_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP, 1, BARHEIGHT)
 		self.reloading_bar=reload_bar
 
+	def reloading_handler(self):
+		# If reloading
+		if survivor.body_motion=='reload':
+			# If we have reached the final reloading image
+			if survivor.current_body_state_number==survivor.max_body_state_number:
+				# We add transfer bullets from the weapon stock to the mag ammo
+				if self.current_mag_ammo!=self.max_mag_ammo:
+					bullets_to_add=self.max_mag_ammo-self.current_mag_ammo
+					# If there are not enough bullets from the weapons to fill mag
+					if bullets_to_add>self.current_weapon_ammo:
+						bullets_to_add=self.current_weapon_ammo
+					self.current_mag_ammo+=bullets_to_add
+					self.current_weapon_ammo-=bullets_to_add
+
+				# If the gun's mag ammo is full or if the weapon has no more ammo, we switch to another state
+				if (self.current_mag_ammo==self.max_mag_ammo or self.current_weapon_ammo==0):
+					survivor.find_body_motion()	
+
+	def reloading_handler1(self):
+		# If reloading
+		if survivor.body_motion=='reload':
+			# If we have reached the final reloading image
+			if survivor.current_body_state_number==survivor.max_body_state_number:
+				# If the mag has not been filled yet
+				if self.current_mag_ammo!=self.max_mag_ammo:
+					# If we have enought bullets in weapon
+					if not self.bullets_to_add>self.current_weapon_ammo:
+						self.current_mag_ammo+=self.bullets_to_add
+						self.current_weapon_ammo-=self.bullets_to_add
+					else:
+						bullets_to_add=self.ammo_left
+						self.ammo_left=0
+						self.current_mag_ammo=bullets_to_add
+					survivor.current_body_state_number+=1
+
+				# If the gun's mag ammo is full or if the weapon has no more ammo, we switch to another state
+				if (self.current_mag_ammo==self.max_mag_ammo or self.current_weapon_ammo==0):
+					survivor.find_body_motion()	
+	
 	def bullet_handler(self):
 		self.shooting_delay=1./self.fire_rate
 		if self.shooting_type=='automatic':
@@ -2077,7 +2093,37 @@ class Weapon(pygame.sprite.Sprite):
 				survivor.update_body_state_image_delay=.05
 			self.bullet_shot=True
 			if GameState['MouseButtonPressed']==False and self.bullet_shot:
-				self.bullet_shot=False	
+				self.bullet_shot=False
+
+		elif self.shooting_type=='pump':
+			self.new_projectile_coords=Vector2()
+			self.new_projectile_coords.from_polar((self.distance_from_survivor_to_tip_of_weapon, self.angle_from_survivor_to_tip_of_weapon+survivor.angle_from_center_to_cursor))
+			self.new_projectile_coords+=survivor.vector
+			if GameState['MouseButtonPressed'] and survivor.body_motion!='reload':
+				total_number=4
+				angles=[-30, -10, 10, 30, 50]
+				bullets_fired=0
+				if self.current_mag_ammo!=0:
+					for bullet_number in range(1,total_number+1):
+						survivor.body_motion='shoot'
+						survivor.current_body_state_number=0
+						survivor.max_body_state_number=2
+						survivor.update_feet_state_image_delay=.1
+						bullet = Projectile(self.new_projectile_coords, survivor.bullet_speed, survivor.angle_to_rotate_body+angles[bullet_number-1], bullet_number, total_number, self)
+						bullet.current_area=find_current_location(bullet.vector, current_map.areas)
+						bullet.current_area.entities_on.add(bullet)
+					self.current_mag_ammo-=1
+					bullets_fired+=1
+					GameState['MouseButtonPressed']=False
+			if survivor.weapon.current_weapon_ammo>0 and survivor.weapon.current_mag_ammo==0 and survivor.body_motion!='reload':
+				survivor.body_motion='reload'
+				survivor.started_reload=GameState['game_time']
+				survivor.max_body_state_number=14
+				survivor.current_body_state_number=0
+				survivor.update_body_state_image_delay=.05
+			self.bullet_shot=True
+			if GameState['MouseButtonPressed']==False and self.bullet_shot:
+				self.bullet_shot=False			
 
 class Pistol(Weapon):
 	def __init__(self, weapon_name, shooting_type, weapon_image, price, price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost):
@@ -2089,6 +2135,17 @@ class Pistol(Weapon):
 class Rifle(Weapon):
 	def __init__(self, weapon_name, shooting_type, weapon_image, price, price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost):
 		Weapon.__init__(self, weapon_name, shooting_type, weapon_image, price, price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
+
+class Shotgun(Weapon):
+	def __init__(self, weapon_name, shooting_type, weapon_image, price, price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost):
+		Weapon.__init__(self, weapon_name, shooting_type, weapon_image, price, price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
+		self.bullets_to_add=1
+
+	def reload(self):		
+		super(Shotgun, self).reload()
+
+	def reloading_handler(self):
+		super(Shotgun, self).reloading_handler1()
 
 name='handgun'
 shooting='semi automatic'
@@ -2127,6 +2184,25 @@ upgrade_penetration_cost=5
 upgrade_max_mag_ammo_cost=5
 upgrade_max_weapon_ammo_cost=3
 Rifle(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
+
+name='shotgun'
+shooting='pump'
+filename='Guns/CartoonShotgun.png'
+price=10
+price_per_mag=2
+fire_rate=1
+bullet_image='bullet.png'
+weapon_size=Vector2(25,10)
+damage=25
+max_mag_ammo=1
+max_weapon_ammo=25
+weapon_scale=(100,100)
+penetration=20
+upgrade_damage_cost=10
+upgrade_penetration_cost=5
+upgrade_max_mag_ammo_cost=5
+upgrade_max_weapon_ammo_cost=3
+Shotgun(name, shooting, filename, price,price_per_mag, fire_rate, bullet_image, weapon_size, damage, max_mag_ammo, max_weapon_ammo, weapon_scale, penetration, upgrade_damage_cost, upgrade_penetration_cost, upgrade_max_mag_ammo_cost, upgrade_max_weapon_ammo_cost)
 
 
 GameState['explosives_collection']=pygame.sprite.Group()
@@ -2698,7 +2774,7 @@ GameState['turrets_collection'].add(GameState['display_turret'])
 class Round:
 	def __init__(self, cap):
 		self.zombie_cap=5
-		self.zombie_quantities=[1000,1000,0,0]
+		self.zombie_quantities=[100,100,0,0]
 		self.zombie_delays=[.1,.1,0,0]
 		self.zombie_last_times=[0,0,0,0]
 		self.delays_doubled=False
