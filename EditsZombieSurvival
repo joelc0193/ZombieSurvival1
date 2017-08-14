@@ -1,3 +1,7 @@
+Reaching the max body state number when reloading doesnt automatically fill mag, instead it fills the mag a specified amount
+
+Fix switching guns in the middle of a reload
+
 Redo Areas
 
 Redo graph wall_check with thicker walls
