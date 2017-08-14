@@ -1217,7 +1217,6 @@ class Player_Tab(Tab):
 			text_surface_obj = text_obj.render('$'+str(survivor.upgrade_walk_speed_cost[0]), True, BLACK)
 			# Upgrade Max Speed Box
 			button = Buy_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, survivor, 'walk_speed', survivor.upgrade_walk_speed_cost[0], survivor.walk_speed_upgrades, text_surface_obj)
-
 		# Max Bullet Speed Container
 		item = Menu_Item(surface, 275, 60, 280, 40, 'bullet_speed', INDIGOBLUE, BLACK)
 		item.draw()
@@ -1237,6 +1236,25 @@ class Player_Tab(Tab):
 			text_surface_obj = text_obj.render('$'+str(survivor.upgrade_bullet_speed_cost[0]), True, BLACK)
 			# Upgrade Bullet Speed Box
 			button = Upgrade_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, survivor, 'bullet_speed', survivor.upgrade_bullet_speed_cost[0], survivor.bullet_speed_upgrades, text_surface_obj)
+		# Reload Speed Container
+		item = Menu_Item(surface, 50, 110, 280, 40, 'reload_speed', INDIGOBLUE, BLACK)
+		item.draw()
+		# Reload Speed Text
+		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+		text_surface_obj = text_obj.render('Reload Speed: '+str(survivor.reload_speed), True, BLACK)
+		text_surface_obj_rect=text_surface_obj.get_rect(topleft=((70, 110)))
+		surface.blit(text_surface_obj, text_surface_obj_rect)
+		# Next Upgrade
+		text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+		if not len(survivor.reload_speed_upgrades)==0:
+			text_surface_obj = text_obj.render('+'+str(survivor.reload_speed_upgrades[0]), True, GREEN)
+			text_surface_obj_rect=text_surface_obj.get_rect(topleft=(text_surface_obj_rect.right,text_surface_obj_rect.top+10))	
+			surface.blit(text_surface_obj, text_surface_obj_rect)
+			# Upgrade Buller Speed Cost
+			text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+			text_surface_obj = text_obj.render('$'+str(survivor.upgrade_reload_speed_cost[0]), True, BLACK)
+			# Upgrade Bullet Speed Box
+			button = Upgrade_Button(surface,text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, survivor, 'reload_speed', survivor.upgrade_reload_speed_cost[0], survivor.reload_speed_upgrades, text_surface_obj)
 
 		pause_menu.update_rects(surface, surface_width, surface_height)
 
@@ -1489,6 +1507,8 @@ class Survivor(pygame.sprite.Sprite):
 		self.buy_armor_cost=10
 		self.reload_number_to_pause=5
 		self.reload_speed=1
+		self.reload_speed_upgrades=[-.1,-.1,-.1,-.2]
+		self.upgrade_reload_speed_cost=[12, 12, 12, 12]
 		self.max_health_upgrades=[20,10,5]
 		self.upgrade_max_health_cost=[50,25,12]
 		self.current_armor=30
@@ -1634,7 +1654,14 @@ class Survivor(pygame.sprite.Sprite):
 
 				# If the gun's mag ammo is full or if the weapon has no more ammo, we switch to another state
 				if (self.weapon.current_mag_ammo==self.weapon.max_mag_ammo or self.weapon.current_weapon_ammo==0):
-					self.find_body_motion()
+					self.find_body_motion()	
+				# Reloading Bar Outline
+				BARWIDTH=140
+				BARHEIGHT=13
+				SPACEAWAYFROMLEFT=30
+				SPACEAWAYFROMTOP=100
+				reloading_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP,1, BARHEIGHT)
+				self.weapon.reloading_bar=reloading_bar
 
 	def find_body_motion(self):
 		# If the survivor is moving, we switch the state to 'move'
@@ -1886,7 +1913,7 @@ class Weapon(pygame.sprite.Sprite):
 
 	def reload(self):
 		now=GameState['game_time']
-		if (survivor.time_of_last_generated_body_state==0) or (now-survivor.time_of_last_generated_body_state>=survivor.update_body_state_image_delay):
+		if (survivor.time_of_last_generated_body_state==0) or (now-survivor.time_of_last_generated_body_state>=self.reload_time*survivor.reload_speed):
 			survivor.time_of_last_generated_body_state = now # update the time of last self update to now
 			survivor.current_body_state_number+=1
 			survivor.current_body_state_number=survivor.current_body_state_number%(survivor.max_body_state_number+1)
@@ -1905,11 +1932,12 @@ class Weapon(pygame.sprite.Sprite):
 		BARHEIGHT=10
 		SPACEAWAYFROMLEFT=32
 		SPACEAWAYFROMTOP=102
-		if not survivor.current_body_state_number==0:
-			BARWIDTH=(float(survivor.current_body_state_number)/survivor.max_body_state_number)*BARMAXWIDTH
+		BARWIDTH=(float(survivor.current_body_state_number)/survivor.max_body_state_number)*BARMAXWIDTH
 		if not BARWIDTH==0:
 			reload_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP, BARWIDTH, BARHEIGHT)
-		self.reloading_bar=reload_bar	
+		else: 
+			reload_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP, 1, BARHEIGHT)
+		self.reloading_bar=reload_bar
 
 	def reload1(self):
 		now=GameState['game_time']
@@ -1943,13 +1971,14 @@ class Weapon(pygame.sprite.Sprite):
 		BARHEIGHT=10
 		SPACEAWAYFROMLEFT=32
 		SPACEAWAYFROMTOP=102
-		if not survivor.current_body_state_number==0:
-			BARWIDTH=(float(GameState['game_time']-survivor.started_reload)/(survivor.weapon.reload_time*survivor.reload_speed))*BARMAXWIDTH
-			if BARWIDTH>BARMAXWIDTH:
-				BARWIDTH=BARMAXWIDTH
-		if not BARWIDTH==0:
+		BARWIDTH=(float(GameState['game_time']-survivor.started_reload)/(survivor.weapon.reload_time*survivor.reload_speed))*BARMAXWIDTH
+		if BARWIDTH>BARMAXWIDTH:
+			BARWIDTH=BARMAXWIDTH
+		if BARWIDTH==0:
 			reload_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP, BARWIDTH, BARHEIGHT)
-			self.reloading_bar=reload_bar
+		else:
+			reload_bar=pygame.Rect(SPACEAWAYFROMLEFT,SPACEAWAYFROMTOP, 1, BARHEIGHT)
+		self.reloading_bar=reload_bar
 
 	def bullet_handler(self):
 		self.shooting_delay=1./self.fire_rate
