@@ -722,6 +722,16 @@ class Buy_Turret_Button(Buy_Button):
 		GameState['turret_to_buy']=self.weapon
 		GameState['MouseButtonPressed']=False
 
+class Sell_Turret_Button(Buy_Button):
+	def __init__(self, surface, left, top, width, height, color, color2, weapon, cost, text_surface_obj):
+		Buy_Button.__init__(self, surface, left, top, width, height, GREEN, color2, weapon, None, cost, None, text_surface_obj)
+
+	def action(self):
+		survivor.money+=self.weapon.sell_value
+		self.weapon.kill()
+		pause_menu.turrets_tab.upgrades_tab_items=[turret for turret in GameState['active_turrets']]
+		pause_menu.turrets_tab.upgrades_tab_items.sort(key=lambda x: x.number, reverse=False)
+
 class Buy_Weapon_Button(Buy_Button):
 	def __init__(self, surface, left, top, width, height, color, color2, weapon, cost, text_surface_obj):
 		Buy_Button.__init__(self, surface, left, top, width, height, color, color2, weapon, None, cost, None, text_surface_obj)
@@ -729,16 +739,19 @@ class Buy_Weapon_Button(Buy_Button):
 	def action(self):
 		survivor.money-=self.field_upgrade_cost
 		survivor.weapons.append(self.weapon)
-		self.weapon.buy_menu_fields[-1]=Menu_Field('Sell Weapon: ', None, None, 'price', (110,90,140,40), 'Sell_Weapon_Button')
+		self.weapon.buy_menu_fields[-1]=Menu_Field('Sell Weapon: ', None, None, 'sell_value', (110,90,140,40), 'Sell_Weapon_Button')
+		self.weapon.sell_value=int(self.weapon.price*.6)
 
 class Sell_Weapon_Button(Buy_Button):
 	def __init__(self, surface, left, top, width, height, color, color2, weapon, cost, text_surface_obj):
-		Buy_Button.__init__(self, surface, left, top, width, height, color, color2, weapon, None, cost, None, text_surface_obj)
+		Buy_Button.__init__(self, surface, left, top, width, height, GREEN, color2, weapon, None, cost, None, text_surface_obj)
 
 	def action(self):
-		survivor.money+=self.field_upgrade_cost
-		survivor.weapons.append(self.weapon)
+		survivor.money+=self.weapon.sell_value
 		self.weapon.buy_menu_fields[-1]=Menu_Field('Buy Weapon: ', None, None, 'price', (110,90,140,40), 'Buy_Weapon_Button')
+		for i, weapon in enumerate(survivor.weapons):
+			if weapon==self.weapon:
+				del survivor.weapons[i]
 
 class Upgrade_Button(Menu_Item):
 	def __init__(self, surface, left, top, width, height, color, color2, weapon, weapon_field, field_upgrade_cost, field_upgrades, text_surface_obj):
@@ -758,6 +771,10 @@ class Upgrade_Button(Menu_Item):
 		x = getattr(self.weapon, self.weapon_field)
 		setattr(self.weapon, self.weapon_field, x+self.field_upgrades[0])
 		del self.field_upgrades[0]
+
+		if isinstance(self.weapon, Weapon) or isinstance(self.weapon, Turret):
+			self.weapon.sell_value+=self.field_upgrade_cost*.6
+			self.weapon.sell_value=int(self.weapon.sell_value)
 
 	def draw(self):
 		super(Upgrade_Button, self).draw()
@@ -969,17 +986,31 @@ class Tab(object):
 				# Attribute Container
 				menu_item = Menu_Item(surface, field_object.rect[0], TOP+field_object.rect[1], field_object.rect[2], field_object.rect[3], None, INDIGOBLUE, INDIGOBLUE)
 				menu_item.draw()
-				# Attribute Text
-				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				text_surface_obj = text_obj.render(field_object.display_text+str(getattr(item, field_object.field)), True, BLACK)
-				text_surface_obj_rect=text_surface_obj.get_rect(left=field_object.rect[0]+10, top=TOP+field_object.rect[1])
-				surface.blit(text_surface_obj, text_surface_obj_rect)
-				# If there are upgrades
-				if not len(getattr(item, field_object.quantity))==0:
-					# If there is a limitation
-					if field_object.limitation!=None:
-						# If the limitation has not been reached
-						if getattr(item, field_object.field)<getattr(item, field_object.limitation):
+				# If the current_button is not a sell turret button
+				if not field_object.button_type=='Sell_Turret_Button':
+					# Attribute Text
+					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+					text_surface_obj = text_obj.render(field_object.display_text+str(getattr(item, field_object.field)), True, BLACK)
+					text_surface_obj_rect=text_surface_obj.get_rect(left=field_object.rect[0]+10, top=TOP+field_object.rect[1])
+					surface.blit(text_surface_obj, text_surface_obj_rect)
+					# If there are upgrades
+					if not len(getattr(item, field_object.quantity))==0:
+						# If there is a limitation
+						if field_object.limitation!=None:
+							# If the limitation has not been reached
+							if getattr(item, field_object.field)<getattr(item, field_object.limitation):
+								text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+								text_surface_obj = text_obj.render('+'+ str(getattr(item, field_object.quantity)[0]), True, GREEN)
+								text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
+								surface.blit(text_surface_obj, text_surface_obj_rect)
+								# Upgrade Cost
+								text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+								text_surface_obj = text_obj.render('$'+str(getattr(item, field_object.cost)), True, BLACK)
+								# Upgrade Buton
+								class_ = getattr(sys.modules[__name__], field_object.button_type)
+								button = class_(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, item, field_object.field, getattr(item, field_object.cost), getattr(item, field_object.quantity), text_surface_obj)
+						# If there are upgrades and no limitation
+						else:
 							text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
 							text_surface_obj = text_obj.render('+'+ str(getattr(item, field_object.quantity)[0]), True, GREEN)
 							text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
@@ -990,18 +1021,16 @@ class Tab(object):
 							# Upgrade Buton
 							class_ = getattr(sys.modules[__name__], field_object.button_type)
 							button = class_(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, item, field_object.field, getattr(item, field_object.cost), getattr(item, field_object.quantity), text_surface_obj)
-					# If there are upgrades and no limitation
-					else:
-						text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-						text_surface_obj = text_obj.render('+'+ str(getattr(item, field_object.quantity)[0]), True, GREEN)
-						text_surface_obj_rect=text_surface_obj.get_rect(left=text_surface_obj_rect.right, top=text_surface_obj_rect.top+10)
-						surface.blit(text_surface_obj, text_surface_obj_rect)
-						# Upgrade Cost
-						text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
-						text_surface_obj = text_obj.render('$'+str(getattr(item, field_object.cost)), True, BLACK)
-						# Upgrade Buton
-						class_ = getattr(sys.modules[__name__], field_object.button_type)
-						button = class_(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top, 30, 20, RED, BLACK, item, field_object.field, getattr(item, field_object.cost), getattr(item, field_object.quantity), text_surface_obj)
+				# If the current button is a sell turret button
+				else:
+					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+					text_surface_obj = text_obj.render(field_object.display_text, True, BLACK)
+					text_surface_obj_rect=text_surface_obj.get_rect(left=field_object.rect[0]+10, top=TOP+field_object.rect[1])
+					surface.blit(text_surface_obj, text_surface_obj_rect)
+					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 15)
+					text_surface_obj = text_obj.render('$'+str(getattr(item, field_object.cost)), True, BLACK)
+					class_ = getattr(sys.modules[__name__], field_object.button_type)
+					button = class_(surface, text_surface_obj_rect.right+10, text_surface_obj_rect.top+10, 30, 20, RED, BLACK, item, getattr(item, field_object.cost), text_surface_obj)
 
 			TOP+=item.upgrades_tab_size-1
 	
@@ -1028,14 +1057,15 @@ class Tab(object):
 			# Picture
 			surface.blit(pygame.transform.scale(item.image_for_menu, item.menu_scale_image), (item.menu_image_blit_location[0], TOP+item.menu_image_blit_location[1]))
 			for field_object in item.upgrade_menu_fields:
-				# Attribute Container
-				menu_item = Menu_Item(surface, field_object.rect[0], TOP+field_object.rect[1], field_object.rect[2], field_object.rect[3], None, INDIGOBLUE, INDIGOBLUE)
-				menu_item.draw()
-				# Attribute Text
-				text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
-				text_surface_obj = text_obj.render(field_object.display_text+str(getattr(item, field_object.field)), True, BLACK)
-				text_surface_obj_rect=text_surface_obj.get_rect(left=field_object.rect[0]+10, top=TOP+field_object.rect[1])
-				surface.blit(text_surface_obj, text_surface_obj_rect)
+				if not field_object.button_type=='Sell_Turret_Button':
+					# Attribute Container
+					menu_item = Menu_Item(surface, field_object.rect[0], TOP+field_object.rect[1], field_object.rect[2], field_object.rect[3], None, INDIGOBLUE, INDIGOBLUE)
+					menu_item.draw()
+					# Attribute Text
+					text_obj = pygame.font.Font('Fonts/PopulationZeroBB.otf', 30)
+					text_surface_obj = text_obj.render(field_object.display_text+str(getattr(item, field_object.field)), True, BLACK)
+					text_surface_obj_rect=text_surface_obj.get_rect(left=field_object.rect[0]+10, top=TOP+field_object.rect[1])
+					surface.blit(text_surface_obj, text_surface_obj_rect)
 			TOP+=item.buy_tab_size-1
 
 		pause_menu.update_rects(surface, surface_width, surface_height)
@@ -1311,7 +1341,7 @@ class Turrets_Tab(Tab):
 		self.list_of_attributes=['damage', 'penetration', 'ammo_left', 'fire_rate']
 		self.list_of_upgrades_costs=['upgrade_damage_cost', 'upgrade_penetration_cost', 'buy_ammo_cost', 'upgrade_fire_rate_cost']
 		self.buy_tab_items=GameState['turrets_collection']
-		self.list_of_buy_fields=['buy_cost']
+		self.list_of_buy_fields=['price']
 		self.list_of_buy_rects=[(120, 90 , 190, 30)]
 		self.list_of_buy_texts=['Buy Turret: ']
 
@@ -1893,6 +1923,7 @@ class Weapon(pygame.sprite.Sprite):
 		self.DPS=self.damage*self.fire_rate
 		self.bullets=pygame.sprite.Group()
 		self.last_time_bullet_shot=0
+		self.sell_value=int(self.price*.6)
 		self.bullet_shot=False
 		self.current_mag_ammo=12
 		self.max_mag_ammo=max_mag_ammo
@@ -2529,11 +2560,11 @@ class Turret(pygame.sprite.Sprite):
 		pygame.sprite.Sprite.__init__(self)
 		self.image_for_menu=pygame.transform.scale(pygame.image.load('Turrets/Turret0/turret.png'), scale)
 		self.number=number
-		self.upgrades_tab_size=100
+		self.upgrades_tab_size=150
 		self.buy_tab_size=150
 		self.weapon_size=Vector2(weapon_size)
 		self.rect=self.image_for_menu.get_rect(center=coords)
-		self.buy_cost=20
+		self.price=20
 		self.damage=damage
 		self.damage_upgrades=[5,4,3,2]
 		self.upgrade_damage_cost=20
@@ -2541,6 +2572,7 @@ class Turret(pygame.sprite.Sprite):
 		self.buy_ammo_cost=100
 		self.penetration=penetration
 		self.penetration_upgrades=[5,4,3,2]
+		self.sell_value=int(self.price*.6)
 		self.upgrade_penetration_cost=20
 		self.fire_rate=fire_rate
 		self.shooting_delay=1/self.fire_rate
@@ -2570,8 +2602,9 @@ class Turret(pygame.sprite.Sprite):
 		self.upgrade_menu_fields.append(Menu_Field('Penetration: ', 'penetration', 'penetration_upgrades', 'upgrade_penetration_cost', (110, 50, 190, 40), 'Upgrade_Button'))
 		self.upgrade_menu_fields.append(Menu_Field('Fire Rate: ', 'fire_rate', 'fire_rate_upgrades', 'upgrade_fire_rate_cost', (340, 50, 190, 40), 'Upgrade_Button'))
 		self.upgrade_menu_fields.append(Menu_Field('Ammo: ', 'ammo_left', 'buy_ammo_quantity', 'buy_ammo_cost', (310, 10, 190, 40), 'Buy_Button', 'max_ammo'))
+		self.upgrade_menu_fields.append(Menu_Field('Sell Turret: ', None, None, 'sell_value', (110, 90, 190, 40), 'Sell_Turret_Button'))
 		self.buy_menu_fields=[]
-		self.buy_menu_fields.append(Menu_Field('Buy Turret', None, None, 'buy_cost', (110, 90, 190, 40), 'Buy_Turret_Button'))
+		self.buy_menu_fields.append(Menu_Field('Buy Turret', None, None, 'price', (110, 90, 190, 40), 'Buy_Turret_Button'))
 
 
 	def target_finder(self):
